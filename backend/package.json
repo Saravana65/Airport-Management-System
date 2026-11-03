@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node tests/health.test.js"
+    "test": "node tests/health.test.js && node tests/auth.test.js"
   },
   "keywords": [
     "airport-management-system",
@@ -18,10 +18,13 @@
   "author": "Saravana",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "oracledb": "^6.6.0"
   },

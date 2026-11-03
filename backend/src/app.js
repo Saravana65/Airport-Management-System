@@ -7,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const { config } = require('./config/environment');
 const routes = require('./routes');
 const notFoundHandler = require('./middleware/notFound.middleware');
@@ -37,9 +38,10 @@ if (!config.isProduction) {
     app.use(morgan('dev'));
 }
 
-// Body Parsing
+// Body & Cookie Parsing
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(cookieParser(config.COOKIE_SECRET));
 
 // Mount API Routes
 app.use(config.API_PREFIX, routes);

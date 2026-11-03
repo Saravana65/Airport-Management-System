@@ -20,6 +20,11 @@ const environment = {
         ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()) 
         : ['http://localhost:3000', 'http://localhost:5173'],
 
+    // JWT & Cookie Security
+    JWT_SECRET: process.env.JWT_SECRET || 'dev_fallback_airport_jwt_secret_key_12345',
+    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '24h',
+    COOKIE_SECRET: process.env.COOKIE_SECRET || 'dev_fallback_cookie_secret_key_12345',
+
     // Oracle Database Connection
     DB: {
         user: process.env.DB_USER || 'airport_admin',
