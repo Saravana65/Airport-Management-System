@@ -1,0 +1,151 @@
+/**
+ * Frontend Verification & Architecture Test Suite
+ * Validates frontend contracts, navigation schemas, and integration points with Phase 05 backend.
+ */
+
+import { test, describe } from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const FRONTEND_ROOT = path.resolve(__dirname, '..');
+
+describe('Phase 06 Frontend Verification Suite', () => {
+
+  test('1. Production Build & Bundler Artifacts Exist', () => {
+    const distPath = path.join(FRONTEND_ROOT, 'dist');
+    assert.strictEqual(fs.existsSync(distPath), true, 'dist/ directory must exist');
+    assert.strictEqual(fs.existsSync(path.join(distPath, 'index.html')), true, 'dist/index.html must exist');
+    
+    const assetsDir = path.join(distPath, 'assets');
+    assert.strictEqual(fs.existsSync(assetsDir), true, 'dist/assets directory must exist');
+    const assetFiles = fs.readdirSync(assetsDir);
+    assert.ok(assetFiles.some(f => f.endsWith('.js')), 'JavaScript bundle must be generated');
+    assert.ok(assetFiles.some(f => f.endsWith('.css')), 'CSS bundle must be generated');
+  });
+
+  test('2. Key Source Architecture Files Exist', () => {
+    const requiredFiles = [
+      'src/main.jsx',
+      'src/App.jsx',
+      'src/services/api.js',
+      'src/services/auth.service.js',
+      'src/context/AuthContext.jsx',
+      'src/hooks/useAuth.js',
+      'src/routes/AppRoutes.jsx',
+      'src/layouts/DashboardLayout.jsx',
+      'src/components/Sidebar/Sidebar.jsx',
+      'src/components/Header/Header.jsx',
+      'src/components/ProtectedRoute/ProtectedRoute.jsx',
+      'src/components/StatCard/StatCard.jsx',
+      'src/components/StatusBadge/StatusBadge.jsx',
+      'src/components/PendingFeatureCard/PendingFeatureCard.jsx',
+      'src/pages/Login/Login.jsx',
+      'src/pages/AdminDashboard/AdminDashboard.jsx',
+      'src/pages/AirlineDashboard/AirlineDashboard.jsx',
+      'src/pages/AirportDashboard/AirportDashboard.jsx',
+      'src/pages/PassengerDashboard/PassengerDashboard.jsx',
+      'src/pages/Unauthorized/Unauthorized.jsx',
+      'src/pages/NotFound/NotFound.jsx',
+    ];
+
+    for (const relPath of requiredFiles) {
+      const fullPath = path.join(FRONTEND_ROOT, relPath);
+      assert.strictEqual(fs.existsSync(fullPath), true, `Required file ${relPath} must exist`);
+    }
+  });
+
+  test('3. API Service Endpoint Contract Matches Phase 05 Backend', () => {
+    const authServiceSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/services/auth.service.js'),
+      'utf8'
+    );
+
+    assert.ok(authServiceSource.includes("'/auth/login'"), 'Must call /auth/login endpoint');
+    assert.ok(authServiceSource.includes("'/auth/logout'"), 'Must call /auth/logout endpoint');
+    assert.ok(authServiceSource.includes("'/auth/me'"), 'Must call /auth/me endpoint');
+    assert.ok(authServiceSource.includes("'/auth/change-password'"), 'Must call /auth/change-password endpoint');
+  });
+
+  test('4. API Client Enforces HttpOnly Cookie Transmissions', () => {
+    const apiSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/services/api.js'),
+      'utf8'
+    );
+
+    assert.ok(
+      apiSource.includes("credentials: 'include'"),
+      "API client must specify credentials: 'include' to transmit session cookies"
+    );
+    assert.ok(
+      !apiSource.includes('localStorage.setItem'),
+      'Must NOT store JWT tokens in localStorage for security'
+    );
+  });
+
+  test('5. Role Navigation Structure Implemented for All 4 Roles', () => {
+    const sidebarSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/components/Sidebar/Sidebar.jsx'),
+      'utf8'
+    );
+
+    assert.ok(sidebarSource.includes("'ADMIN'"), 'Must include ADMIN role navigation');
+    assert.ok(sidebarSource.includes("'AIRLINE_STAFF'"), 'Must include AIRLINE_STAFF role navigation');
+    assert.ok(sidebarSource.includes("'AIRPORT_STAFF'"), 'Must include AIRPORT_STAFF role navigation');
+    assert.ok(sidebarSource.includes("'PASSENGER'"), 'Must include PASSENGER role navigation');
+
+    // Admin nav items
+    assert.ok(sidebarSource.includes('/admin/users'), 'Admin must have User Management');
+    assert.ok(sidebarSource.includes('/admin/flights'), 'Admin must have Flight Operations');
+    assert.ok(sidebarSource.includes('/admin/database'), 'Admin must have Database Monitor');
+
+    // Airline nav items
+    assert.ok(sidebarSource.includes('/airline/flights'), 'Airline staff must have Flight Schedules');
+    assert.ok(sidebarSource.includes('/airline/passengers'), 'Airline staff must have Passenger List');
+
+    // Airport nav items
+    assert.ok(sidebarSource.includes('/airport/gates'), 'Airport staff must have Gate Allocation');
+    assert.ok(sidebarSource.includes('/airport/baggage'), 'Airport staff must have Baggage Routing');
+
+    // Passenger nav items
+    assert.ok(sidebarSource.includes('/passenger/search'), 'Passenger must have Flight Search');
+    assert.ok(sidebarSource.includes('/passenger/bookings'), 'Passenger must have Bookings');
+    assert.ok(sidebarSource.includes('/passenger/checkin'), 'Passenger must have Web Check-in');
+  });
+
+  test('6. Route Protection and Unauthorized Handling', () => {
+    const routesSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/routes/AppRoutes.jsx'),
+      'utf8'
+    );
+
+    assert.ok(routesSource.includes('<ProtectedRoute allowedRoles={[\'ADMIN\']}>'), 'Admin routes must be protected');
+    assert.ok(routesSource.includes('<ProtectedRoute allowedRoles={[\'AIRLINE_STAFF\']}>'), 'Airline routes must be protected');
+    assert.ok(routesSource.includes('<ProtectedRoute allowedRoles={[\'AIRPORT_STAFF\']}>'), 'Airport routes must be protected');
+    assert.ok(routesSource.includes('<ProtectedRoute allowedRoles={[\'PASSENGER\']}>'), 'Passenger routes must be protected');
+    assert.ok(routesSource.includes('/unauthorized'), 'Unauthorized route must be registered');
+  });
+
+  test('7. Transparent Placeholder Implementation (No Fake Data)', () => {
+    const adminSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/pages/AdminDashboard/AdminDashboard.jsx'),
+      'utf8'
+    );
+    const airlineSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/pages/AirlineDashboard/AirlineDashboard.jsx'),
+      'utf8'
+    );
+
+    assert.ok(
+      adminSource.includes('isPending={true}'),
+      'Admin dashboard metrics must clearly indicate pending API integration'
+    );
+    assert.ok(
+      airlineSource.includes('isPending={true}'),
+      'Airline dashboard metrics must clearly indicate pending API integration'
+    );
+  });
+});

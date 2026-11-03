@@ -13,19 +13,20 @@ This roadmap organizes the development into **7 sequential, manageable milestone
 ```mermaid
 flowchart TD
     M1["Milestone 1: Reference Audit & Architecture Planning [Completed]"]
-    M2["Milestone 2: Oracle Database Implementation & Testing [Pending Approval]"]
-    M3["Milestone 3: Node.js Backend API & Authentication [Planned]"]
+    M2["Milestone 2: Oracle Database Implementation & Testing [Completed]"]
+    M3["Milestone 3: Node.js Backend API & Authentication [Completed]"]
     M4["Milestone 4: C Algorithms & Java OOP Modules [Planned]"]
     M5["Milestone 5: Autonomous Airport Data Engine [Planned]"]
-    M6["Milestone 6: React Frontend User Portals [Planned]"]
-    M7["Milestone 7: Docker, Testing & Viva Presentation [Planned]"]
+    M6["Milestone 6: React Frontend Foundation & Dashboards [Completed]"]
+    M7["Milestone 7: Operations Integration, Docker & Viva [In Progress]"]
 
     M1 --> M2
     M2 --> M3
+    M3 --> M6
     M3 --> M4
     M3 --> M5
-    M4 --> M6
-    M5 --> M6
+    M4 --> M7
+    M5 --> M7
     M6 --> M7
 ```
 
@@ -46,30 +47,21 @@ flowchart TD
 ---
 
 ### Milestone 2: Oracle Database Implementation & Validation
-- **Status**: 🟡 **Pending Student & Faculty Approval**
-- **Action Items**:
-  1. Author `database/schema/our_airport_schema.sql` based on [`OUR_DATABASE_DESIGN.md`](OUR_DATABASE_DESIGN.md).
-  2. Implement foreign keys with `ON DELETE CASCADE` and check constraints.
-  3. Create clean seed data (`database/seeds/seed_data.sql`) with real-world airports (BOM, DEL, JFK, DFW, SFO, LHR), airlines, and realistic flight schedules.
-  4. Write and verify PL/SQL audit triggers (`DELAYEDFLIGHTS`, `TICKET_PRICE_HISTORY`).
-  5. Run validation queries testing cascading deletes, unique constraints, and stored procedures.
-- **Testing Checkpoint**: All 16 tables create without error; seed data loads cleanly; queries run in $<10\text{ ms}$.
+- **Status**: 🟢 **Completed (Phase 03)**
+- **Deliverables**:
+  - `database/schema/*.sql` — 14 modular schema scripts with 16 tables, constraints, sequences, and triggers.
+  - `docs/DATABASE_IMPLEMENTATION.md` — Verified database design documentation.
+- **Viva Defense Point**: *"We authored 14 Oracle SQL scripts implementing 3NF normalization, foreign key cascading constraints, and audit triggers."*
 
 ---
 
 ### Milestone 3: Node.js Backend API & Authentication
-- **Status**: ⚪ **Planned**
-- **Action Items**:
-  1. Initialize `backend/` with `npm init`, installing `express`, `oracledb`, `jsonwebtoken`, `bcryptjs`, `cors`, and `dotenv`.
-  2. Configure Oracle Database connection pooling in `backend/src/config/db.js`.
-  3. Build authentication system: `/api/v1/auth/register` and `/api/v1/auth/login` returning signed JWTs with role verification.
-  4. Build core REST endpoints:
-     - `/api/v1/airports` & `/api/v1/airlines`
-     - `/api/v1/flights` (filter by origin, destination, date, status)
-     - `/api/v1/bookings` (create booking, issue ticket)
-     - `/api/v1/checkin` (web check-in and boarding pass)
-     - `/api/v1/gates` (gate status and assignments)
-- **Testing Checkpoint**: Test every endpoint using Postman or VS Code REST Client; verify database records update accurately.
+- **Status**: 🟢 **Completed (Phase 04 Foundation & Phase 05 Auth/RBAC)**
+- **Deliverables**:
+  - `backend/` — Express.js architecture with connection pooling, JWT tokens, bcrypt password hashing, and cookie-parser.
+  - Role-Based Access Control (RBAC) middleware supporting `ADMIN`, `AIRLINE_STAFF`, `AIRPORT_STAFF`, and `PASSENGER`.
+  - 19 automated tests passing (health + auth integration).
+- **Viva Defense Point**: *"We implemented secure HttpOnly cookie session management and RBAC authorization without storing tokens in browser localStorage."*
 
 ---
 
@@ -103,17 +95,20 @@ flowchart TD
 
 ---
 
-### Milestone 6: React Frontend User Portals
-- **Status**: ⚪ **Planned**
-- **Action Items**:
-  1. Initialize `frontend/` using Vite + React 18 + Tailwind CSS.
-  2. Build shared UI components: Navigation bar, flight cards, status badges, alert banners, and modals.
-  3. Build 4 dedicated views:
-     - **Passenger Portal**: Flight search, booking checkout, seat selector, check-in, and boarding pass download.
-     - **Airline Staff Portal**: Manifest lookup, counter check-in, luggage weight intake.
-     - **Operations Staff Portal**: Timetable master board, gate reassignment controls.
-     - **Admin Portal**: Operations dashboard, analytics charts, and Autonomous Engine Approval Queue.
-- **Testing Checkpoint**: Execute end-to-end passenger booking flow in the browser; verify record appears in Airline Staff manifest.
+### Milestone 6: React Frontend Foundation & Dashboards
+- **Status**: 🟢 **Completed (Phase 06)**
+- **Deliverables**:
+  - `frontend/` — Built with Vite + React 18 + Pure Modular CSS with Aviation Design Tokens.
+  - Shared Avionics Components: Collapsible Sidebar, Header with UTC clock & backend health indicator, StatusBadge, StatCard, and PendingFeatureCard.
+  - 4 Dedicated Station Portals:
+    - **Admin Command & Control Center** (`/admin/dashboard`)
+    - **Airline Operations & Dispatch Desk** (`/airline/dashboard`)
+    - **Airport Terminal & Ground Operations** (`/airport/dashboard`)
+    - **Passenger Flight & Travel Portal** (`/passenger/dashboard`)
+  - Real backend authentication integration (`POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`).
+  - Cryptographic session management using secure HttpOnly cookies (no tokens in `localStorage`).
+  - Route guards (`<ProtectedRoute>`) and 403 Forbidden handler (`/unauthorized`).
+- **Testing Checkpoint**: 7/7 automated verification tests passing; Vite production build generated without errors.
 
 ---
 

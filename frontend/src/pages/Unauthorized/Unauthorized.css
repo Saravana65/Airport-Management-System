@@ -1,0 +1,109 @@
+.unauthorized-viewport {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: var(--bg-canvas);
+}
+
+.unauthorized-card {
+  max-width: 500px;
+  width: 100%;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.unauthorized-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: var(--status-red);
+  border-radius: 2px;
+}
+
+.unauthorized-icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background-color: var(--status-red-bg);
+  border: 1px solid var(--status-red-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--status-red);
+}
+
+.unauthorized-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--status-red);
+  letter-spacing: 0.08em;
+}
+
+.unauthorized-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.unauthorized-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.unauthorized-user-box {
+  width: 100%;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-box-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.box-label {
+  color: var(--text-muted);
+}
+
+.box-val {
+  color: var(--text-primary);
+}
+
+.unauthorized-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.unauthorized-actions .btn {
+  flex: 1;
+}
+
+@media (max-width: 480px) {
+  .unauthorized-actions {
+    flex-direction: column;
+  }
+}

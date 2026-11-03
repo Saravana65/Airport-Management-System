@@ -1,0 +1,83 @@
+.airline-dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.airline-banner {
+  border-left-color: var(--status-blue) !important;
+}
+
+.airline-icon-box {
+  background-color: var(--status-blue-bg) !important;
+  border-color: var(--status-blue-border) !important;
+  color: var(--status-blue) !important;
+}
+
+/* Dispatch Table */
+.dispatch-board-panel {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dispatch-table-header {
+  display: grid;
+  grid-template-columns: 120px 1.5fr 1.5fr 120px 160px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dispatch-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-clock-icon {
+  animation: pulse-radar 3s infinite ease-in-out;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  max-width: 580px;
+  line-height: 1.5;
+}
+
+.empty-desc code {
+  font-family: var(--font-mono);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--amber-primary);
+}
+
+.empty-badge-wrap {
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .dispatch-table-header {
+    display: none;
+  }
+}

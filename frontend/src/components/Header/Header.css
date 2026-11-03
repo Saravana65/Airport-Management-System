@@ -1,0 +1,171 @@
+.ams-header {
+  height: var(--header-height);
+  background-color: var(--bg-header);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-mobile-toggle {
+  display: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.header-mobile-toggle:hover {
+  background-color: var(--bg-card);
+  color: var(--amber-primary);
+}
+
+.header-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--amber-primary);
+  letter-spacing: 0.05em;
+}
+
+.crumb-separator {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Aviation Clock */
+.aviation-clock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.clock-icon {
+  color: var(--amber-primary);
+}
+
+.utc-time {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.clock-separator {
+  color: var(--text-muted);
+}
+
+.lcl-time {
+  color: var(--text-muted);
+}
+
+/* Backend Status Pill */
+.backend-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.backend-status-pill.online {
+  background-color: var(--status-emerald-bg);
+  border: 1px solid var(--status-emerald-border);
+  color: var(--status-emerald);
+}
+.backend-status-pill.online .status-indicator-dot {
+  background-color: var(--status-emerald);
+  box-shadow: 0 0 6px var(--status-emerald);
+}
+
+.backend-status-pill.offline {
+  background-color: var(--status-red-bg);
+  border: 1px solid var(--status-red-border);
+  color: var(--status-red);
+}
+.backend-status-pill.offline .status-indicator-dot {
+  background-color: var(--status-red);
+  box-shadow: 0 0 6px var(--status-red);
+}
+
+.backend-status-pill.checking {
+  background-color: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: var(--text-muted);
+}
+.backend-status-pill.checking .status-indicator-dot {
+  background-color: var(--text-muted);
+}
+
+.status-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* Header User Tag */
+.header-user-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--amber-primary);
+  font-weight: 600;
+}
+
+.role-shield-icon {
+  color: var(--amber-primary);
+}
+
+@media (max-width: 992px) {
+  .header-mobile-toggle {
+    display: flex;
+  }
+
+  .ams-header {
+    padding: 0 16px;
+  }
+
+  .aviation-clock {
+    display: none;
+  }
+}

@@ -1,0 +1,81 @@
+.passenger-dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.passenger-banner {
+  border-left-color: var(--status-purple) !important;
+}
+
+.passenger-icon-box {
+  background-color: var(--status-purple-bg) !important;
+  border-color: var(--status-purple-border) !important;
+  color: var(--status-purple) !important;
+}
+
+/* Flight Search Bar */
+.flight-search-bar {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-input-group {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-input-group.date-group {
+  max-width: 180px;
+}
+
+.search-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.search-field {
+  width: 100%;
+}
+
+.search-action-btn {
+  height: 42px;
+  padding: 0 20px;
+  white-space: nowrap;
+}
+
+.search-footnote {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.search-footnote code {
+  color: var(--amber-primary);
+}
+
+@media (max-width: 768px) {
+  .flight-search-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input-group.date-group {
+    max-width: 100%;
+  }
+
+  .search-action-btn {
+    width: 100%;
+  }
+}
