@@ -1,0 +1,31 @@
+{
+  "name": "airport-management-system-backend",
+  "version": "1.0.0",
+  "description": "Node.js and Express backend with Oracle Database connection pooling for Airport Management System",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "node tests/health.test.js"
+  },
+  "keywords": [
+    "airport-management-system",
+    "nodejs",
+    "express",
+    "oracle",
+    "oracledb"
+  ],
+  "author": "Saravana",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
+    "oracledb": "^6.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
