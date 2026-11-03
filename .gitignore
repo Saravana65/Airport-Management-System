@@ -1,0 +1,7 @@
+# Ignore documents and images
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.tiff
+*.bmp
