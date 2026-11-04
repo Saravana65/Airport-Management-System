@@ -22,6 +22,7 @@ import {
   Briefcase,
   Compass,
   User,
+  Cpu,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import StatusBadge from '../StatusBadge/StatusBadge';
@@ -48,6 +49,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
           { label: 'Airline Management', to: '/admin/airlines', icon: Briefcase },
           { label: 'Employee Management', to: '/admin/employees', icon: UserCheck },
           { label: 'Autonomous Data Engine', to: '/admin/aade', icon: Radio },
+          { label: 'C & Java Algorithms', to: '/admin/algorithms', icon: Cpu },
           { label: 'Database Monitoring', to: '/admin/database', icon: Database },
           { label: 'System Settings', to: '/admin/settings', icon: Settings },
         ];
@@ -60,6 +62,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
           { label: 'Booking Management', to: '/airline/bookings', icon: Calendar },
           { label: 'Ticket Information', to: '/airline/tickets', icon: Ticket },
           { label: 'Autonomous Data Engine', to: '/airline/aade', icon: Radio },
+          { label: 'C & Java Algorithms', to: '/airline/algorithms', icon: Cpu },
         ];
       case 'AIRPORT_STAFF':
         return [
@@ -70,6 +73,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
           { label: 'Baggage Management', to: '/airport/baggage', icon: Luggage },
           { label: 'Employee Operations', to: '/airport/employees', icon: UserCheck },
           { label: 'Autonomous Data Engine', to: '/airport/aade', icon: Radio },
+          { label: 'C & Java Algorithms', to: '/airport/algorithms', icon: Cpu },
         ];
       case 'PASSENGER':
         return [
@@ -79,6 +83,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
           { label: 'My Tickets', to: '/passenger/tickets', icon: Ticket },
           { label: 'Web Check-in', to: '/passenger/checkin', icon: ShieldCheck },
           { label: 'Travel Information', to: '/passenger/travel-info', icon: Compass },
+          { label: 'Dynamic Fare & Engines', to: '/passenger/algorithms', icon: Cpu },
           { label: 'My Profile', to: '/passenger/profile', icon: User },
         ];
       default:

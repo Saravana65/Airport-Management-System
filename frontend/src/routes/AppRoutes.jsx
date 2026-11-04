@@ -13,6 +13,7 @@ import AirlineDashboard from '../pages/AirlineDashboard/AirlineDashboard';
 import AirportDashboard from '../pages/AirportDashboard/AirportDashboard';
 import PassengerDashboard from '../pages/PassengerDashboard/PassengerDashboard';
 import AadeDashboard from '../pages/AadeDashboard/AadeDashboard';
+import AlgorithmsDashboard from '../pages/AlgorithmsDashboard/AlgorithmsDashboard';
 import ComingSoon from '../pages/ComingSoon/ComingSoon';
 import Unauthorized from '../pages/Unauthorized/Unauthorized';
 import NotFound from '../pages/NotFound/NotFound';
@@ -132,6 +133,7 @@ export function AppRoutes() {
         />
         <Route path="database" element={<AadeDashboard />} />
         <Route path="aade" element={<AadeDashboard />} />
+        <Route path="algorithms" element={<AlgorithmsDashboard />} />
         <Route
           path="settings"
           element={
@@ -212,6 +214,7 @@ export function AppRoutes() {
           }
         />
         <Route path="aade" element={<AadeDashboard />} />
+        <Route path="algorithms" element={<AlgorithmsDashboard />} />
       </Route>
 
       {/* AIRPORT_STAFF Station Routes */}
@@ -281,6 +284,7 @@ export function AppRoutes() {
           }
         />
         <Route path="aade" element={<AadeDashboard />} />
+        <Route path="algorithms" element={<AlgorithmsDashboard />} />
       </Route>
 
       {/* PASSENGER Station Routes */}
@@ -360,6 +364,7 @@ export function AppRoutes() {
             />
           }
         />
+        <Route path="algorithms" element={<AlgorithmsDashboard />} />
       </Route>
 
       {/* Catch-all 404 Route */}

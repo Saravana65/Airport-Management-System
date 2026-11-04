@@ -21,6 +21,7 @@ const baggageRoutes = require('./baggage.routes');
 const gateRoutes = require('./gate.routes');
 const employeeRoutes = require('./employee.routes');
 const aadeRoutes = require('./aade.routes');
+const integrationRoutes = require('./integration.routes');
 
 // Health Check API
 router.use('/health', healthRoutes);
@@ -57,5 +58,8 @@ router.use('/employees', employeeRoutes);
 
 // Phase 08: Autonomous Airport Data Engine (AADE)
 router.use('/aade', aadeRoutes);
+
+// Phase 09: C Algorithm Engine & Java OOP Services Integration
+router.use('/integration', integrationRoutes);
 
 module.exports = router;

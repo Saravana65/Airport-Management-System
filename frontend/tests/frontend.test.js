@@ -222,4 +222,33 @@ describe('Phase 06 Frontend Verification Suite', () => {
     );
     assert.ok(routesSource.includes('AadeDashboard'), 'AppRoutes must include AadeDashboard');
   });
+
+  test('9. Phase 09 Multi-Language Algorithms & Java OOP Services Integration', () => {
+    const integrationServicePath = path.join(FRONTEND_ROOT, 'src/services/integration.service.js');
+    assert.strictEqual(fs.existsSync(integrationServicePath), true, 'integration.service.js must exist');
+    const integrationSource = fs.readFileSync(integrationServicePath, 'utf8');
+
+    assert.ok(integrationSource.includes('getStatus'), 'integrationService must have getStatus');
+    assert.ok(integrationSource.includes('getGateAllocation'), 'integrationService must have getGateAllocation');
+    assert.ok(integrationSource.includes('getRunwayQueue'), 'integrationService must have getRunwayQueue');
+    assert.ok(integrationSource.includes('getBaggageRouting'), 'integrationService must have getBaggageRouting');
+    assert.ok(integrationSource.includes('getJavaBookings'), 'integrationService must have getJavaBookings');
+    assert.ok(integrationSource.includes('calculatePricing'), 'integrationService must have calculatePricing');
+    assert.ok(integrationSource.includes('transitionJavaBooking'), 'integrationService must have transitionJavaBooking');
+
+    const algoDashboardPath = path.join(FRONTEND_ROOT, 'src/pages/AlgorithmsDashboard/AlgorithmsDashboard.jsx');
+    assert.strictEqual(fs.existsSync(algoDashboardPath), true, 'AlgorithmsDashboard.jsx must exist');
+
+    const sidebarSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/components/Sidebar/Sidebar.jsx'),
+      'utf8'
+    );
+    assert.ok(sidebarSource.includes('C & Java Algorithms'), 'Sidebar must include C & Java Algorithms link');
+
+    const routesSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/routes/AppRoutes.jsx'),
+      'utf8'
+    );
+    assert.ok(routesSource.includes('AlgorithmsDashboard'), 'AppRoutes must include AlgorithmsDashboard');
+  });
 });

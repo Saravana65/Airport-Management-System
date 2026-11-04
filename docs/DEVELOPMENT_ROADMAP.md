@@ -15,7 +15,7 @@ flowchart TD
     M1["Milestone 1: Reference Audit & Architecture Planning [Completed]"]
     M2["Milestone 2: Oracle Database Implementation & Testing [Completed]"]
     M3["Milestone 3: Node.js Backend API & Authentication [Completed]"]
-    M4["Milestone 4: C Algorithms & Java OOP Modules [Planned]"]
+    M4["Milestone 4: Java OOP Services & C Algorithms (Phase 09) [Completed]"]
     M5["Milestone 5: Autonomous Airport Data Engine (Phase 08) [Completed]"]
     M6["Milestone 6: React Frontend Foundation & Dashboards [Completed]"]
     M7["Milestone 7: Operations Modules & Full-Stack Integration [Completed]"]
@@ -26,9 +26,8 @@ flowchart TD
     M3 --> M6
     M6 --> M7
     M7 --> M5
-    M3 --> M4
+    M5 --> M4
     M4 --> M8
-    M5 --> M8
 ```
 
 ---
@@ -66,18 +65,29 @@ flowchart TD
 
 ---
 
-### Milestone 4: C Algorithms & Java OOP Modules
-- **Status**: ⚪ **Planned**
-- **Action Items**:
-  1. **C Algorithms (`c-algorithms/`)**:
-     - Implement Min-Heap Priority Queue for Runway Sequencing (`runway_queue.c`).
-     - Implement Bipartite Matching for Gate Allocation (`gate_assignment.c`).
-     - Compile binaries with `gcc` and test with sample JSON/CLI input.
-  2. **Java OOP Modules (`java/`)**:
-     - Implement `Flight` abstract class and subclasses (`DomesticFlight`, `InternationalFlight`).
-     - Implement Strategy Pattern for dynamic pricing (`EarlyBird`, `Surge`, `LastMinute`).
-  3. Connect C and Java execution to Node.js controllers via child process calls.
-- **Testing Checkpoint**: Verify C binary sorts 100 flights in $<1\text{ ms}$; verify Java pricing engine computes correct discounts.
+### Milestone 4: Java OOP Services & C Data Structures Integration (Phase 09)
+- **Status**: 🟢 **Completed (Phase 09)**
+- **Deliverables**:
+  - `c-engine/` — ANSI C (C99) high-performance algorithm suite:
+    1. **Greedy Bipartite Gate Allocation** ($O(F \cdot G)$) with wingspan compatibility & 30-min turnaround buffer.
+    2. **Binary Min-Heap Flight Priority Queue** ($O(\log N)$) with emergency medical pre-emption & delay score boosting.
+    3. **Dijkstra Baggage Conveyor Routing** ($O(V^2)$) on directed graph with disconnected checkpoint safety.
+    - CLI JSON harness (`c-engine.exe`) & standalone test runner (`test_algorithms.exe`) passing 17/17 tests.
+  - `java-service/` — Java 17 LTS Object-Oriented Domain Microservice on embedded HTTP port 5050:
+    1. **Encapsulation & Validation**: `Passenger.java` & `Flight.java` with thread-safe synchronized seat reservations.
+    2. **Abstraction & Inheritance**: `Booking.java` abstract base with `CommercialBooking` & `VipBooking` ($120 concierge fee).
+    3. **Polymorphic Strategy Pattern**: `PricingStrategy` interface implemented by `StandardPricingStrategy` and `SurgePricingStrategy`.
+    4. **Deterministic State Machine**: `BookingLifecycleManager` (`PENDING` $\to$ `CONFIRMED` $\to$ `CHECKED_IN` $\to$ `BOARDED`).
+    5. **Custom Exceptions & Concurrency**: `AirportException` hierarchy and thread-safe `ConcurrentHashMap` repository.
+    - Standalone OOP test suite (`BookingWorkflowTest.java`) passing 24/24 tests.
+  - `backend/` Integration Layer:
+    - `cEngine.service.js` with `child_process.execFile` execution, 5s timeouts, and zero-crash JavaScript fallback.
+    - `javaClient.service.js` with port 5050 REST client, 2s timeouts, and zero-crash simulation fallback.
+    - REST router `/api/integration/*` with RBAC authorization guards and 12/12 automated integration tests passing.
+  - `frontend/` Real-time Avionics Lab:
+    - `AlgorithmsDashboard.jsx` featuring interactive gate allocator, runway Min-Heap visualizer, Dijkstra route flow, and live Java dynamic fare calculator.
+    - Full Vite production build & 9/9 frontend verification tests passing.
+- **Viva Defense Point**: *"We engineered a production-grade polyglot microservice architecture delegating latency-critical dispatch to compiled C99 algorithms, transactional state to Java 17 OOP models, and API orchestration to Node.js Express, guaranteed by zero-crash fallback resilience."*
 
 ---
 

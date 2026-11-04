@@ -8,7 +8,9 @@
 [![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20CSS-61DAFB?logo=react)](docs/FRONTEND_DESIGN.md)
 [![Operations](https://img.shields.io/badge/Phase%2007%20Operations-8%20Modules%20Integrated-success)](docs/AIRPORT_OPERATIONS_MODULES.md)
 [![AADE Engine](https://img.shields.io/badge/Phase%2008%20AADE-Autonomous%20Engine%20Active-brightgreen)](docs/AADE_ARCHITECTURE.md)
-[![Tests](https://img.shields.io/badge/Tests-67%2F67%20Passing-brightgreen)](docs/AADE_TEST_REPORT.md)
+[![Java OOP](https://img.shields.io/badge/Phase%2009%20Java-OOP%20Domain%20Services-orange?logo=openjdk)](docs/JAVA_SERVICE_ARCHITECTURE.md)
+[![C Engine](https://img.shields.io/badge/Phase%2009%20C%20Engine-ANSI%20C99%20Algorithms-blue?logo=c)](docs/C_ALGORITHM_DESIGN.md)
+[![Tests](https://img.shields.io/badge/Tests-129%2F129%20Passing-brightgreen)](docs/PHASE_09_TEST_REPORT.md)
 
 ---
 
@@ -81,6 +83,8 @@ To maintain engineering transparency, all modules are categorized as **[Implemen
 | **Airport Resource & Gate Management** | Terminal aerobridge management, real-time occupancy, and conflict-free flight allocation. | **Implemented (Full-Stack)** | Module 7 APIs, `GATES` table, conflict detection engine |
 | **Employee & Workforce Management** | Operational personnel profiles with clear separation between login user roles and job titles. | **Implemented (Full-Stack)** | Module 8 APIs, `EMPLOYEES` table |
 | **Autonomous Airport Data Engine** | Invariant monitoring, gate overlap & seat collision detection, rule-based recommendations, and human approval queue. | **Implemented (Full-Stack)** | Phase 08 Autonomous Engine, 10 Components, 5 AADE Tables, React Approval Dashboard |
+| **C Algorithm Engine** | High-performance C99 algorithms: greedy bipartite gate allocation ($O(F\cdot G)$), Min-Heap runway priority queue ($O(\log N)$), Dijkstra conveyor routing ($O(V^2)$). | **Implemented (Native & Full-Stack)** | Phase 09 `c-engine/`, CLI harness, MSVC/GCC compilation, child_process runner |
+| **Java OOP Microservice** | Pure Java 17 LTS domain service: Encapsulation, Inheritance, Polymorphism (Dynamic Strategy Pricing), State Machine (`PENDING` $\to$ `CONFIRMED` $\to$ `CHECKED_IN` $\to$ `BOARDED`), and `ConcurrentHashMap`. | **Implemented (Full-Stack)** | Phase 09 `java-service/`, embedded HTTP server (port 5050), Node.js client |
 
 *Detailed feature breakdown is documented in [`docs/FEATURES.md`](docs/FEATURES.md).*
 
@@ -142,11 +146,11 @@ flowchart TD
 | Technology | Layer | Role in System | Status |
 | :--- | :--- | :--- | :--- |
 | **Oracle SQL / PL/SQL** | Database Layer | Relational storage, referential integrity, stored procedures, and audit triggers | **Implemented** |
-| **Node.js & Express.js** | Application / API Gateway | Stateless REST API, authentication middleware, and database connection pooling | **Planned** |
-| **React.js** | Frontend Presentation | Interactive Operations Center dashboard and passenger self-service portal | **Planned** |
-| **Java (JDK 17+)** | Enterprise Services | OOP domain services, booking state machines, and concurrency management | **Planned** |
-| **ANSI C (C99/C11)** | Computation Engine | Graph algorithms, priority queues, and gate/runway allocation optimization | **Planned** |
-| **Docker** | Infrastructure | Containerized execution of web, API, worker services, and database | **Planned** |
+| **Node.js & Express.js** | Application / API Gateway | Stateless REST API, JWT authentication, RBAC guards, Oracle connection pool, and C/Java integration router | **Implemented** |
+| **React.js (Vite)** | Frontend Presentation | Interactive Operations Center dashboard, 4 station portals, and live algorithms lab | **Implemented** |
+| **Java (JDK 17 LTS)** | Enterprise Services | Pure OOP domain microservice on port 5050: Strategy pattern dynamic pricing, lifecycle state machine, and concurrent repository | **Implemented** |
+| **ANSI C (C99/C11)** | Computation Engine | Standalone compiled CLI binary: Greedy gate allocation ($O(F\cdot G)$), Min-Heap runway queue ($O(\log N)$), Dijkstra conveyor route ($O(V^2)$) | **Implemented** |
+| **Docker** | Infrastructure | Containerized execution of web, API, worker services, and database | **Planned (Phase 10)** |
 | **GitHub** | DevOps & Versioning | Version control, documentation hosting, and continuous integration | **Active** |
 | **Antigravity** | Development Platform | AI-assisted engineering, architectural drafting, and documentation generation | **Active** |
 
@@ -398,6 +402,12 @@ No formal license file is currently included in the repository. Please contact t
 For in-depth architectural, database, and viva preparation documentation, refer to the following guides:
 
 ### Student Capstone & Viva Defense Guides
+- ☕ [**Java Service Architecture**](docs/JAVA_SERVICE_ARCHITECTURE.md) — Embedded microservice architecture on port 5050, multithreading model, and REST interfaces.
+- 🎓 [**Java OOP Concepts & Viva Guide**](docs/JAVA_OOP_CONCEPTS.md) — Viva explanation guide for Encapsulation, Inheritance, Polymorphism, Abstraction, and State Pattern.
+- ⚡ [**C Algorithm Engine Design**](docs/C_ALGORITHM_DESIGN.md) — C99 data structures, Gate Allocation, Min-Heap Runway Queue, Dijkstra Conveyor, and CLI interface.
+- 📊 [**Algorithm Complexity Analysis**](docs/ALGORITHM_COMPLEXITY.md) — Mathematical proofs, Big-O evaluations ($O(F\cdot G)$, $O(\log N)$, $O(V^2)$), and edge cases.
+- 🔌 [**Polyglot Service Integration**](docs/SERVICE_INTEGRATION.md) — Node.js child_process and HTTP integration, zero-crash fallback resilience, and port assignments.
+- 🧪 [**Phase 09 Test Report**](docs/PHASE_09_TEST_REPORT.md) — Verification results across C, Java, Node.js integration, and Frontend test suites (62 tests passing).
 - 🔍 [**Existing Project Analysis & Audit**](docs/EXISTING_PROJECT_ANALYSIS.md) — Technical critique of reference SQL files, identifying 8 critical design flaws and reusable concepts.
 - 📐 [**Our Proposed Database Design**](docs/OUR_DATABASE_DESIGN.md) — Custom 16-table 3NF schema resolving reference flaws (Aircraft, Gates, Baggage, Check-in, Users).
 - 🖥️ [**Application Modules & Interfaces**](docs/APPLICATION_MODULES.md) — Functional specifications for Administrator, Airline Staff, Operations Staff, and Passenger portals.

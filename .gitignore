@@ -5,3 +5,10 @@
 *.jpeg
 *.tiff
 *.bmp
+
+# Dependencies and build outputs
+node_modules/
+dist/
+target/
+*.obj
+*.class
