@@ -7,7 +7,8 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20JWT-blue?logo=nodedotjs)](docs/API_DOCUMENTATION.md)
 [![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20CSS-61DAFB?logo=react)](docs/FRONTEND_DESIGN.md)
 [![Operations](https://img.shields.io/badge/Phase%2007%20Operations-8%20Modules%20Integrated-success)](docs/AIRPORT_OPERATIONS_MODULES.md)
-[![Tests](https://img.shields.io/badge/Tests-50%2F50%20Passing-brightgreen)](docs/PHASE_07_TEST_REPORT.md)
+[![AADE Engine](https://img.shields.io/badge/Phase%2008%20AADE-Autonomous%20Engine%20Active-brightgreen)](docs/AADE_ARCHITECTURE.md)
+[![Tests](https://img.shields.io/badge/Tests-67%2F67%20Passing-brightgreen)](docs/AADE_TEST_REPORT.md)
 
 ---
 
@@ -79,7 +80,7 @@ To maintain engineering transparency, all modules are categorized as **[Implemen
 | **Baggage Logistics & Tracking** | Barcode luggage tags (`BAG-...`), 0-60kg weight validation, conveyor/carousel progression. | **Implemented (Full-Stack)** | Module 6 APIs, `BAGGAGE` table |
 | **Airport Resource & Gate Management** | Terminal aerobridge management, real-time occupancy, and conflict-free flight allocation. | **Implemented (Full-Stack)** | Module 7 APIs, `GATES` table, conflict detection engine |
 | **Employee & Workforce Management** | Operational personnel profiles with clear separation between login user roles and job titles. | **Implemented (Full-Stack)** | Module 8 APIs, `EMPLOYEES` table |
-| **Autonomous Airport Data Engine** | Background anomaly detection, duplicate seat auditing, and scheduled conflict checks. | **Foundational Triggers Implemented** / Engine Planned | Phase 08 Autonomous Engine |
+| **Autonomous Airport Data Engine** | Invariant monitoring, gate overlap & seat collision detection, rule-based recommendations, and human approval queue. | **Implemented (Full-Stack)** | Phase 08 Autonomous Engine, 10 Components, 5 AADE Tables, React Approval Dashboard |
 
 *Detailed feature breakdown is documented in [`docs/FEATURES.md`](docs/FEATURES.md).*
 

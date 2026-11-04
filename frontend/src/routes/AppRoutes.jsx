@@ -12,6 +12,7 @@ import AdminDashboard from '../pages/AdminDashboard/AdminDashboard';
 import AirlineDashboard from '../pages/AirlineDashboard/AirlineDashboard';
 import AirportDashboard from '../pages/AirportDashboard/AirportDashboard';
 import PassengerDashboard from '../pages/PassengerDashboard/PassengerDashboard';
+import AadeDashboard from '../pages/AadeDashboard/AadeDashboard';
 import ComingSoon from '../pages/ComingSoon/ComingSoon';
 import Unauthorized from '../pages/Unauthorized/Unauthorized';
 import NotFound from '../pages/NotFound/NotFound';
@@ -129,17 +130,8 @@ export function AppRoutes() {
             />
           }
         />
-        <Route
-          path="database"
-          element={
-            <ComingSoon
-              moduleName="Autonomous Database & Trigger Monitor"
-              description="Autonomous delay recalculations, orphan ticket reconciliation, and event logs."
-              phase="Phase 08"
-              schemaTable="OPERATIONAL_LOGS & TRIGGERS"
-            />
-          }
-        />
+        <Route path="database" element={<AadeDashboard />} />
+        <Route path="aade" element={<AadeDashboard />} />
         <Route
           path="settings"
           element={
@@ -219,6 +211,7 @@ export function AppRoutes() {
             />
           }
         />
+        <Route path="aade" element={<AadeDashboard />} />
       </Route>
 
       {/* AIRPORT_STAFF Station Routes */}
@@ -287,6 +280,7 @@ export function AppRoutes() {
             />
           }
         />
+        <Route path="aade" element={<AadeDashboard />} />
       </Route>
 
       {/* PASSENGER Station Routes */}

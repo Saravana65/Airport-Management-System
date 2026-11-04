@@ -47,6 +47,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
           { label: 'Airport Management', to: '/admin/airports', icon: Building2 },
           { label: 'Airline Management', to: '/admin/airlines', icon: Briefcase },
           { label: 'Employee Management', to: '/admin/employees', icon: UserCheck },
+          { label: 'Autonomous Data Engine', to: '/admin/aade', icon: Radio },
           { label: 'Database Monitoring', to: '/admin/database', icon: Database },
           { label: 'System Settings', to: '/admin/settings', icon: Settings },
         ];
@@ -58,6 +59,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
           { label: 'Passenger Management', to: '/airline/passengers', icon: Users },
           { label: 'Booking Management', to: '/airline/bookings', icon: Calendar },
           { label: 'Ticket Information', to: '/airline/tickets', icon: Ticket },
+          { label: 'Autonomous Data Engine', to: '/airline/aade', icon: Radio },
         ];
       case 'AIRPORT_STAFF':
         return [
@@ -67,6 +69,7 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
           { label: 'Check-in Operations', to: '/airport/checkin', icon: ShieldCheck },
           { label: 'Baggage Management', to: '/airport/baggage', icon: Luggage },
           { label: 'Employee Operations', to: '/airport/employees', icon: UserCheck },
+          { label: 'Autonomous Data Engine', to: '/airport/aade', icon: Radio },
         ];
       case 'PASSENGER':
         return [

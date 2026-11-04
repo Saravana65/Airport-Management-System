@@ -16,7 +16,7 @@ flowchart TD
     M2["Milestone 2: Oracle Database Implementation & Testing [Completed]"]
     M3["Milestone 3: Node.js Backend API & Authentication [Completed]"]
     M4["Milestone 4: C Algorithms & Java OOP Modules [Planned]"]
-    M5["Milestone 5: Autonomous Airport Data Engine [Planned]"]
+    M5["Milestone 5: Autonomous Airport Data Engine (Phase 08) [Completed]"]
     M6["Milestone 6: React Frontend Foundation & Dashboards [Completed]"]
     M7["Milestone 7: Operations Modules & Full-Stack Integration [Completed]"]
     M8["Milestone 8: Docker Containerization & Viva Preparation [Planned]"]
@@ -25,11 +25,10 @@ flowchart TD
     M2 --> M3
     M3 --> M6
     M6 --> M7
+    M7 --> M5
     M3 --> M4
-    M3 --> M5
     M4 --> M8
     M5 --> M8
-    M7 --> M8
 ```
 
 ---
@@ -82,18 +81,24 @@ flowchart TD
 
 ---
 
-### Milestone 5: Autonomous Airport Data Engine
-- **Status**: ⚪ **Planned**
-- **Action Items**:
-  1. Build `autonomous-engine/index.js` running on a configurable interval (e.g., every 30 seconds).
-  2. Implement detection rules:
-     - Rule 1: Scan for duplicate seat allocations on the same flight instance.
-     - Rule 2: Scan for overlapping time windows on assigned gates.
-     - Rule 3: Automatically flag unrecorded flight delays when clock exceeds departure time.
-     - Rule 4: Reconcile orphan ticket and booking statuses.
-  3. Populate `OPERATIONAL_LOGS` with anomaly details.
-  4. Build the **Admin Approval Queue** endpoint allowing controllers to accept or reject recommended interventions.
-- **Testing Checkpoint**: Artificially inject an overlapping gate assignment; verify the engine logs the conflict and surfaces a recommendation within 30 seconds.
+### Milestone 5: Autonomous Airport Data Engine (Phase 08)
+- **Status**: 🟢 **Completed (Phase 08)**
+- **Deliverables**:
+  - `database/schema/11_aade_tables.sql` — 5 new relational tables (`AADE_EVENTS`, `AADE_ALERTS`, `AADE_RECOMMENDATIONS`, `AADE_APPROVAL_REQUESTS`, `AADE_AUDIT_LOGS`).
+  - 10 Modular Core Components in `backend/src/services/aade/`:
+    1. Database Health Monitor
+    2. Data Integrity Monitor
+    3. Duplicate Booking & Seat Collision Detector
+    4. Flight & Gate Conflict Detector
+    5. Resource Utilization Analyzer
+    6. Event & Alert Manager (with MD5 hash deduplication)
+    7. Rule-Based Recommendation Engine
+    8. Approval-Based Action Manager (Human-in-the-Loop)
+    9. Audit History Manager (Before/After state diffs)
+    10. Central Autonomous Engine Service (Scheduler & on-demand triggers)
+  - Dedicated React Station: `frontend/src/pages/AadeDashboard/` with real live telemetry, active alerts, conflict cards, recommendation approval queue, and audit history.
+  - 16 automated backend tests passing (`tests/aade.test.js`).
+- **Viva Defense Point**: *"We built an active autonomous intelligence layer that monitors invariants, detects gate overlaps and seat collisions, formulates explainable recommendations, and enforces human-in-the-loop approval before applying changes."*
 
 ---
 

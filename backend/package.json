@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node tests/health.test.js && node tests/auth.test.js && node tests/operations.test.js"
+    "test": "node tests/health.test.js && node tests/auth.test.js && node tests/operations.test.js && node tests/aade.test.js"
   },
   "keywords": [
     "airport-management-system",

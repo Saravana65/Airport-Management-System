@@ -1,0 +1,303 @@
+/* Phase 08: Autonomous Airport Data Engine (AADE) Styles */
+
+.aade-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.aade-banner {
+  border-left-color: var(--amber-primary) !important;
+  background: linear-gradient(135deg, #1A1F2C 0%, #0F172A 100%) !important;
+}
+
+.aade-icon-box {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: var(--amber-primary) !important;
+}
+
+.engine-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--status-emerald);
+  display: inline-block;
+  margin-right: 6px;
+  box-shadow: 0 0 8px var(--status-emerald);
+  animation: pulse-radar 2s infinite ease-in-out;
+}
+
+/* Conflict & Sentinel Cards */
+.conflict-card {
+  background: #111827;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-left: 4px solid var(--status-red);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.conflict-card.warning-card {
+  border-color: rgba(245, 158, 11, 0.3);
+  border-left-color: var(--amber-primary);
+}
+
+.conflict-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.conflict-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.conflict-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.conflict-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Recommendation & Approval Cards */
+.recommendation-card {
+  background: #0F172A;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-left: 4px solid #38BDF8;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.rec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+}
+
+.rec-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rec-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.rec-category-tag {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #38BDF8;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.rec-body-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.rec-block {
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rec-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.rec-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.rec-action-highlight {
+  color: var(--amber-primary);
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.rec-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.rec-status-tag {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.rec-status-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--amber-primary);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.rec-status-executed {
+  background: var(--status-emerald-bg);
+  color: var(--status-emerald);
+  border: 1px solid var(--status-emerald-border);
+}
+
+.rec-status-rejected {
+  background: var(--status-red-bg);
+  color: var(--status-red);
+  border: 1px solid var(--status-red-border);
+}
+
+/* Utilization Bar Chart Blocks */
+.utilization-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.util-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.util-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.util-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.util-progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.util-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--amber-primary), #FB923C);
+  border-radius: 4px;
+  transition: width 0.5s ease-in-out;
+}
+
+.util-card-stat {
+  font-size: 22px;
+  font-weight: 700;
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+}
+
+/* Congestion Timeline Grid */
+.congestion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.congestion-slot {
+  background: #0B1120;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.congestion-slot.peak-slot {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.slot-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.slot-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--amber-primary);
+  font-family: var(--font-mono);
+}
+
+.slot-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* State Diff Visualizer */
+.state-diff-box {
+  background: #020617;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #94A3B8;
+  max-width: 320px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}

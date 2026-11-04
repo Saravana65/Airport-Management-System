@@ -6,6 +6,7 @@
 const app = require('./app');
 const { config, validateConfig } = require('./config/environment');
 const { initializePool, closePool } = require('./config/database');
+const engineService = require('./services/aade/engine.service');
 
 async function startServer() {
     console.log('================================================================');
@@ -35,12 +36,19 @@ async function startServer() {
         console.log(`[Server] Base API URL: http://localhost:${config.PORT}${config.API_PREFIX}`);
         console.log(`[Server] Health Check: http://localhost:${config.PORT}${config.API_PREFIX}/health`);
         console.log(`[Server] Database Check: http://localhost:${config.PORT}${config.API_PREFIX}/health/database`);
+        console.log(`[Server] AADE Engine: http://localhost:${config.PORT}${config.API_PREFIX}/aade/status`);
         console.log('----------------------------------------------------------------');
+
+        // Start Autonomous Airport Data Engine
+        engineService.startEngine(config.AADE_INTERVAL_MS);
     });
 
     // 4. Graceful Shutdown Handlers
     async function gracefulShutdown(signal) {
         console.log(`\n[Shutdown] Received ${signal}. Closing server gracefully...`);
+
+        // Stop AADE background scheduler
+        engineService.stopEngine();
 
         server.close(async () => {
             console.log('[Shutdown] HTTP server closed.');

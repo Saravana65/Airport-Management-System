@@ -36,6 +36,9 @@ const environment = {
         poolTimeout: parseInt(process.env.DB_POOL_TIMEOUT, 10) || 60,
     },
 
+    // Autonomous Airport Data Engine (AADE) Configuration
+    AADE_INTERVAL_MS: parseInt(process.env.AADE_INTERVAL_MS, 10) || 60000,
+
     // Helper: Is production environment
     isProduction: process.env.NODE_ENV === 'production',
 };

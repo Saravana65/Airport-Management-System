@@ -87,6 +87,12 @@ const store = {
     flightStatusHistory: [
         { historyId: 1, flightInstanceId: 2, oldStatus: 'SCHEDULED', newStatus: 'BOARDING', reason: 'Gate open for boarding', changedAt: '2026-11-04 14:30:00', changedByUserId: 2 },
     ],
+    // Phase 08: Autonomous Airport Data Engine (AADE) Collections
+    aadeEvents: [],
+    aadeAlerts: [],
+    aadeRecommendations: [],
+    aadeApprovals: [],
+    aadeAuditLogs: [],
 };
 
 module.exports = store;

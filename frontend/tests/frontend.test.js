@@ -189,4 +189,37 @@ describe('Phase 06 Frontend Verification Suite', () => {
       'Passenger dashboard must integrate with operationsService'
     );
   });
+
+  test('8. Phase 08 Autonomous Airport Data Engine (AADE) Integration', () => {
+    const aadeServicePath = path.join(FRONTEND_ROOT, 'src/services/aade.service.js');
+    assert.strictEqual(fs.existsSync(aadeServicePath), true, 'aade.service.js must exist');
+    const aadeServiceSource = fs.readFileSync(aadeServicePath, 'utf8');
+
+    assert.ok(aadeServiceSource.includes('getStatus'), 'aadeService must have getStatus');
+    assert.ok(aadeServiceSource.includes('getHealth'), 'aadeService must have getHealth');
+    assert.ok(aadeServiceSource.includes('runCycle'), 'aadeService must have runCycle');
+    assert.ok(aadeServiceSource.includes('getAlerts'), 'aadeService must have getAlerts');
+    assert.ok(aadeServiceSource.includes('getConflicts'), 'aadeService must have getConflicts');
+    assert.ok(aadeServiceSource.includes('getUtilization'), 'aadeService must have getUtilization');
+    assert.ok(aadeServiceSource.includes('getRecommendations'), 'aadeService must have getRecommendations');
+    assert.ok(aadeServiceSource.includes('getApprovals'), 'aadeService must have getApprovals');
+    assert.ok(aadeServiceSource.includes('approveAction'), 'aadeService must have approveAction');
+    assert.ok(aadeServiceSource.includes('rejectAction'), 'aadeService must have rejectAction');
+    assert.ok(aadeServiceSource.includes('getAuditLogs'), 'aadeService must have getAuditLogs');
+
+    const aadeDashboardPath = path.join(FRONTEND_ROOT, 'src/pages/AadeDashboard/AadeDashboard.jsx');
+    assert.strictEqual(fs.existsSync(aadeDashboardPath), true, 'AadeDashboard.jsx must exist');
+
+    const sidebarSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/components/Sidebar/Sidebar.jsx'),
+      'utf8'
+    );
+    assert.ok(sidebarSource.includes('Autonomous Data Engine'), 'Sidebar must include Autonomous Data Engine link');
+
+    const routesSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/routes/AppRoutes.jsx'),
+      'utf8'
+    );
+    assert.ok(routesSource.includes('AadeDashboard'), 'AppRoutes must include AadeDashboard');
+  });
 });
