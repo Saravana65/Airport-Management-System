@@ -1,7 +1,7 @@
 /**
  * Database Service Wrapper
  * Handles acquiring connection from pool, executing parameterized SQL,
- * and ensuring connection release back to pool to prevent leaks.
+ * managing multi-statement transactions (commit/rollback), and ensuring connection release.
  */
 
 const { getPool, initializePool } = require('../config/database');
@@ -45,6 +45,51 @@ async function execute(sql, binds = {}, options = {}) {
 }
 
 /**
+ * Executes a sequence of queries within a single ACID transaction.
+ * Automatically commits on success and rolls back on error.
+ * @param {Function} callback - async (connection) => Promise<any>
+ * @returns {Promise<any>}
+ */
+async function executeTransaction(callback) {
+    let pool = getPool();
+
+    if (!pool) {
+        pool = await initializePool();
+    }
+
+    if (!pool) {
+        const error = new Error('Database connection pool is not initialized. Check Oracle server and credentials.');
+        error.code = 'DB_POOL_UNAVAILABLE';
+        throw error;
+    }
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const result = await callback(connection);
+        await connection.commit();
+        return result;
+    } catch (err) {
+        if (connection) {
+            try {
+                await connection.rollback();
+            } catch (rbErr) {
+                console.error('[Database Service] Rollback failed:', rbErr.message);
+            }
+        }
+        throw err;
+    } finally {
+        if (connection) {
+            try {
+                await connection.close();
+            } catch (err) {
+                console.error('[Database Service] Error closing transaction connection:', err.message);
+            }
+        }
+    }
+}
+
+/**
  * Tests database connectivity by executing a lightweight query on DUAL.
  * @returns {Promise<{ healthy: boolean, latencyMs: number, serverTime?: string, error?: string }>}
  */
@@ -73,5 +118,6 @@ async function testConnection() {
 
 module.exports = {
     execute,
+    executeTransaction,
     testConnection,
 };

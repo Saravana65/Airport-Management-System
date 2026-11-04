@@ -18,16 +18,18 @@ flowchart TD
     M4["Milestone 4: C Algorithms & Java OOP Modules [Planned]"]
     M5["Milestone 5: Autonomous Airport Data Engine [Planned]"]
     M6["Milestone 6: React Frontend Foundation & Dashboards [Completed]"]
-    M7["Milestone 7: Operations Integration, Docker & Viva [In Progress]"]
+    M7["Milestone 7: Operations Modules & Full-Stack Integration [Completed]"]
+    M8["Milestone 8: Docker Containerization & Viva Preparation [Planned]"]
 
     M1 --> M2
     M2 --> M3
     M3 --> M6
+    M6 --> M7
     M3 --> M4
     M3 --> M5
-    M4 --> M7
-    M5 --> M7
-    M6 --> M7
+    M4 --> M8
+    M5 --> M8
+    M7 --> M8
 ```
 
 ---
@@ -112,7 +114,26 @@ flowchart TD
 
 ---
 
-### Milestone 7: Docker Containerization & Viva Preparation
+### Milestone 7: Operations Modules & Full-Stack Integration
+- **Status**: 🟢 **Completed (Phase 07)**
+- **Deliverables**:
+  - 8 Connected Operational Modules bridging React frontend, Express API, and Oracle SQL:
+    1. Airport, Airline & Aircraft Management
+    2. Flight Schedule & Dispatch Status Management
+    3. Passenger Profile & Data Privacy Masking
+    4. Transaction-Safe Booking & 6-character PNR Engine
+    5. Web Check-in & Digital Boarding Pass Generation (`BP-...`)
+    6. Baggage Conveyance & Barcode Tag Tracking (`BAG-...`)
+    7. Terminal Gate Scheduling & Conflict Prevention
+    8. Employee & Workforce Operations Management
+  - Full-stack interactive consoles across all 4 dashboards (`AdminDashboard`, `AirlineDashboard`, `AirportDashboard`, `PassengerDashboard`).
+  - 50 passing automated tests across 4 suites (Health, Auth/RBAC, Phase 07 Operations, Frontend Verification).
+  - Production build verified with Vite (exit code 0).
+- **Viva Defense Point**: *"We integrated real operational workflows with duplicate seat locking, gate conflict detection, passport privacy masking, and digital boarding pass generation."*
+
+---
+
+### Milestone 8: Docker Containerization & Viva Preparation
 - **Status**: ⚪ **Planned**
 - **Action Items**:
   1. Author `Dockerfile` for frontend and backend.

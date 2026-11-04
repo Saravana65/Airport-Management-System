@@ -144,7 +144,17 @@ describe('Phase 06 Frontend Verification Suite', () => {
     assert.ok(routesSource.includes('/unauthorized'), 'Unauthorized route must be registered');
   });
 
-  test('7. Transparent Placeholder Implementation (No Fake Data)', () => {
+  test('7. Phase 07 Operations Service Contract & Dashboard Integration', () => {
+    const opsServiceSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/services/operations.service.js'),
+      'utf8'
+    );
+    assert.ok(opsServiceSource.includes('getAirports'), 'operationsService must provide getAirports');
+    assert.ok(opsServiceSource.includes('getFlights'), 'operationsService must provide getFlights');
+    assert.ok(opsServiceSource.includes('getBookings'), 'operationsService must provide getBookings');
+    assert.ok(opsServiceSource.includes('getBaggage'), 'operationsService must provide getBaggage');
+    assert.ok(opsServiceSource.includes('getGates'), 'operationsService must provide getGates');
+
     const adminSource = fs.readFileSync(
       path.join(FRONTEND_ROOT, 'src/pages/AdminDashboard/AdminDashboard.jsx'),
       'utf8'
@@ -153,14 +163,30 @@ describe('Phase 06 Frontend Verification Suite', () => {
       path.join(FRONTEND_ROOT, 'src/pages/AirlineDashboard/AirlineDashboard.jsx'),
       'utf8'
     );
+    const airportSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/pages/AirportDashboard/AirportDashboard.jsx'),
+      'utf8'
+    );
+    const passengerSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/pages/PassengerDashboard/PassengerDashboard.jsx'),
+      'utf8'
+    );
 
     assert.ok(
-      adminSource.includes('isPending={true}'),
-      'Admin dashboard metrics must clearly indicate pending API integration'
+      adminSource.includes('operationsService'),
+      'Admin dashboard must integrate with operationsService'
     );
     assert.ok(
-      airlineSource.includes('isPending={true}'),
-      'Airline dashboard metrics must clearly indicate pending API integration'
+      airlineSource.includes('operationsService'),
+      'Airline dashboard must integrate with operationsService'
+    );
+    assert.ok(
+      airportSource.includes('operationsService'),
+      'Airport dashboard must integrate with operationsService'
+    );
+    assert.ok(
+      passengerSource.includes('operationsService'),
+      'Passenger dashboard must integrate with operationsService'
     );
   });
 });

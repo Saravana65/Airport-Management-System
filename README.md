@@ -4,9 +4,10 @@
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Saravana65%2FAirport--Management--System-blue?logo=github)](https://github.com/Saravana65/Airport-Management-System)
 [![Database](https://img.shields.io/badge/Database-Oracle%20SQL%20%7C%20PL%2FSQL-red?logo=oracle)](docs/DATABASE_DESIGN.md)
-[![Architecture](https://img.shields.io/badge/Architecture-Multi--Tier%20Decoupled-green)](docs/SYSTEM_ARCHITECTURE.md)
-[![Status](https://img.shields.io/badge/Database%20Layer-Implemented-success)](docs/FEATURES.md)
-[![Status](https://img.shields.io/badge/App%20%26%20UI%20Tiers-Planned-orange)](docs/DEVELOPMENT_ROADMAP.md)
+[![Backend](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20JWT-blue?logo=nodedotjs)](docs/API_DOCUMENTATION.md)
+[![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20CSS-61DAFB?logo=react)](docs/FRONTEND_DESIGN.md)
+[![Operations](https://img.shields.io/badge/Phase%2007%20Operations-8%20Modules%20Integrated-success)](docs/AIRPORT_OPERATIONS_MODULES.md)
+[![Tests](https://img.shields.io/badge/Tests-50%2F50%20Passing-brightgreen)](docs/PHASE_07_TEST_REPORT.md)
 
 ---
 
@@ -70,15 +71,15 @@ To maintain engineering transparency, all modules are categorized as **[Implemen
 
 | Module | Scope & Capabilities | Status | Technical Foundation |
 | :--- | :--- | :--- | :--- |
-| **Flight Operations Management** | Flight schedules, route networks, arrival/departure timetables, status categorization (`On-time`, `Delayed`), and dynamic cursor filtering. | **Implemented (Database)** / Planned (UI) | `FLIGHT` table, `FLIGHTSBYSTATUS` stored procedure |
-| **Passenger Management** | 3NF decomposed passenger records: passport verification, demographic attributes, and flight manifest assignments. | **Implemented (Database)** / Planned (UI) | `PASSENGER1`, `PASSENGER2`, `PASSENGER3` tables |
-| **Ticket Booking & Check-in** | Multi-class ticketing (Economy, Business, First), dynamic route/date pricing, cancellation surcharges, and fare audit logging. | **Implemented (Database)** / Planned (UI) | `TICKET1`, `TICKET2`, `TICKET3`, `TICKET_PRICE_HISTORY` |
-| **Baggage Management** | Luggage tagging, conveyor routing algorithms, and carousel assignment. | **Planned** | Planned `BAGGAGE` entity & C graph routing |
-| **Airport Resource & Gate Management** | Airfield facility modeling, airline terminal associations, and collision-free gate allocation. | **Partially Implemented** | `AIRPORT`, `CONTAINS` tables implemented; C gate scheduler planned |
-| **Employee & Shift Management** | Personnel profiles across four branches (Administrative Support, Engineers, Traffic Monitors, Authority), shift tracking, and rule-based compensation adjustments. | **Implemented (Database)** / Planned (UI) | `EMPLOYEE1`, `EMPLOYEE2`, `SERVES` tables, `UPDATEDSalary` trigger |
-| **Notification & Event Management** | Automated logging of delayed flights with timestamps and event dispatching. | **Implemented (Database)** / Planned (UI) | `DELAYEDFLIGHTS` trigger, `DELAYED_FLIGHTS` audit table |
-| **Autonomous Airport Data Engine** | Continuous database integrity inspection, anomaly detection, conflict alerts, and automated audit logging. | **Foundational Triggers Implemented** / Engine Planned | Oracle SQL triggers implemented; background monitoring daemon planned |
-| **Analytics & Reporting** | Specific route manifest queries (e.g. DFW Economy passengers) and operational performance reporting. | **Implemented (Database)** / Planned (UI) | `DFWECONOMYPASSENGERS` stored procedure |
+| **Airport & Airline Management** | Facilities, commercial carriers, fleet aircraft models and seating tier allocations. | **Implemented (Full-Stack)** | Module 1 APIs, Oracle `AIRPORTS`, `AIRLINES`, `AIRCRAFTS` tables |
+| **Flight Operations Management** | Flight schedules, route networks, daily rotations, status transitions (`SCHEDULED` -> `BOARDING` -> `DEPARTED`), and audit logging. | **Implemented (Full-Stack)** | Module 2 APIs, `FLIGHTS`, `FLIGHT_INSTANCES`, `FLIGHT_STATUS_HISTORY` |
+| **Passenger Profile Management** | Traveler identities, passport uniqueness, and data privacy masking (`K9****01`). | **Implemented (Full-Stack)** | Module 3 APIs, `PASSENGERS` table |
+| **Ticket Booking & Check-in** | Transaction-safe reservations, 6-character PNR generation, duplicate seat prevention, and payment simulation. | **Implemented (Full-Stack)** | Module 4 APIs, `BOOKINGS`, `TICKETS` tables |
+| **Web Check-in & Boarding Pass** | Online check-in, duplicate prevention, and digital boarding pass generation (`BP-...`). | **Implemented (Full-Stack)** | Module 5 APIs, `CHECK_IN` table, React Boarding Pass UI |
+| **Baggage Logistics & Tracking** | Barcode luggage tags (`BAG-...`), 0-60kg weight validation, conveyor/carousel progression. | **Implemented (Full-Stack)** | Module 6 APIs, `BAGGAGE` table |
+| **Airport Resource & Gate Management** | Terminal aerobridge management, real-time occupancy, and conflict-free flight allocation. | **Implemented (Full-Stack)** | Module 7 APIs, `GATES` table, conflict detection engine |
+| **Employee & Workforce Management** | Operational personnel profiles with clear separation between login user roles and job titles. | **Implemented (Full-Stack)** | Module 8 APIs, `EMPLOYEES` table |
+| **Autonomous Airport Data Engine** | Background anomaly detection, duplicate seat auditing, and scheduled conflict checks. | **Foundational Triggers Implemented** / Engine Planned | Phase 08 Autonomous Engine |
 
 *Detailed feature breakdown is documented in [`docs/FEATURES.md`](docs/FEATURES.md).*
 
