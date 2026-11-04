@@ -11,9 +11,11 @@ import {
   AlertCircle,
   Bell,
   ArrowRight,
+  User,
+  Info,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
-import StatCard from '../../components/StatCard/StatCard';
+import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import PendingFeatureCard from '../../components/PendingFeatureCard/PendingFeatureCard';
 import './PassengerDashboard.css';
@@ -23,16 +25,16 @@ export function PassengerDashboard() {
 
   return (
     <div className="passenger-dashboard-container">
-      {/* Banner */}
+      {/* 1. Welcome Section */}
       <div className="dashboard-welcome-banner passenger-banner">
         <div className="banner-left">
           <div className="banner-icon-box passenger-icon-box">
             <Compass size={24} className="banner-passenger-icon" />
           </div>
           <div>
-            <h2 className="banner-title">Passenger Flight & Travel Portal</h2>
+            <h2 className="banner-title">Welcome to Passenger Flight & Travel Hub</h2>
             <p className="banner-description">
-              Search available flights, access your e-tickets, complete web check-in, and monitor live departure gates.
+              Logged in as <span className="mono text-white">{user?.email || 'Passenger'}</span>. Manage your flight itineraries, e-tickets, web check-in, and departure alerts.
             </p>
           </div>
         </div>
@@ -41,10 +43,10 @@ export function PassengerDashboard() {
         </div>
       </div>
 
-      {/* Flight Search Quick Bar (UI Layout ready for Phase 07 search API) */}
+      {/* 2. Flight Search Quick Bar */}
       <section className="dashboard-section">
         <div className="section-header">
-          <h3 className="section-title">Flight Search & Availability</h3>
+          <h3 className="section-title">Search Flights & Availability</h3>
           <span className="section-tag mono">INSTANT LOOKUP</span>
         </div>
 
@@ -91,7 +93,7 @@ export function PassengerDashboard() {
         </span>
       </section>
 
-      {/* Passenger Overview Cards */}
+      {/* 3. Core Passenger Sections: Upcoming Trips, Booking Information, Check-in Status, Travel Updates */}
       <section className="dashboard-section">
         <div className="section-header">
           <h3 className="section-title">My Travel Overview</h3>
@@ -99,49 +101,53 @@ export function PassengerDashboard() {
         </div>
 
         <div className="metrics-grid">
-          <StatCard
-            title="My Upcoming Bookings"
+          {/* Upcoming Trips */}
+          <DashboardCard
+            title="Upcoming Trips & Flights"
             icon={Calendar}
             isPending={true}
-            pendingNote="Bookings API pending Phase 07"
+            pendingNote="Data integration pending"
             subtitle="Referenced by PASSENGER_ID"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          <StatCard
-            title="Issued Boarding Passes"
+          {/* Booking Information */}
+          <DashboardCard
+            title="Confirmed Bookings & Tickets"
             icon={Ticket}
             isPending={true}
-            pendingNote="Ticketing API pending Phase 07"
-            subtitle="Linked to TICKETS table"
+            pendingNote="Data integration pending"
+            subtitle="Linked to BOOKINGS & TICKETS"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          <StatCard
+          {/* Check-in Status */}
+          <DashboardCard
             title="Web Check-in Status"
             icon={ShieldCheck}
             isPending={true}
-            pendingNote="Check-in API pending Phase 07"
-            subtitle="Valid within 24h of departure"
+            pendingNote="Data integration pending"
+            subtitle="Opens 24 hours prior to departure"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          <StatCard
-            title="Registered Baggage Items"
-            icon={Luggage}
+          {/* Travel Updates */}
+          <DashboardCard
+            title="Travel Updates & Advisories"
+            icon={Bell}
             isPending={true}
-            pendingNote="Baggage API pending Phase 07"
-            subtitle="Linked to BAGGAGE table"
+            pendingNote="Data integration pending"
+            subtitle="Linked to NOTIFICATIONS table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
         </div>
       </section>
 
-      {/* Navigation Modules (My Bookings, Tickets, Check-in, Travel Info) */}
+      {/* 4. Passenger Self-Service Modules */}
       <section className="dashboard-section">
         <div className="section-header">
           <h3 className="section-title">Passenger Self-Service Modules</h3>

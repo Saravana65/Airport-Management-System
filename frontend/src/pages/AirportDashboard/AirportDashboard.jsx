@@ -10,9 +10,11 @@ import {
   Layers,
   MapPin,
   CheckCircle2,
+  Activity,
+  Users,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
-import StatCard from '../../components/StatCard/StatCard';
+import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import PendingFeatureCard from '../../components/PendingFeatureCard/PendingFeatureCard';
 import './AirportDashboard.css';
@@ -40,49 +42,53 @@ export function AirportDashboard() {
         </div>
       </div>
 
-      {/* Airport Operations Overview Metrics */}
+      {/* 1. Terminal Resource Metrics: Today's flight ops, Gate allocation, Check-in activity, Baggage status */}
       <section className="dashboard-section">
         <div className="section-header">
-          <h3 className="section-title">Terminal Operations Overview</h3>
+          <h3 className="section-title">Ground Operations Resource Metrics</h3>
           <span className="section-tag mono">GROUND RESOURCE TELEMETRY</span>
         </div>
 
         <div className="metrics-grid">
-          <StatCard
-            title="Total Daily Movements"
+          {/* Today's Flight Operations */}
+          <DashboardCard
+            title="Today's Flight Operations"
             icon={Plane}
             isPending={true}
-            pendingNote="Flight ops API pending Phase 07"
+            pendingNote="Data integration pending"
             subtitle="Scheduled arrivals & departures"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          <StatCard
-            title="Operational Terminal Gates"
+          {/* Gate Allocation Overview */}
+          <DashboardCard
+            title="Gate Allocation Overview"
             icon={DoorOpen}
             isPending={true}
-            pendingNote="Gate API pending Phase 07"
+            pendingNote="Data integration pending"
             subtitle="Registered in GATES table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          <StatCard
-            title="Active Check-in Counters"
+          {/* Check-in Activity */}
+          <DashboardCard
+            title="Check-in Activity & Desks"
             icon={ShieldCheck}
             isPending={true}
-            pendingNote="Check-in desk API pending Phase 07"
+            pendingNote="Data integration pending"
             subtitle="Tracked in CHECK_IN table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          <StatCard
-            title="Baggage In-Transit"
+          {/* Baggage Status */}
+          <DashboardCard
+            title="Baggage Handling Status"
             icon={Luggage}
             isPending={true}
-            pendingNote="Baggage API pending Phase 07"
+            pendingNote="Data integration pending"
             subtitle="Tracked in BAGGAGE table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
@@ -90,22 +96,22 @@ export function AirportDashboard() {
         </div>
       </section>
 
-      {/* Today's Flight Operations Board */}
+      {/* 2. Airport Operational Summary Panel */}
       <section className="dashboard-section">
         <div className="section-header">
-          <h3 className="section-title">Today's Runway & Terminal Flight Board</h3>
-          <span className="section-tag mono">AIRSIDE MOVEMENTS</span>
+          <h3 className="section-title">Airport Operational Summary</h3>
+          <span className="section-tag mono">TERMINAL STATUS</span>
         </div>
 
         <div className="ground-ops-panel">
           <div className="ground-panel-header">
             <div className="panel-tab active">
               <Plane size={15} />
-              <span>Departures (0)</span>
+              <span>Departures & Airside</span>
             </div>
             <div className="panel-tab">
               <Plane size={15} style={{ transform: 'rotate(90deg)' }} />
-              <span>Arrivals (0)</span>
+              <span>Arrivals & Baggage Reclaim</span>
             </div>
           </div>
 
@@ -119,7 +125,7 @@ export function AirportDashboard() {
               <div className="empty-badge-wrap">
                 <span className="status-badge status-pending_api size-sm">
                   <span className="status-dot"></span>
-                  <span>GROUND DATA INTEGRATION PENDING</span>
+                  <span>DATA INTEGRATION PENDING</span>
                 </span>
               </div>
             </div>
@@ -127,7 +133,7 @@ export function AirportDashboard() {
         </div>
       </section>
 
-      {/* Navigation Modules (Gate, Check-in, Baggage) */}
+      {/* 3. Navigation Modules */}
       <section className="dashboard-section">
         <div className="section-header">
           <h3 className="section-title">Ground Operations Control Modules</h3>

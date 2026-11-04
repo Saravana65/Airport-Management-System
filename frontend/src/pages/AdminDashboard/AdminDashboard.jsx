@@ -12,9 +12,12 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
+  Clock,
+  Settings,
+  UserCheck,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
-import StatCard from '../../components/StatCard/StatCard';
+import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import PendingFeatureCard from '../../components/PendingFeatureCard/PendingFeatureCard';
 import api from '../../services/api';
@@ -23,9 +26,8 @@ import './AdminDashboard.css';
 export function AdminDashboard() {
   const { user } = useAuth();
   const [dbHealth, setDbHealth] = useState({ status: 'checking', message: '' });
-  const [systemUptime, setSystemUptime] = useState('0h 0m');
 
-  // Verify real backend /health and /health/database
+  // Query actual backend /health/database
   useEffect(() => {
     let isMounted = true;
     async function fetchSystemHealth() {
@@ -41,7 +43,7 @@ export function AdminDashboard() {
         if (isMounted) {
           setDbHealth({
             status: 'standby',
-            message: 'Oracle 1521 listener offline. App operating in offline/local auth mode.',
+            message: 'Oracle 1521 listener offline. App operating in offline/resilient auth mode.',
           });
         }
       }
@@ -73,7 +75,7 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Primary Metrics Grid (Transparent: Real indicators vs Pending database integration) */}
+      {/* 1. Core System Statistics (Transparent: Real indicators vs Pending database integration) */}
       <section className="dashboard-section">
         <div className="section-header">
           <h3 className="section-title">System Metrics & Station Tallies</h3>
@@ -81,56 +83,57 @@ export function AdminDashboard() {
         </div>
 
         <div className="metrics-grid">
-          {/* Total Flights (Pending Phase 07 Flight APIs) */}
-          <StatCard
-            title="Total Registered Flights"
-            icon={Plane}
-            isPending={true}
-            pendingNote="Flight API pending Phase 07"
-            subtitle="Schema ready in FLIGHTS table"
-            badgeStatus="PENDING_API"
-            badgeLabel="PHASE 07"
-          />
-
-          {/* Registered Passengers (Pending Phase 07 Passenger APIs) */}
-          <StatCard
-            title="Registered Passengers"
+          {/* Total Registered Users */}
+          <DashboardCard
+            title="Total Registered Users"
             icon={Users}
             isPending={true}
-            pendingNote="Passenger API pending Phase 07"
-            subtitle="Schema ready in PASSENGERS table"
+            pendingNote="Data integration pending"
+            subtitle="Oracle USERS table schema ready"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          {/* Airlines (Pending Airline APIs) */}
-          <StatCard
-            title="Active Airlines"
+          {/* Flight Operations Overview */}
+          <DashboardCard
+            title="Flight Operations Overview"
+            icon={Plane}
+            isPending={true}
+            pendingNote="Data integration pending"
+            subtitle="Scheduled arrivals & departures"
+            badgeStatus="PENDING_API"
+            badgeLabel="PHASE 07"
+          />
+
+          {/* Airline Overview */}
+          <DashboardCard
+            title="Active Carrier Airlines"
             icon={Building2}
             isPending={true}
-            pendingNote="Airline API pending Phase 07"
-            subtitle="Schema ready in AIRLINES table"
+            pendingNote="Data integration pending"
+            subtitle="Registered in AIRLINES table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          {/* Airport Staff (Pending Employee APIs) */}
-          <StatCard
-            title="Airport Staff On-Duty"
-            icon={Shield}
+          {/* Airport Staff Overview */}
+          <DashboardCard
+            title="Airport Staff Overview"
+            icon={UserCheck}
             isPending={true}
-            pendingNote="Staff API pending Phase 07"
-            subtitle="Schema ready in EMPLOYEES table"
+            pendingNote="Data integration pending"
+            subtitle="Tracked in EMPLOYEES table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
         </div>
       </section>
 
-      {/* System Health & Operator Session Status */}
+      {/* 2. System Health & Operator Session Identity */}
       <section className="dashboard-section">
         <div className="section-header">
-          <h3 className="section-title">System Health & Active Session Identity</h3>
+          <h3 className="section-title">System Health & Live Gateway Status</h3>
+          <span className="section-tag mono">CORE SERVICES</span>
         </div>
 
         <div className="health-session-grid">
@@ -151,16 +154,16 @@ export function AdminDashboard() {
               </div>
               <div className="telemetry-row">
                 <span className="telemetry-label">Database Target</span>
-                <span className="telemetry-value mono">Oracle SQL 19c/21c XE (1521/XEPDB1)</span>
+                <span className="telemetry-value mono">Oracle SQL (1521/XEPDB1)</span>
               </div>
               <div className="telemetry-row">
-                <span className="telemetry-label">Pool Health State</span>
+                <span className="telemetry-label">Connection Pool State</span>
                 <span className="telemetry-value mono text-amber">
-                  {dbHealth.message || 'Querying connection pool...'}
+                  {dbHealth.message || 'Probing pool...'}
                 </span>
               </div>
               <div className="telemetry-row">
-                <span className="telemetry-label">JWT Token Verification</span>
+                <span className="telemetry-label">JWT Token Security</span>
                 <span className="telemetry-value mono text-emerald">
                   <CheckCircle2 size={13} className="inline-icon" /> HttpOnly Signature Valid
                 </span>
@@ -168,7 +171,7 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* Active Operator Profile Details */}
+          {/* Active Operator Session Profile */}
           <div className="avionics-panel">
             <div className="panel-header">
               <div className="panel-title-group">
@@ -194,9 +197,9 @@ export function AdminDashboard() {
                 <span className="telemetry-value mono">#{user?.userId || 'N/A'}</span>
               </div>
               <div className="telemetry-row">
-                <span className="telemetry-label">Account Active</span>
+                <span className="telemetry-label">Account Clearance</span>
                 <span className="telemetry-value mono text-emerald">
-                  {user?.isActive ? 'CONFIRMED (IS_ACTIVE = 1)' : 'SUSPENDED'}
+                  {user?.isActive ? 'ACTIVE (CONFIRMED)' : 'SUSPENDED'}
                 </span>
               </div>
             </div>
@@ -204,7 +207,29 @@ export function AdminDashboard() {
         </div>
       </section>
 
-      {/* Navigation Modules (User Management, Flight Operations, Database Monitoring) */}
+      {/* 3. Recent System Activity (Audit Log Stream) */}
+      <section className="dashboard-section">
+        <div className="section-header">
+          <h3 className="section-title">Recent System Activity</h3>
+          <span className="section-tag mono">OPERATIONAL AUDIT</span>
+        </div>
+
+        <div className="avionics-panel">
+          <div className="activity-stream-empty">
+            <Clock size={28} className="text-amber empty-icon" />
+            <h4 className="empty-title">Audit Stream Telemetry Awaiting Database Activation</h4>
+            <p className="empty-desc">
+              The Oracle <code>OPERATIONAL_LOGS</code> and <code>FLIGHT_STATUS_HISTORY</code> audit tables are designed and ready. Operational event streams and autonomous trigger events will display here once the live Oracle instance is connected in Phase 07.
+            </p>
+            <span className="status-badge status-pending_api size-sm">
+              <span className="status-dot"></span>
+              <span>DATA INTEGRATION PENDING</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Administrative Operations Navigation Modules */}
       <section className="dashboard-section">
         <div className="section-header">
           <h3 className="section-title">Administrative Operations Modules</h3>
@@ -214,7 +239,7 @@ export function AdminDashboard() {
         <div className="modules-grid">
           <PendingFeatureCard
             title="User & Role Administration"
-            description="Manage system users, assign roles (ADMIN, AIRLINE_STAFF, AIRPORT_STAFF, PASSENGER), and toggle active access flags."
+            description="Manage station users, assign clearance roles (ADMIN, AIRLINE_STAFF, AIRPORT_STAFF, PASSENGER), and toggle active flags."
             modulePhase="Phase 05 Ready"
             icon={Users}
             actionLabel="View RBAC Matrix"

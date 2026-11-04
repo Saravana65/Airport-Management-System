@@ -40,6 +40,7 @@ describe('Phase 06 Frontend Verification Suite', () => {
       'src/components/Sidebar/Sidebar.jsx',
       'src/components/Header/Header.jsx',
       'src/components/ProtectedRoute/ProtectedRoute.jsx',
+      'src/components/DashboardCard/DashboardCard.jsx',
       'src/components/StatCard/StatCard.jsx',
       'src/components/StatusBadge/StatusBadge.jsx',
       'src/components/PendingFeatureCard/PendingFeatureCard.jsx',
@@ -48,6 +49,7 @@ describe('Phase 06 Frontend Verification Suite', () => {
       'src/pages/AirlineDashboard/AirlineDashboard.jsx',
       'src/pages/AirportDashboard/AirportDashboard.jsx',
       'src/pages/PassengerDashboard/PassengerDashboard.jsx',
+      'src/pages/ComingSoon/ComingSoon.jsx',
       'src/pages/Unauthorized/Unauthorized.jsx',
       'src/pages/NotFound/NotFound.jsx',
     ];
@@ -99,21 +101,34 @@ describe('Phase 06 Frontend Verification Suite', () => {
 
     // Admin nav items
     assert.ok(sidebarSource.includes('/admin/users'), 'Admin must have User Management');
-    assert.ok(sidebarSource.includes('/admin/flights'), 'Admin must have Flight Operations');
-    assert.ok(sidebarSource.includes('/admin/database'), 'Admin must have Database Monitor');
+    assert.ok(sidebarSource.includes('/admin/flights'), 'Admin must have Flight Management');
+    assert.ok(sidebarSource.includes('/admin/airports'), 'Admin must have Airport Management');
+    assert.ok(sidebarSource.includes('/admin/airlines'), 'Admin must have Airline Management');
+    assert.ok(sidebarSource.includes('/admin/employees'), 'Admin must have Employee Management');
+    assert.ok(sidebarSource.includes('/admin/database'), 'Admin must have Database Monitoring');
+    assert.ok(sidebarSource.includes('/admin/settings'), 'Admin must have System Settings');
 
     // Airline nav items
-    assert.ok(sidebarSource.includes('/airline/flights'), 'Airline staff must have Flight Schedules');
-    assert.ok(sidebarSource.includes('/airline/passengers'), 'Airline staff must have Passenger List');
+    assert.ok(sidebarSource.includes('/airline/my-airline'), 'Airline staff must have My Airline');
+    assert.ok(sidebarSource.includes('/airline/flights'), 'Airline staff must have Flight Management');
+    assert.ok(sidebarSource.includes('/airline/passengers'), 'Airline staff must have Passenger Management');
+    assert.ok(sidebarSource.includes('/airline/bookings'), 'Airline staff must have Booking Management');
+    assert.ok(sidebarSource.includes('/airline/tickets'), 'Airline staff must have Ticket Information');
 
     // Airport nav items
-    assert.ok(sidebarSource.includes('/airport/gates'), 'Airport staff must have Gate Allocation');
-    assert.ok(sidebarSource.includes('/airport/baggage'), 'Airport staff must have Baggage Routing');
+    assert.ok(sidebarSource.includes('/airport/flights'), 'Airport staff must have Flight Operations');
+    assert.ok(sidebarSource.includes('/airport/gates'), 'Airport staff must have Gate Management');
+    assert.ok(sidebarSource.includes('/airport/checkin'), 'Airport staff must have Check-in Operations');
+    assert.ok(sidebarSource.includes('/airport/baggage'), 'Airport staff must have Baggage Management');
+    assert.ok(sidebarSource.includes('/airport/employees'), 'Airport staff must have Employee Operations');
 
     // Passenger nav items
-    assert.ok(sidebarSource.includes('/passenger/search'), 'Passenger must have Flight Search');
-    assert.ok(sidebarSource.includes('/passenger/bookings'), 'Passenger must have Bookings');
+    assert.ok(sidebarSource.includes('/passenger/search'), 'Passenger must have Search Flights');
+    assert.ok(sidebarSource.includes('/passenger/bookings'), 'Passenger must have My Bookings');
+    assert.ok(sidebarSource.includes('/passenger/tickets'), 'Passenger must have My Tickets');
     assert.ok(sidebarSource.includes('/passenger/checkin'), 'Passenger must have Web Check-in');
+    assert.ok(sidebarSource.includes('/passenger/travel-info'), 'Passenger must have Travel Information');
+    assert.ok(sidebarSource.includes('/passenger/profile'), 'Passenger must have My Profile');
   });
 
   test('6. Route Protection and Unauthorized Handling', () => {

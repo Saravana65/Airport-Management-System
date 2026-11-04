@@ -10,9 +10,10 @@ import {
   AlertCircle,
   Shield,
   FileSpreadsheet,
+  Layers,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
-import StatCard from '../../components/StatCard/StatCard';
+import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import PendingFeatureCard from '../../components/PendingFeatureCard/PendingFeatureCard';
 import './AirlineDashboard.css';
@@ -40,49 +41,53 @@ export function AirlineDashboard() {
         </div>
       </div>
 
-      {/* Overview Stat Cards */}
+      {/* 1. Core Carrier Sections: Airline Overview, Scheduled Flights, Passenger Overview, Booking Overview */}
       <section className="dashboard-section">
         <div className="section-header">
-          <h3 className="section-title">Airline Overview Metrics</h3>
+          <h3 className="section-title">Carrier Operations Overview</h3>
           <span className="section-tag mono">CARRIER TELEMETRY</span>
         </div>
 
         <div className="metrics-grid">
-          <StatCard
-            title="Scheduled Airline Flights"
-            icon={Plane}
-            isPending={true}
-            pendingNote="Flight schedule API pending Phase 07"
-            subtitle="Tied to AIRLINE_ID foreign key"
-            badgeStatus="PENDING_API"
-            badgeLabel="PHASE 07"
-          />
-
-          <StatCard
+          {/* Airline Overview */}
+          <DashboardCard
             title="Active Fleet Aircraft"
             icon={Building2}
             isPending={true}
-            pendingNote="Fleet API pending Phase 07"
+            pendingNote="Data integration pending"
             subtitle="Registered in AIRCRAFTS table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          <StatCard
-            title="Booked Passengers"
+          {/* Scheduled Flights */}
+          <DashboardCard
+            title="Scheduled Airline Flights"
+            icon={Plane}
+            isPending={true}
+            pendingNote="Data integration pending"
+            subtitle="Tied to AIRLINE_ID foreign key"
+            badgeStatus="PENDING_API"
+            badgeLabel="PHASE 07"
+          />
+
+          {/* Passenger Overview */}
+          <DashboardCard
+            title="Passenger Manifest Overview"
             icon={Users}
             isPending={true}
-            pendingNote="Manifest API pending Phase 07"
+            pendingNote="Data integration pending"
             subtitle="Tracked in BOOKINGS table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
           />
 
-          <StatCard
-            title="Confirmed Tickets"
+          {/* Booking Overview */}
+          <DashboardCard
+            title="Confirmed Booking Records"
             icon={Ticket}
             isPending={true}
-            pendingNote="Ticketing API pending Phase 07"
+            pendingNote="Data integration pending"
             subtitle="Tracked in TICKETS table"
             badgeStatus="PENDING_API"
             badgeLabel="PHASE 07"
@@ -90,10 +95,10 @@ export function AirlineDashboard() {
         </div>
       </section>
 
-      {/* Flight Status Overview (Table layout ready for Phase 07 integration) */}
+      {/* 2. Flight Status Summary (Dispatch Board) */}
       <section className="dashboard-section">
         <div className="section-header">
-          <h3 className="section-title">Carrier Flight Status Overview</h3>
+          <h3 className="section-title">Carrier Flight Status Summary</h3>
           <span className="section-tag mono">DISPATCH BOARD</span>
         </div>
 
@@ -122,7 +127,7 @@ export function AirlineDashboard() {
         </div>
       </section>
 
-      {/* Navigation Modules */}
+      {/* 3. Carrier Operational Modules */}
       <section className="dashboard-section">
         <div className="section-header">
           <h3 className="section-title">Carrier Operational Management Modules</h3>
