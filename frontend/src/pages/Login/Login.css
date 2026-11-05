@@ -10,7 +10,7 @@
   overflow: hidden;
 }
 
-/* Radar & Grid Backdrops */
+/* Subtle Aviation Grid Backdrop */
 .login-backdrop-grid {
   position: absolute;
   top: 0;
@@ -18,9 +18,10 @@
   right: 0;
   bottom: 0;
   background-image: 
-    linear-gradient(rgba(30, 41, 59, 0.25) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30, 41, 59, 0.25) 1px, transparent 1px);
+    linear-gradient(#E2E8F0 1px, transparent 1px),
+    linear-gradient(90deg, #E2E8F0 1px, transparent 1px);
   background-size: 40px 40px;
+  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -29,7 +30,7 @@
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  border: 1px dashed rgba(245, 158, 11, 0.15);
+  border: 1px dashed rgba(37, 99, 235, 0.2);
   pointer-events: none;
   animation: pulse-radar 6s infinite ease-in-out;
 }
@@ -38,11 +39,11 @@
 .login-container {
   width: 100%;
   max-width: 440px;
-  background-color: var(--bg-surface);
+  background-color: #FFFFFF;
   border: 1px solid var(--border-card);
   border-radius: 16px;
   padding: 36px 32px;
-  box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 25px -5px rgba(22, 58, 112, 0.08), 0 8px 10px -6px rgba(22, 58, 112, 0.04);
   position: relative;
   z-index: 10;
   display: flex;
@@ -54,11 +55,11 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 20%;
-  right: 20%;
+  left: 15%;
+  right: 15%;
   height: 3px;
-  background: linear-gradient(90deg, transparent, var(--amber-primary), transparent);
-  border-radius: 2px;
+  background: var(--blue-primary);
+  border-radius: 0 0 3px 3px;
 }
 
 /* Header */
@@ -74,31 +75,32 @@
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #1E293B, #0F172A);
-  border: 1px solid var(--border-card);
+  background: var(--light-blue);
+  border: 1px solid var(--border-light-blue);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
 }
 
 .brand-plane-icon {
-  color: var(--amber-primary);
+  color: var(--blue-primary);
   transform: rotate(-45deg);
 }
 
 .login-title {
-  font-family: var(--font-mono);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+  color: var(--navy-primary);
 }
 
 .login-subtitle {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
+  font-weight: var(--fw-regular);
 }
 
 /* Alert Banners */
@@ -110,33 +112,38 @@
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.4;
+  font-weight: var(--fw-medium);
 }
 
 .login-alert-banner.alert-danger {
   background-color: var(--status-red-bg);
   border: 1px solid var(--status-red-border);
-  color: #FCA5A5;
+  color: var(--status-red);
 }
+
 .login-alert-banner.alert-danger .alert-icon {
   color: var(--status-red);
   flex-shrink: 0;
   margin-top: 1px;
 }
+
 .login-alert-banner.alert-danger code {
-  background-color: rgba(0, 0, 0, 0.4);
-  padding: 2px 4px;
+  background-color: #FFFFFF;
+  padding: 2px 6px;
   border-radius: 4px;
   font-family: var(--font-mono);
-  color: #FFFFFF;
+  color: var(--status-red);
+  border: 1px solid var(--status-red-border);
 }
 
 .login-alert-banner.alert-warning {
   background-color: var(--status-amber-bg);
   border: 1px solid var(--status-amber-border);
-  color: #FDE68A;
+  color: var(--status-amber);
 }
+
 .login-alert-banner.alert-warning .alert-icon {
-  color: var(--amber-primary);
+  color: var(--status-amber);
   flex-shrink: 0;
 }
 
@@ -155,8 +162,8 @@
 
 .form-label {
   font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: var(--fw-semibold);
+  color: var(--navy-primary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -170,7 +177,7 @@
 .input-icon {
   position: absolute;
   left: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   pointer-events: none;
 }
 
@@ -178,13 +185,16 @@
   width: 100%;
   padding-left: 38px;
   padding-right: 38px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
 }
 
 .password-toggle-btn {
   position: absolute;
   right: 10px;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   padding: 4px;
   border-radius: 4px;
   display: flex;
@@ -193,33 +203,40 @@
 }
 
 .password-toggle-btn:hover {
-  color: var(--text-primary);
+  color: var(--navy-primary);
 }
 
 .login-submit-btn {
   width: 100%;
   padding: 12px;
   font-size: 14px;
+  font-weight: var(--fw-semibold);
   margin-top: 4px;
+  background-color: var(--blue-primary);
+  color: #FFFFFF;
+}
+
+.login-submit-btn:hover:not(:disabled) {
+  background-color: var(--blue-hover);
 }
 
 .spinner-border {
   width: 14px;
   height: 14px;
-  border: 2px solid #000;
+  border: 2px solid #FFFFFF;
   border-top-color: transparent;
   border-radius: 50%;
 }
 
 /* Demo Role Pills */
 .login-demo-helper {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-card);
+  background-color: var(--light-blue);
+  border: 1px solid var(--border-light-blue);
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .demo-helper-header {
@@ -227,14 +244,14 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--amber-primary);
+  font-weight: var(--fw-semibold);
+  color: var(--navy-primary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .demo-info-icon {
-  color: var(--amber-primary);
+  color: var(--blue-primary);
 }
 
 .demo-pill-group {
@@ -244,44 +261,28 @@
 }
 
 .demo-pill {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 11px;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  background-color: var(--bg-surface);
-  color: var(--text-secondary);
+  font-weight: var(--fw-semibold);
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-card);
+  background-color: #FFFFFF;
+  color: var(--navy-primary);
   transition: all var(--transition-fast);
+  cursor: pointer;
 }
 
 .demo-pill:hover {
+  border-color: var(--blue-primary);
+  background-color: var(--blue-primary);
+  color: #FFFFFF;
   transform: translateY(-1px);
 }
 
-.pill-admin:hover {
-  border-color: #FBBF24;
-  color: #FBBF24;
-}
-
-.pill-airline:hover {
-  border-color: var(--status-blue);
-  color: var(--status-blue);
-}
-
-.pill-airport:hover {
-  border-color: var(--orange-accent);
-  color: var(--orange-accent);
-}
-
-.pill-passenger:hover {
-  border-color: var(--status-purple);
-  color: var(--status-purple);
-}
-
 .demo-note {
-  font-size: 10px;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 /* Footer Security Notice */
@@ -291,7 +292,8 @@
   justify-content: center;
   gap: 6px;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
 }
 
 .security-check-icon {

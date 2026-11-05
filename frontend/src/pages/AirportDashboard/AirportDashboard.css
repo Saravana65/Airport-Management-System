@@ -5,13 +5,13 @@
 }
 
 .airport-banner {
-  border-left-color: var(--orange-accent) !important;
+  border-left-color: var(--blue-primary) !important;
 }
 
 .airport-icon-box {
-  background-color: rgba(255, 120, 73, 0.15) !important;
-  border-color: rgba(255, 120, 73, 0.35) !important;
-  color: var(--orange-accent) !important;
+  background-color: var(--light-blue) !important;
+  border-color: var(--border-light-blue) !important;
+  color: var(--blue-primary) !important;
 }
 
 /* Ground Ops Panel */
@@ -20,11 +20,12 @@
   border: 1px solid var(--border-card);
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
 .ground-panel-header {
   display: flex;
-  background-color: var(--bg-surface);
+  background-color: #F8FAFC;
   border-bottom: 1px solid var(--border-subtle);
   padding: 0 16px;
 }
@@ -33,27 +34,29 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 18px;
+  padding: 13px 20px;
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
   border-bottom: 2px solid transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .panel-tab:hover {
-  color: var(--text-secondary);
+  color: var(--navy-primary);
+  background-color: #F1F5F9;
 }
 
 .panel-tab.active {
-  color: var(--amber-primary);
-  border-bottom-color: var(--amber-primary);
-  font-weight: 600;
+  color: var(--blue-primary);
+  border-bottom-color: var(--blue-primary);
+  background-color: #FFFFFF;
+  font-weight: var(--fw-semibold);
 }
 
 .ground-panel-body {
-  padding: 40px 24px;
+  padding: 32px 24px;
 }
 
 .ground-empty-state {
@@ -63,8 +66,13 @@
   justify-content: center;
   text-align: center;
   gap: 12px;
+  background-color: #F8FAFC;
+  border-radius: 8px;
+  padding: 32px 20px;
+  border: 1px dashed var(--border-card);
 }
 
 .empty-radio-icon {
+  color: var(--blue-primary);
   animation: pulse-radar 2.5s infinite ease-in-out;
 }

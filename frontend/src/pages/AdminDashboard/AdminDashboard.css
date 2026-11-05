@@ -6,9 +6,9 @@
 
 /* Welcome Banner */
 .dashboard-welcome-banner {
-  background: linear-gradient(135deg, #161F32 0%, #0F172A 100%);
+  background: #FFFFFF;
   border: 1px solid var(--border-card);
-  border-left: 4px solid var(--amber-primary);
+  border-left: 4px solid var(--blue-primary);
   border-radius: 12px;
   padding: 24px;
   display: flex;
@@ -16,6 +16,7 @@
   justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
+  box-shadow: var(--shadow-card);
 }
 
 .banner-left {
@@ -28,19 +29,19 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background-color: var(--amber-glow);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background-color: var(--light-blue);
+  border: 1px solid var(--border-light-blue);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--amber-primary);
+  color: var(--blue-primary);
   flex-shrink: 0;
 }
 
 .banner-title {
   font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
   margin-bottom: 4px;
 }
 
@@ -48,6 +49,7 @@
   font-size: 13px;
   color: var(--text-secondary);
   max-width: 700px;
+  font-weight: var(--fw-regular);
 }
 
 /* Section Common */
@@ -65,16 +67,20 @@
 
 .section-title {
   font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .section-tag {
   font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
+  color: var(--text-secondary);
+  font-weight: var(--fw-semibold);
+  background-color: #F8FAFC;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-card);
 }
 
 /* Grids */
@@ -101,10 +107,11 @@
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: 12px;
-  padding: 20px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: var(--shadow-card);
 }
 
 .panel-header {
@@ -112,7 +119,7 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
 }
 
 .panel-title-group {
@@ -123,8 +130,8 @@
 
 .panel-title-group h4 {
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
 }
 
 .panel-body {
@@ -138,8 +145,8 @@
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
-  padding: 6px 0;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+  padding: 8px 0;
+  border-bottom: 1px solid #F1F5F9;
 }
 
 .telemetry-row:last-child {
@@ -148,11 +155,12 @@
 
 .telemetry-label {
   color: var(--text-secondary);
+  font-weight: var(--fw-regular);
 }
 
 .telemetry-value {
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: var(--fw-semibold);
 }
 
 .text-emerald {
@@ -172,7 +180,7 @@
   border: 1px solid var(--status-emerald-border);
   padding: 2px 6px;
   border-radius: 4px;
-  font-weight: 600;
+  font-weight: var(--fw-bold);
 }
 
 /* Activity Stream Empty */
@@ -184,16 +192,20 @@
   padding: 32px 16px;
   text-align: center;
   gap: 10px;
+  background-color: #F8FAFC;
+  border-radius: 8px;
+  border: 1px dashed var(--border-card);
 }
 
 .empty-icon {
+  color: var(--blue-primary);
   animation: pulse-radar 2.5s infinite ease-in-out;
 }
 
 .empty-title {
   font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
 }
 
 .empty-desc {
@@ -201,13 +213,15 @@
   color: var(--text-secondary);
   max-width: 580px;
   line-height: 1.5;
+  font-weight: var(--fw-regular);
 }
 
 .empty-desc code {
   font-family: var(--font-mono);
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
   padding: 2px 6px;
   border-radius: 4px;
-  color: var(--amber-primary);
+  color: var(--blue-primary);
+  font-weight: var(--fw-semibold);
 }

@@ -5,13 +5,13 @@
 }
 
 .airline-banner {
-  border-left-color: var(--status-blue) !important;
+  border-left-color: var(--blue-primary) !important;
 }
 
 .airline-icon-box {
-  background-color: var(--status-blue-bg) !important;
-  border-color: var(--status-blue-border) !important;
-  color: var(--status-blue) !important;
+  background-color: var(--light-blue) !important;
+  border-color: var(--border-light-blue) !important;
+  color: var(--blue-primary) !important;
 }
 
 /* Dispatch Table */
@@ -20,18 +20,19 @@
   border: 1px solid var(--border-card);
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
 .dispatch-table-header {
   display: grid;
   grid-template-columns: 120px 1.5fr 1.5fr 120px 160px;
-  background-color: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 12px 20px;
-  font-family: var(--font-mono);
+  background-color: #F8FAFC;
+  border-bottom: 2px solid var(--border-card);
+  padding: 14px 20px;
+  font-family: var(--font-sans);
   font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-weight: var(--fw-semibold);
+  color: var(--navy-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -44,16 +45,18 @@
   padding: 48px 24px;
   text-align: center;
   gap: 12px;
+  background-color: #F8FAFC;
 }
 
 .empty-clock-icon {
+  color: var(--blue-primary);
   animation: pulse-radar 3s infinite ease-in-out;
 }
 
 .empty-title {
   font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
 }
 
 .empty-desc {
@@ -61,15 +64,17 @@
   color: var(--text-secondary);
   max-width: 580px;
   line-height: 1.5;
+  font-weight: var(--fw-regular);
 }
 
 .empty-desc code {
   font-family: var(--font-mono);
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
   padding: 2px 6px;
   border-radius: 4px;
-  color: var(--amber-primary);
+  color: var(--blue-primary);
+  font-weight: var(--fw-semibold);
 }
 
 .empty-badge-wrap {

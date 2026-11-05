@@ -3,20 +3,20 @@
   align-items: center;
   gap: 6px;
   border-radius: 9999px;
-  font-family: var(--font-mono);
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .status-badge.size-sm {
-  padding: 2px 8px;
+  padding: 3px 8px;
   font-size: 11px;
 }
 
 .status-badge.size-md {
-  padding: 4px 10px;
+  padding: 4px 12px;
   font-size: 12px;
 }
 
@@ -28,9 +28,9 @@
 
 /* Default / Neutral */
 .status-badge.status-default {
-  background-color: rgba(148, 163, 184, 0.1);
-  color: #94A3B8;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background-color: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
 }
 .status-badge.status-default .status-dot {
   background-color: #94A3B8;
@@ -50,7 +50,6 @@
 .status-badge.status-on_time .status-dot,
 .status-badge.status-operational .status-dot {
   background-color: var(--status-emerald);
-  box-shadow: 0 0 6px var(--status-emerald);
 }
 
 /* Warning / Standby / Pending */
@@ -58,53 +57,57 @@
 .status-badge.status-standby,
 .status-badge.status-boarding,
 .status-badge.status-delayed,
-.status-badge.status-pending_api {
+.status-badge.status-warning {
   background-color: var(--status-amber-bg);
-  color: var(--amber-primary);
+  color: var(--status-amber);
   border: 1px solid var(--status-amber-border);
 }
 .status-badge.status-pending .status-dot,
 .status-badge.status-standby .status-dot,
 .status-badge.status-boarding .status-dot,
 .status-badge.status-delayed .status-dot,
-.status-badge.status-pending_api .status-dot {
-  background-color: var(--amber-primary);
-  box-shadow: 0 0 6px var(--amber-primary);
+.status-badge.status-warning .status-dot {
+  background-color: var(--status-amber);
 }
 
-/* Roles */
-.status-badge.status-admin {
-  background-color: rgba(245, 158, 11, 0.15);
-  color: #FBBF24;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+/* Red / Alert / Cancelled / Offline */
+.status-badge.status-offline,
+.status-badge.status-cancelled,
+.status-badge.status-error,
+.status-badge.status-critical {
+  background-color: var(--status-red-bg);
+  color: var(--status-red);
+  border: 1px solid var(--status-red-border);
 }
-.status-badge.status-admin .status-dot {
-  background-color: #FBBF24;
+.status-badge.status-offline .status-dot,
+.status-badge.status-cancelled .status-dot,
+.status-badge.status-error .status-dot,
+.status-badge.status-critical .status-dot {
+  background-color: var(--status-red);
 }
 
-.status-badge.status-airline_staff {
+/* Blue / Info / Telemetry */
+.status-badge.status-info,
+.status-badge.status-radar,
+.status-badge.status-scheduled {
   background-color: var(--status-blue-bg);
   color: var(--status-blue);
   border: 1px solid var(--status-blue-border);
 }
-.status-badge.status-airline_staff .status-dot {
+.status-badge.status-info .status-dot,
+.status-badge.status-radar .status-dot,
+.status-badge.status-scheduled .status-dot {
   background-color: var(--status-blue);
 }
 
-.status-badge.status-airport_staff {
-  background-color: rgba(255, 120, 73, 0.15);
-  color: var(--orange-accent);
-  border: 1px solid rgba(255, 120, 73, 0.35);
-}
-.status-badge.status-airport_staff .status-dot {
-  background-color: var(--orange-accent);
-}
-
+/* Purple / Passenger / VIP */
+.status-badge.status-vip,
 .status-badge.status-passenger {
   background-color: var(--status-purple-bg);
   color: var(--status-purple);
   border: 1px solid var(--status-purple-border);
 }
+.status-badge.status-vip .status-dot,
 .status-badge.status-passenger .status-dot {
   background-color: var(--status-purple);
 }

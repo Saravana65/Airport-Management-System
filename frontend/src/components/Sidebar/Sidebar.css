@@ -11,6 +11,7 @@
   z-index: 100;
   transition: width var(--transition-normal), transform var(--transition-normal);
   user-select: none;
+  box-shadow: 1px 0 3px rgba(16, 24, 40, 0.04);
 }
 
 .ams-sidebar.collapsed {
@@ -25,6 +26,7 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border-subtle);
+  background-color: #FFFFFF;
 }
 
 .sidebar-brand {
@@ -38,8 +40,8 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #1E293B, #0F172A);
-  border: 1px solid var(--border-card);
+  background: var(--light-blue);
+  border: 1px solid var(--border-light-blue);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,7 +50,7 @@
 }
 
 .brand-plane-icon {
-  color: var(--amber-primary);
+  color: var(--blue-primary);
   transform: rotate(-45deg);
   z-index: 2;
 }
@@ -58,9 +60,9 @@
   width: 100%;
   height: 100%;
   border-radius: 10px;
-  border: 1px solid var(--amber-primary);
+  border: 1px solid var(--blue-primary);
   animation: pulse-radar 2.5s infinite;
-  opacity: 0.3;
+  opacity: 0.25;
 }
 
 .brand-text-container {
@@ -70,18 +72,19 @@
 }
 
 .brand-title {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--text-primary);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--navy-primary);
 }
 
 .brand-subtitle {
   font-size: 10px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: var(--fw-semibold);
 }
 
 .sidebar-collapse-btn {
@@ -92,35 +95,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .sidebar-collapse-btn:hover {
-  background-color: var(--bg-card);
-  color: var(--amber-primary);
+  background-color: var(--bg-card-hover);
+  color: var(--blue-primary);
 }
 
 /* Station Role Banner */
 .sidebar-role-banner {
-  padding: 12px 16px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: #F8FAFC;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .role-label-tag {
   font-size: 11px;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--navy-primary);
   letter-spacing: 0.05em;
-  font-weight: 500;
+  font-weight: var(--fw-semibold);
 }
 
 /* Navigation List */
 .sidebar-nav {
   flex: 1;
-  padding: 16px 8px;
+  padding: 16px 12px;
   overflow-y: auto;
 }
 
@@ -139,26 +143,27 @@
   border-radius: 8px;
   color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   transition: all var(--transition-fast);
   white-space: nowrap;
   position: relative;
 }
 
 .nav-link:hover {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
+  background-color: #F8FAFC;
+  color: var(--navy-primary);
 }
 
 .nav-link.active {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.02));
-  color: var(--amber-primary);
-  border-left: 3px solid var(--amber-primary);
-  font-weight: 600;
+  background-color: var(--light-blue);
+  color: var(--blue-primary);
+  border-left: 3px solid var(--blue-primary);
+  font-weight: var(--fw-semibold);
 }
 
 .nav-icon {
   flex-shrink: 0;
+  color: inherit;
   transition: transform var(--transition-fast);
 }
 
@@ -169,6 +174,7 @@
 .nav-label {
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: inherit;
 }
 
 .nav-sub-icon {
@@ -176,24 +182,24 @@
 }
 
 .text-amber {
-  color: var(--amber-primary);
+  color: var(--blue-primary);
 }
 
 /* Footer & Logout */
 .sidebar-footer {
-  padding: 12px;
+  padding: 14px 16px;
   border-top: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background-color: var(--bg-surface);
+  gap: 10px;
+  background-color: #FFFFFF;
 }
 
 .user-profile-widget {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 8px;
+  padding: 4px 6px;
   border-radius: 8px;
 }
 
@@ -201,14 +207,15 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--amber-primary), var(--amber-hover));
-  color: #0F172A;
-  font-weight: 700;
+  background: var(--blue-primary);
+  color: #FFFFFF;
+  font-weight: var(--fw-bold);
   font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
 }
 
 .user-details {
@@ -219,7 +226,7 @@
 
 .user-email {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--fw-semibold);
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -227,8 +234,9 @@
 }
 
 .user-id-tag {
-  font-size: 10px;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: var(--fw-regular);
 }
 
 .sidebar-logout-btn {
@@ -239,11 +247,11 @@
   gap: 8px;
   padding: 8px 12px;
   border-radius: 6px;
-  background-color: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #F87171;
+  background-color: var(--status-red-bg);
+  border: 1px solid var(--status-red-border);
+  color: var(--status-red);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--fw-semibold);
   transition: all var(--transition-fast);
 }
 
@@ -272,7 +280,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(15, 23, 42, 0.45);
     backdrop-filter: blur(4px);
     z-index: 99;
   }

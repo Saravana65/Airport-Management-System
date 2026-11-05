@@ -1,55 +1,73 @@
 :root {
-  /* Dark Aviation Palette */
-  --bg-canvas: #090D16;          /* Deep nocturnal abyss */
-  --bg-surface: #0F172A;         /* Charcoal base surface */
-  --bg-card: #151F32;            /* Elevated avionics card */
-  --bg-card-hover: #1A273F;      /* Hover elevation */
-  --bg-sidebar: #0C1220;         /* Primary control sidebar */
-  --bg-header: #0F172ACC;        /* Glassmorphism topbar */
-  --bg-input: #0B111D;           /* Recessed input background */
+  /* Modern White and Blue Aviation Palette */
+  --bg-canvas: #F5F8FC;          /* Clean airfield sky-grey/white */
+  --bg-surface: #FFFFFF;         /* Pure white elevation */
+  --bg-card: #FFFFFF;            /* White avionics card */
+  --bg-card-hover: #F8FAFC;      /* Subtle hover tint */
+  --bg-sidebar: #FFFFFF;         /* Crisp white control sidebar */
+  --bg-header: rgba(255, 255, 255, 0.96); /* Clean glassmorphic topbar */
+  --bg-input: #FFFFFF;           /* Crisp input background */
+  --bg-light-blue: #EAF3FF;      /* Aviation light blue background */
+  --bg-selected: #EAF3FF;        /* Active selection background */
 
   /* Borders & Dividers */
-  --border-subtle: #1E293B;       /* Low-contrast divider */
-  --border-card: #223048;         /* Structural border */
-  --border-focus: #F59E0B;        /* Active Amber highlight */
-  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-subtle: #E2E8F0;       /* Neutral light divider */
+  --border-card: #E2E8F0;         /* Card structural border */
+  --border-focus: #2563EB;        /* Primary Blue focus highlight */
+  --border-glass: rgba(226, 232, 240, 0.8);
+  --border-light-blue: #BFDBFE;   /* Light blue accent border */
 
-  /* Amber & Safety Orange Highlights */
-  --amber-primary: #F59E0B;       /* Amber-500 aviation alert */
-  --amber-hover: #D97706;         /* Amber-600 */
-  --amber-light: #FBBF24;         /* Amber-400 */
-  --amber-glow: rgba(245, 158, 11, 0.2);
-  --orange-accent: #FF7849;       /* Aviation safety high-vis */
+  /* Primary Aviation Blues */
+  --navy-primary: #163A70;        /* Deep authoritative aviation navy */
+  --blue-primary: #2563EB;        /* Vivid sky / operational blue */
+  --blue-hover: #1D4ED8;          /* Blue-700 hover state */
+  --blue-light: #3B82F6;          /* Blue-500 accent */
+  --blue-glow: rgba(37, 99, 235, 0.18);
+  --light-blue: #EAF3FF;          /* Aviation tinted surface */
 
-  /* Operational Status Accents */
-  --status-emerald: #10B981;      /* Operational / Active / On-time */
-  --status-emerald-bg: rgba(16, 185, 129, 0.12);
-  --status-emerald-border: rgba(16, 185, 129, 0.3);
+  /* Compatibility Aliases for Components */
+  --amber-primary: #2563EB;       /* Primary Action Blue */
+  --amber-hover: #1D4ED8;         /* Action Blue Hover */
+  --amber-light: #3B82F6;         /* Accent Blue */
+  --amber-glow: rgba(37, 99, 235, 0.18);
+  --orange-accent: #2563EB;       /* Blue Operational Accent */
 
-  --status-amber: #F59E0B;        /* Warning / Boarding / Standby */
-  --status-amber-bg: rgba(245, 158, 11, 0.12);
-  --status-amber-border: rgba(245, 158, 11, 0.3);
+  /* Operational Status Accents (Tailored for White Background) */
+  --status-emerald: #16A34A;      /* Active / On-time / Success */
+  --status-emerald-bg: #DCFCE7;
+  --status-emerald-border: #BBF7D0;
 
-  --status-red: #EF4444;          /* Alert / Cancelled / Error */
-  --status-red-bg: rgba(239, 68, 68, 0.12);
-  --status-red-border: rgba(239, 68, 68, 0.3);
+  --status-amber: #D97706;        /* Warning / Standby / Boarding */
+  --status-amber-bg: #FEF3C7;
+  --status-amber-border: #FDE68A;
 
-  --status-blue: #38BDF8;         /* Radar / Telemetry / Info */
-  --status-blue-bg: rgba(56, 189, 248, 0.12);
-  --status-blue-border: rgba(56, 189, 248, 0.3);
+  --status-red: #DC2626;          /* Alert / Cancelled / Error */
+  --status-red-bg: #FEE2E2;
+  --status-red-border: #FECACA;
 
-  --status-purple: #A855F7;       /* Passenger / VIP */
-  --status-purple-bg: rgba(168, 85, 247, 0.12);
-  --status-purple-border: rgba(168, 85, 247, 0.3);
+  --status-blue: #2563EB;         /* Radar / Telemetry / Info */
+  --status-blue-bg: #EAF3FF;
+  --status-blue-border: #BFDBFE;
+
+  --status-purple: #7C3AED;       /* Passenger / VIP */
+  --status-purple-bg: #F3E8FF;
+  --status-purple-border: #E9D5FF;
 
   /* Typography */
-  --text-primary: #F8FAFC;        /* Maximum contrast white-tint */
-  --text-secondary: #94A3B8;      /* Slate secondary label */
-  --text-muted: #64748B;          /* Muted telemetry details */
-  --text-inverse: #0F172A;
+  --text-primary: #172B4D;        /* Primary Slate-Navy text */
+  --text-heading: #163A70;        /* Bold authoritative Navy */
+  --text-secondary: #64748B;      /* Slate secondary label */
+  --text-muted: #94A3B8;          /* Muted telemetry details */
+  --text-inverse: #FFFFFF;        /* Text on dark navy/blue buttons */
 
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', Arial, Helvetica, sans-serif;
   --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+
+  /* Font Weights */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
 
   /* Dimensions & Spacing */
   --sidebar-width: 260px;
@@ -60,9 +78,11 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --shadow-amber-glow: 0 0 20px rgba(245, 158, 11, 0.25);
+  /* Shadows (Subtle, clean, enterprise aviation grade) */
+  --shadow-sm: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(16, 24, 40, 0.07), 0 2px 4px -2px rgba(16, 24, 40, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(16, 24, 40, 0.08), 0 4px 6px -4px rgba(16, 24, 40, 0.03);
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.05), 0 1px 2px rgba(16, 24, 40, 0.03);
+  --shadow-card-hover: 0 6px 14px -2px rgba(16, 24, 40, 0.08), 0 3px 5px -2px rgba(16, 24, 40, 0.04);
+  --shadow-amber-glow: 0 0 12px rgba(37, 99, 235, 0.2);
 }

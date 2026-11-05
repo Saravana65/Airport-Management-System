@@ -5,13 +5,13 @@
 }
 
 .passenger-banner {
-  border-left-color: var(--status-purple) !important;
+  border-left-color: var(--blue-primary) !important;
 }
 
 .passenger-icon-box {
-  background-color: var(--status-purple-bg) !important;
-  border-color: var(--status-purple-border) !important;
-  color: var(--status-purple) !important;
+  background-color: var(--light-blue) !important;
+  border-color: var(--border-light-blue) !important;
+  color: var(--blue-primary) !important;
 }
 
 /* Flight Search Bar */
@@ -19,11 +19,12 @@
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: 12px;
-  padding: 20px;
+  padding: 22px;
   display: flex;
   align-items: flex-end;
   gap: 16px;
   flex-wrap: wrap;
+  box-shadow: var(--shadow-card);
 }
 
 .search-input-group {
@@ -40,29 +41,43 @@
 
 .search-label {
   font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-weight: var(--fw-semibold);
+  color: var(--navy-primary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .search-field {
   width: 100%;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
 }
 
 .search-action-btn {
   height: 42px;
-  padding: 0 20px;
+  padding: 0 22px;
   white-space: nowrap;
+  background-color: var(--blue-primary);
+  color: #FFFFFF;
+  font-weight: var(--fw-semibold);
+}
+
+.search-action-btn:hover:not(:disabled) {
+  background-color: var(--blue-hover);
 }
 
 .search-footnote {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .search-footnote code {
-  color: var(--amber-primary);
+  color: var(--blue-primary);
+  font-weight: var(--fw-semibold);
+  background-color: var(--light-blue);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 @media (max-width: 768px) {
