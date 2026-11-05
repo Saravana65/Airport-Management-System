@@ -1,0 +1,21 @@
+# Root .dockerignore
+.git
+.gitignore
+.env
+*.env
+*.log
+
+# Build artifacts
+node_modules/
+dist/
+target/
+*.obj
+*.class
+*.exe
+*.pdb
+
+# Documentation & IDE
+.vscode/
+.idea/
+docs/
+*.md

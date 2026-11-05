@@ -9,20 +9,20 @@ const fs = require('fs');
 
 class CEngineService {
     constructor() {
-        // Resolve binary location across development and build environments
-        const primaryPath = path.resolve(__dirname, '../../../c-engine/c-engine.exe');
-        const secondaryPath = path.resolve(__dirname, '../../c-engine/c-engine.exe');
-        const tertiaryPath = path.resolve(process.cwd(), 'c-engine/c-engine.exe');
+        // Resolve binary location across development, container (Linux), and build (Windows) environments
+        const candidates = [
+            process.env.C_ENGINE_PATH,
+            path.resolve(__dirname, '../../../c-engine/c-engine'),
+            path.resolve(__dirname, '../../../c-engine/c-engine.exe'),
+            path.resolve(__dirname, '../../c-engine/c-engine'),
+            path.resolve(__dirname, '../../c-engine/c-engine.exe'),
+            path.resolve(process.cwd(), 'c-engine/c-engine'),
+            path.resolve(process.cwd(), 'c-engine/c-engine.exe'),
+            path.resolve(process.cwd(), '../c-engine/c-engine'),
+            path.resolve(process.cwd(), '../c-engine/c-engine.exe')
+        ].filter(Boolean);
 
-        if (fs.existsSync(primaryPath)) {
-            this.binaryPath = primaryPath;
-        } else if (fs.existsSync(secondaryPath)) {
-            this.binaryPath = secondaryPath;
-        } else if (fs.existsSync(tertiaryPath)) {
-            this.binaryPath = tertiaryPath;
-        } else {
-            this.binaryPath = primaryPath; // fallback reference
-        }
+        this.binaryPath = candidates.find(p => fs.existsSync(p)) || path.resolve(__dirname, '../../../c-engine/c-engine.exe');
     }
 
     /**

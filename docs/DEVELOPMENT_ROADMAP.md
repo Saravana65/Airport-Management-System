@@ -19,7 +19,8 @@ flowchart TD
     M5["Milestone 5: Autonomous Airport Data Engine (Phase 08) [Completed]"]
     M6["Milestone 6: React Frontend Foundation & Dashboards [Completed]"]
     M7["Milestone 7: Operations Modules & Full-Stack Integration [Completed]"]
-    M8["Milestone 8: Docker Containerization & Viva Preparation [Planned]"]
+    M8["Milestone 8: Docker Containerization & Orchestration (Phase 10) [Completed]"]
+    M9["Milestone 9: Viva Defense Package & Presentation [Planned - Phase 11]"]
 
     M1 --> M2
     M2 --> M3
@@ -28,6 +29,7 @@ flowchart TD
     M7 --> M5
     M5 --> M4
     M4 --> M8
+    M8 --> M9
 ```
 
 ---
@@ -148,16 +150,31 @@ flowchart TD
 
 ---
 
-### Milestone 8: Docker Containerization & Viva Preparation
-- **Status**: ⚪ **Planned**
+### Milestone 8: Docker Containerization & Production Orchestration (Phase 10)
+- **Status**: 🟢 **Completed (Phase 10)**
+- **Deliverables**:
+  - `docker-compose.yml` orchestrating React Frontend, Node.js API Gateway, C Algorithm Engine, and Java 17 OOP Domain Microservice on an isolated bridge network (`airport-network`).
+  - Multi-stage Dockerfiles:
+    - `frontend/Dockerfile`: Vite build + Nginx 1.27 Alpine production web server with API reverse proxy.
+    - `backend/Dockerfile`: GCC Alpine builder (compiles & tests `c-engine` during image build) + Node.js 20 Alpine with `dumb-init` and unprivileged `node` user.
+    - `java-service/Dockerfile`: OpenJDK 17 builder (compiles & tests `BookingWorkflowTest`) + Eclipse Temurin 17 JRE Alpine runtime with `airport` non-root user.
+  - Reverse Proxy: `docker/nginx/default.conf` providing SPA client routing and `/api/` reverse proxying.
+  - One-Click Scripts: `docker-up.bat`, `docker-down.bat`, `docker-up.sh`, `docker-down.sh`.
+  - Comprehensive documentation:
+    - [`docs/DOCKER_SETUP.md`](DOCKER_SETUP.md)
+    - [`docs/CONTAINER_ARCHITECTURE.md`](CONTAINER_ARCHITECTURE.md)
+    - [`docs/ENVIRONMENT_CONFIGURATION.md`](ENVIRONMENT_CONFIGURATION.md)
+    - [`docs/PHASE_10_TEST_REPORT.md`](PHASE_10_TEST_REPORT.md)
+- **Viva Defense Point**: *"We containerized the polyglot stack into lightweight multi-stage Docker images running under least-privilege non-root users with dumb-init signal handling, automated health checks, and host Oracle XE connectivity via host.docker.internal."*
+
+---
+
+### Milestone 9: Viva Defense Package & Presentation (Phase 11)
+- **Status**: ⚪ **Planned (Awaiting Approval)**
 - **Action Items**:
-  1. Author `Dockerfile` for frontend and backend.
-  2. Write `docker-compose.yml` orchestrating React, Node.js, and Oracle XE database.
-  3. Prepare Viva Defense Package:
-     - Project presentation slide deck.
-     - Comprehensive viva Q&A preparation guide covering normalization, PL/SQL, REST, C DSA, and Java OOP.
-     - 5-minute live demonstration script.
-- **Testing Checkpoint**: Single command `docker-compose up` launches the entire system cleanly on a clean machine.
+  1. Author comprehensive viva defense question & answer guide covering 3NF normalization, PL/SQL triggers, RESTful API design, C DSA time complexity proofs, Java OOP design patterns, and container architecture.
+  2. Prepare project presentation slide deck outline.
+  3. Prepare 5-minute live demonstration script with exact commands and click-through pathways.
 
 ---
 

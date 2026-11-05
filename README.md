@@ -10,6 +10,7 @@
 [![AADE Engine](https://img.shields.io/badge/Phase%2008%20AADE-Autonomous%20Engine%20Active-brightgreen)](docs/AADE_ARCHITECTURE.md)
 [![Java OOP](https://img.shields.io/badge/Phase%2009%20Java-OOP%20Domain%20Services-orange?logo=openjdk)](docs/JAVA_SERVICE_ARCHITECTURE.md)
 [![C Engine](https://img.shields.io/badge/Phase%2009%20C%20Engine-ANSI%20C99%20Algorithms-blue?logo=c)](docs/C_ALGORITHM_DESIGN.md)
+[![Docker Compose](https://img.shields.io/badge/Phase%2010%20Docker-Compose%20Orchestrated-blue?logo=docker)](docs/DOCKER_SETUP.md)
 [![Tests](https://img.shields.io/badge/Tests-129%2F129%20Passing-brightgreen)](docs/PHASE_09_TEST_REPORT.md)
 
 ---
@@ -85,6 +86,7 @@ To maintain engineering transparency, all modules are categorized as **[Implemen
 | **Autonomous Airport Data Engine** | Invariant monitoring, gate overlap & seat collision detection, rule-based recommendations, and human approval queue. | **Implemented (Full-Stack)** | Phase 08 Autonomous Engine, 10 Components, 5 AADE Tables, React Approval Dashboard |
 | **C Algorithm Engine** | High-performance C99 algorithms: greedy bipartite gate allocation ($O(F\cdot G)$), Min-Heap runway priority queue ($O(\log N)$), Dijkstra conveyor routing ($O(V^2)$). | **Implemented (Native & Full-Stack)** | Phase 09 `c-engine/`, CLI harness, MSVC/GCC compilation, child_process runner |
 | **Java OOP Microservice** | Pure Java 17 LTS domain service: Encapsulation, Inheritance, Polymorphism (Dynamic Strategy Pricing), State Machine (`PENDING` $\to$ `CONFIRMED` $\to$ `CHECKED_IN` $\to$ `BOARDED`), and `ConcurrentHashMap`. | **Implemented (Full-Stack)** | Phase 09 `java-service/`, embedded HTTP server (port 5050), Node.js client |
+| **Docker Production Orchestration** | Multi-stage containerization of Frontend (Nginx), Backend (Node+C), Java Microservice, and isolated bridge network. | **Implemented (Phase 10)** | `docker-compose.yml`, multi-stage Dockerfiles, healthchecks, one-click scripts |
 
 *Detailed feature breakdown is documented in [`docs/FEATURES.md`](docs/FEATURES.md).*
 
@@ -150,7 +152,7 @@ flowchart TD
 | **React.js (Vite)** | Frontend Presentation | Interactive Operations Center dashboard, 4 station portals, and live algorithms lab | **Implemented** |
 | **Java (JDK 17 LTS)** | Enterprise Services | Pure OOP domain microservice on port 5050: Strategy pattern dynamic pricing, lifecycle state machine, and concurrent repository | **Implemented** |
 | **ANSI C (C99/C11)** | Computation Engine | Standalone compiled CLI binary: Greedy gate allocation ($O(F\cdot G)$), Min-Heap runway queue ($O(\log N)$), Dijkstra conveyor route ($O(V^2)$) | **Implemented** |
-| **Docker** | Infrastructure | Containerized execution of web, API, worker services, and database | **Planned (Phase 10)** |
+| **Docker & Docker Compose** | Infrastructure | Multi-stage containerized execution of web (Nginx), API (Node+C), and Java microservice | **Implemented (Phase 10)** |
 | **GitHub** | DevOps & Versioning | Version control, documentation hosting, and continuous integration | **Active** |
 | **Antigravity** | Development Platform | AI-assisted engineering, architectural drafting, and documentation generation | **Active** |
 
@@ -193,8 +195,8 @@ graph TB
         Procedures["Stored Procedures & Sequences\nAutonomous Sequences, Constraints, Triggers"]
     end
 
-    subgraph Tier6 ["6. Containerization & Deployment [Planned - Phase 10]"]
-        Docker["Docker Multi-Container Orchestration\n(Frontend, API, Worker, Database)"]
+    subgraph Tier6 ["6. Containerization & Deployment [Implemented - Docker Compose]"]
+        Docker["Docker Multi-Container Orchestration\n(airport-frontend, airport-backend, airport-java-service)"]
     end
 
     UI_Admin -->|HTTPS / JSON REST| API_Gateway
@@ -364,7 +366,19 @@ To deploy and execute the currently available source code, you need:
    run.bat
    ```
 
-5. **Docker Compose**: *Planned (Phase 10)*
+5. **Docker Multi-Tier Container Launch (All Services)**:
+   ```cmd
+   # One-click Windows launch
+   docker-up.bat
+
+   # One-click Linux / macOS launch
+   chmod +x docker-up.sh
+   ./docker-up.sh
+
+   # Manual Docker Compose
+   cp .env.example .env
+   docker-compose up -d --build
+   ```
 
 ---
 
@@ -435,6 +449,10 @@ No formal license file is currently included in the repository. Please contact t
 For in-depth architectural, database, and viva preparation documentation, refer to the following guides:
 
 ### Student Capstone & Viva Defense Guides
+- 🐳 [**Docker Setup & Operations Guide**](docs/DOCKER_SETUP.md) — Prerequisites, one-click start/stop, host Oracle connection, and troubleshooting.
+- 🏗️ [**Container Architecture & Security**](docs/CONTAINER_ARCHITECTURE.md) — Multi-stage Dockerfiles, least-privilege non-root users, dumb-init, and Nginx reverse proxy.
+- ⚙️ [**Environment Configuration Reference**](docs/ENVIRONMENT_CONFIGURATION.md) — Comprehensive guide to all container, database, security, and port parameters.
+- 📋 [**Phase 10 Test & Verification Report**](docs/PHASE_10_TEST_REPORT.md) — Docker Compose validation, image specs, and multi-tier verification report.
 - ☕ [**Java Service Architecture**](docs/JAVA_SERVICE_ARCHITECTURE.md) — Embedded microservice architecture on port 5050, multithreading model, and REST interfaces.
 - 🎓 [**Java OOP Concepts & Viva Guide**](docs/JAVA_OOP_CONCEPTS.md) — Viva explanation guide for Encapsulation, Inheritance, Polymorphism, Abstraction, and State Pattern.
 - ⚡ [**C Algorithm Engine Design**](docs/C_ALGORITHM_DESIGN.md) — C99 data structures, Gate Allocation, Min-Heap Runway Queue, Dijkstra Conveyor, and CLI interface.
