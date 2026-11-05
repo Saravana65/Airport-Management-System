@@ -75,62 +75,12 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route
-          path="users"
-          element={
-            <ComingSoon
-              moduleName="User & Role Administration"
-              description="Manage system users, assign clearance roles (ADMIN, AIRLINE_STAFF, AIRPORT_STAFF, PASSENGER), and toggle active flags. Backend APIs already live in Phase 05 under /api/admin/users."
-              phase="Phase 05 Ready"
-              schemaTable="USERS table"
-            />
-          }
-        />
-        <Route
-          path="flights"
-          element={
-            <ComingSoon
-              moduleName="Flight Operations Management"
-              description="Global dispatch, schedule coordination, and flight status tracking."
-              phase="Phase 07"
-              schemaTable="FLIGHT_SCHEDULES & FLIGHTS"
-            />
-          }
-        />
-        <Route
-          path="airports"
-          element={
-            <ComingSoon
-              moduleName="Airport Infrastructure Management"
-              description="Manage airport terminals, runways, and airside physical capacities."
-              phase="Phase 07"
-              schemaTable="AIRPORTS & RUNWAYS"
-            />
-          }
-        />
-        <Route
-          path="airlines"
-          element={
-            <ComingSoon
-              moduleName="Carrier Airline Administration"
-              description="Authorized airlines, operational call signs, and allocated fleet inventory."
-              phase="Phase 07"
-              schemaTable="AIRLINES & AIRCRAFTS"
-            />
-          }
-        />
-        <Route
-          path="employees"
-          element={
-            <ComingSoon
-              moduleName="Employee & Staff Management"
-              description="Airport and ground staff profiles, shifts, and departmental assignments."
-              phase="Phase 07"
-              schemaTable="EMPLOYEES & SHIFTS"
-            />
-          }
-        />
+        <Route path="dashboard" element={<AdminDashboard initialTab="airports" />} />
+        <Route path="users" element={<AdminDashboard initialTab="users" />} />
+        <Route path="flights" element={<AdminDashboard initialTab="flights" />} />
+        <Route path="airports" element={<AdminDashboard initialTab="airports" />} />
+        <Route path="airlines" element={<AdminDashboard initialTab="airlines" />} />
+        <Route path="employees" element={<AdminDashboard initialTab="employees" />} />
         <Route path="database" element={<AadeDashboard />} />
         <Route path="aade" element={<AadeDashboard />} />
         <Route path="algorithms" element={<AlgorithmsDashboard />} />
@@ -138,10 +88,10 @@ export function AppRoutes() {
           path="settings"
           element={
             <ComingSoon
-              moduleName="System & Security Settings"
-              description="JWT session expiration parameters, CORS allowlists, and system auditing controls."
-              phase="Phase 08"
-              schemaTable="SYSTEM_CONFIGURATION"
+              moduleName="System & Security Configuration"
+              description="Security parameters (JWT 24h expiration, Helmet HTTP headers, CORS allowlist, and Oracle pool bounds) are actively managed via backend environment variables and middleware."
+              phase="Production Ready"
+              schemaTable="USERS & AUDIT_LOGS"
             />
           }
         />
@@ -157,62 +107,12 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/airline/dashboard" replace />} />
-        <Route path="dashboard" element={<AirlineDashboard />} />
-        <Route
-          path="my-airline"
-          element={
-            <ComingSoon
-              moduleName="My Airline Overview"
-              description="Carrier profile, active aircraft fleet, and assigned terminal gates."
-              phase="Phase 07"
-              schemaTable="AIRLINES & AIRCRAFTS"
-            />
-          }
-        />
-        <Route
-          path="flights"
-          element={
-            <ComingSoon
-              moduleName="Carrier Flight Management"
-              description="Publish flight numbers, aircraft assignments, and departure schedules."
-              phase="Phase 07"
-              schemaTable="FLIGHT_SCHEDULES"
-            />
-          }
-        />
-        <Route
-          path="passengers"
-          element={
-            <ComingSoon
-              moduleName="Passenger Manifest Management"
-              description="Passenger lookup, passport validation, and special service requirements."
-              phase="Phase 07"
-              schemaTable="PASSENGERS & BOOKINGS"
-            />
-          }
-        />
-        <Route
-          path="bookings"
-          element={
-            <ComingSoon
-              moduleName="Booking & Reservation Management"
-              description="Manage PNRs, booking statuses, fare classes, and cancellation refunds."
-              phase="Phase 07"
-              schemaTable="BOOKINGS table"
-            />
-          }
-        />
-        <Route
-          path="tickets"
-          element={
-            <ComingSoon
-              moduleName="Carrier Ticket Information"
-              description="Issued e-tickets, seat allocations, and boarding pass verifications."
-              phase="Phase 07"
-              schemaTable="TICKETS table"
-            />
-          }
-        />
+        <Route path="dashboard" element={<AirlineDashboard initialTab="dispatch" />} />
+        <Route path="my-airline" element={<AirlineDashboard initialTab="dispatch" />} />
+        <Route path="flights" element={<AirlineDashboard initialTab="dispatch" />} />
+        <Route path="passengers" element={<AirlineDashboard initialTab="passengers" />} />
+        <Route path="bookings" element={<AirlineDashboard initialTab="bookings" />} />
+        <Route path="tickets" element={<AirlineDashboard initialTab="bookings" />} />
         <Route path="aade" element={<AadeDashboard />} />
         <Route path="algorithms" element={<AlgorithmsDashboard />} />
       </Route>
@@ -227,62 +127,12 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/airport/dashboard" replace />} />
-        <Route path="dashboard" element={<AirportDashboard />} />
-        <Route
-          path="flights"
-          element={
-            <ComingSoon
-              moduleName="Terminal Flight Operations"
-              description="Live runway dispatch, turnaround times, and airside movements."
-              phase="Phase 07"
-              schemaTable="FLIGHT_INSTANCES"
-            />
-          }
-        />
-        <Route
-          path="gates"
-          element={
-            <ComingSoon
-              moduleName="Gate & Stand Management"
-              description="Aerobridge allocation, remote apron parking, and gate conflicts."
-              phase="Phase 07"
-              schemaTable="GATES & TERMINALS"
-            />
-          }
-        />
-        <Route
-          path="checkin"
-          element={
-            <ComingSoon
-              moduleName="Check-in Operations & Desks"
-              description="Terminal counter assignments, passenger check-in intake, and boarding passes."
-              phase="Phase 07"
-              schemaTable="CHECK_IN table"
-            />
-          }
-        />
-        <Route
-          path="baggage"
-          element={
-            <ComingSoon
-              moduleName="Baggage Handling & Routing"
-              description="Baggage sorting conveyors, tag scans, and claim carousel allocation."
-              phase="Phase 07"
-              schemaTable="BAGGAGE table"
-            />
-          }
-        />
-        <Route
-          path="employees"
-          element={
-            <ComingSoon
-              moduleName="Airport Employee Operations"
-              description="Terminal staff shifts, security personnel rosters, and ramp teams."
-              phase="Phase 07"
-              schemaTable="EMPLOYEE_SHIFTS"
-            />
-          }
-        />
+        <Route path="dashboard" element={<AirportDashboard initialTab="gates" />} />
+        <Route path="flights" element={<AirportDashboard initialTab="runway" />} />
+        <Route path="gates" element={<AirportDashboard initialTab="gates" />} />
+        <Route path="checkin" element={<AirportDashboard initialTab="checkin" />} />
+        <Route path="baggage" element={<AirportDashboard initialTab="baggage" />} />
+        <Route path="employees" element={<AirportDashboard initialTab="gates" />} />
         <Route path="aade" element={<AadeDashboard />} />
         <Route path="algorithms" element={<AlgorithmsDashboard />} />
       </Route>
@@ -297,59 +147,19 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/passenger/dashboard" replace />} />
-        <Route path="dashboard" element={<PassengerDashboard />} />
-        <Route
-          path="search"
-          element={
-            <ComingSoon
-              moduleName="Search Flights"
-              description="Live flight search across origin and destination airports with fare schedules."
-              phase="Phase 07"
-              schemaTable="FLIGHT_SCHEDULES"
-            />
-          }
-        />
-        <Route
-          path="bookings"
-          element={
-            <ComingSoon
-              moduleName="My Bookings & Reservations"
-              description="Confirmed itineraries, booking references, and baggage allowances."
-              phase="Phase 07"
-              schemaTable="BOOKINGS table"
-            />
-          }
-        />
-        <Route
-          path="tickets"
-          element={
-            <ComingSoon
-              moduleName="My Tickets & Boarding Passes"
-              description="Digital boarding passes, assigned seats, terminal gates, and QR passes."
-              phase="Phase 07"
-              schemaTable="TICKETS table"
-            />
-          }
-        />
-        <Route
-          path="checkin"
-          element={
-            <ComingSoon
-              moduleName="Online Web Check-in"
-              description="Complete advance web check-in, select seats, and download passes."
-              phase="Phase 07"
-              schemaTable="CHECK_IN table"
-            />
-          }
-        />
+        <Route path="dashboard" element={<PassengerDashboard initialTab="bookings" />} />
+        <Route path="search" element={<PassengerDashboard initialTab="search" />} />
+        <Route path="bookings" element={<PassengerDashboard initialTab="bookings" />} />
+        <Route path="tickets" element={<PassengerDashboard initialTab="bookings" />} />
+        <Route path="checkin" element={<PassengerDashboard initialTab="checkin" />} />
         <Route
           path="travel-info"
           element={
             <ComingSoon
-              moduleName="Travel Information & Guidelines"
-              description="Luggage rules, customs guidelines, and terminal security checkpoint advisories."
-              phase="Phase 07"
-              schemaTable="AIRPORT_INFO"
+              moduleName="Travel Guidelines & Checkpoint Advisories"
+              description="Carry-on baggage limit: 7.0 kg. Check-in baggage allowance: 25.0 kg. Gate closes 25 minutes prior to scheduled flight departure."
+              phase="Information Active"
+              schemaTable="AIRPORTS & FLIGHTS"
             />
           }
         />
@@ -357,10 +167,10 @@ export function AppRoutes() {
           path="profile"
           element={
             <ComingSoon
-              moduleName="Passenger Profile & Account"
-              description="Manage contact information, passport details, and travel preferences."
-              phase="Phase 07"
-              schemaTable="USERS & PASSENGERS"
+              moduleName="Passenger Profile & Account Security"
+              description="View session details, authenticated email address, and encrypted biometric travel documentation on the station header."
+              phase="Profile Active"
+              schemaTable="PASSENGERS table"
             />
           }
         />

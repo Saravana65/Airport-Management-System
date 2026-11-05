@@ -26,10 +26,10 @@ import operationsService from '../../services/operations.service';
 import api from '../../services/api';
 import './AdminDashboard.css';
 
-export function AdminDashboard() {
+export function AdminDashboard({ initialTab = 'airports' }) {
   const { user } = useAuth();
   const [dbHealth, setDbHealth] = useState({ status: 'checking', message: '' });
-  const [activeTab, setActiveTab] = useState('airports');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,6 +40,7 @@ export function AdminDashboard() {
   const [flights, setFlights] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [gates, setGates] = useState([]);
+  const [usersList, setUsersList] = useState([]);
 
   // Form State for creating new Airport
   const [newAirport, setNewAirport] = useState({ airportCode: '', airportName: '', city: '', country: '', timezone: 'Asia/Kolkata' });
@@ -50,13 +51,14 @@ export function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [ports, lines, planes, flts, emps, gts] = await Promise.all([
+      const [ports, lines, planes, flts, emps, gts, usrRes] = await Promise.all([
         operationsService.getAirports().catch(() => []),
         operationsService.getAirlines().catch(() => []),
         operationsService.getAircraft().catch(() => []),
         operationsService.getFlights().catch(() => []),
         operationsService.getEmployees().catch(() => []),
         operationsService.getGates().catch(() => []),
+        api.get('/admin/users').catch(() => ({ data: { users: [] } })),
       ]);
       setAirports(ports);
       setAirlines(lines);
@@ -64,12 +66,17 @@ export function AdminDashboard() {
       setFlights(flts);
       setEmployees(emps);
       setGates(gts);
+      setUsersList(usrRes?.data?.users || usrRes?.users || []);
     } catch (err) {
       setError(err.message || 'Failed to load operational data.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     loadData();
@@ -195,8 +202,10 @@ export function AdminDashboard() {
             <button className={`tab-btn ${activeTab === 'airports' ? 'active' : ''}`} onClick={() => setActiveTab('airports')}>Airports ({airports.length})</button>
             <button className={`tab-btn ${activeTab === 'airlines' ? 'active' : ''}`} onClick={() => setActiveTab('airlines')}>Airlines ({airlines.length})</button>
             <button className={`tab-btn ${activeTab === 'aircraft' ? 'active' : ''}`} onClick={() => setActiveTab('aircraft')}>Fleet ({aircraft.length})</button>
+            <button className={`tab-btn ${activeTab === 'flights' ? 'active' : ''}`} onClick={() => setActiveTab('flights')}>Flights ({flights.length})</button>
             <button className={`tab-btn ${activeTab === 'employees' ? 'active' : ''}`} onClick={() => setActiveTab('employees')}>Staff ({employees.length})</button>
             <button className={`tab-btn ${activeTab === 'gates' ? 'active' : ''}`} onClick={() => setActiveTab('gates')}>Gates ({gates.length})</button>
+            <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users ({usersList.length})</button>
           </div>
         </div>
 
@@ -387,6 +396,62 @@ export function AdminDashboard() {
                       <td className="mono font-bold">{g.terminal} - {g.gateNumber}</td>
                       <td><StatusBadge status={g.status} label={g.status} size="sm" /></td>
                       <td className="mono">{g.activeFlightNumber ? `${g.activeFlightNumber} (${g.activeFlightStatus})` : 'Clear / Unassigned'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'flights' && (
+            <div className="table-responsive">
+              <table className="ops-table">
+                <thead>
+                  <tr>
+                    <th>Flight #</th>
+                    <th>Route</th>
+                    <th>Scheduled Times</th>
+                    <th>Aircraft Tail</th>
+                    <th>Base Fare</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flights.map(f => (
+                    <tr key={f.flightInstanceId || f.flightNumber}>
+                      <td className="mono text-amber font-bold">{f.flightNumber}</td>
+                      <td className="mono">{f.originAirport} &rarr; {f.destAirport}</td>
+                      <td className="mono text-muted">{f.scheduledDepartureTime} - {f.scheduledArrivalTime}</td>
+                      <td className="mono">{f.aircraftRegistration || f.airlineCode}</td>
+                      <td className="mono font-bold">${f.baseFare}</td>
+                      <td><StatusBadge status={f.status} label={f.status} size="sm" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'users' && (
+            <div className="table-responsive">
+              <table className="ops-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Email Address</th>
+                    <th>Role Clearance</th>
+                    <th>Status</th>
+                    <th>Registered At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usersList.map(u => (
+                    <tr key={u.userId}>
+                      <td className="mono">#{u.userId}</td>
+                      <td className="font-medium text-white">{u.email}</td>
+                      <td><StatusBadge status={u.role} label={u.role} size="sm" /></td>
+                      <td><StatusBadge status={u.isActive === 'Y' ? 'ACTIVE' : 'INACTIVE'} label={u.isActive === 'Y' ? 'ACTIVE' : 'DEACTIVATED'} size="sm" /></td>
+                      <td className="mono text-muted">{u.createdAt || '--'}</td>
                     </tr>
                   ))}
                 </tbody>

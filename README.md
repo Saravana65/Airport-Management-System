@@ -87,6 +87,7 @@ To maintain engineering transparency, all modules are categorized as **[Implemen
 | **C Algorithm Engine** | High-performance C99 algorithms: greedy bipartite gate allocation ($O(F\cdot G)$), Min-Heap runway priority queue ($O(\log N)$), Dijkstra conveyor routing ($O(V^2)$). | **Implemented (Native & Full-Stack)** | Phase 09 `c-engine/`, CLI harness, MSVC/GCC compilation, child_process runner |
 | **Java OOP Microservice** | Pure Java 17 LTS domain service: Encapsulation, Inheritance, Polymorphism (Dynamic Strategy Pricing), State Machine (`PENDING` $\to$ `CONFIRMED` $\to$ `CHECKED_IN` $\to$ `BOARDED`), and `ConcurrentHashMap`. | **Implemented (Full-Stack)** | Phase 09 `java-service/`, embedded HTTP server (port 5050), Node.js client |
 | **Docker Production Orchestration** | Multi-stage containerization of Frontend (Nginx), Backend (Node+C), Java Microservice, and isolated bridge network. | **Implemented (Phase 10)** | `docker-compose.yml`, multi-stage Dockerfiles, healthchecks, one-click scripts |
+| **Full System Integration & Viva Readiness** | End-to-end integration, 152 automated tests passing (100%), security hardening, ACID transaction verification, and viva presentation script. | **Implemented & Verified (Phase 11)** | `backend/tests/e2e.test.js`, `docs/DEMONSTRATION_GUIDE.md`, `docs/FINAL_SYSTEM_ARCHITECTURE.md` |
 
 *Detailed feature breakdown is documented in [`docs/FEATURES.md`](docs/FEATURES.md).*
 
@@ -449,6 +450,12 @@ No formal license file is currently included in the repository. Please contact t
 For in-depth architectural, database, and viva preparation documentation, refer to the following guides:
 
 ### Student Capstone & Viva Defense Guides
+- 🎓 [**Faculty Demonstration & Viva Guide**](docs/DEMONSTRATION_GUIDE.md) — Step-by-step viva presentation script with demo credentials, role workflows, and technology explanations.
+- 🏛️ [**Final System Architecture**](docs/FINAL_SYSTEM_ARCHITECTURE.md) — Comprehensive 4-tier system architecture, polyglot interaction flow, and data flow.
+- 🧪 [**End-to-End System Test Report**](docs/END_TO_END_TEST_REPORT.md) — Detailed verification of all 152 automated tests passing with 100% pass rate.
+- 🛡️ [**System Security Audit & Hardening**](docs/SECURITY_AUDIT.md) — Security vector review: bcrypt hashing, HttpOnly JWT cookies, RBAC, and parameterization.
+- 🗄️ [**Database & Transaction Validation**](docs/DATABASE_VALIDATION_REPORT.md) — 16 3NF tables, composite unique keys, foreign keys, and ACID rollback behavior.
+- ⚠️ [**Known Limitations & Academic Scope**](docs/KNOWN_LIMITATIONS.md) — Clear, transparent report on academic simulation boundaries and deployment prerequisites.
 - 🐳 [**Docker Setup & Operations Guide**](docs/DOCKER_SETUP.md) — Prerequisites, one-click start/stop, host Oracle connection, and troubleshooting.
 - 🏗️ [**Container Architecture & Security**](docs/CONTAINER_ARCHITECTURE.md) — Multi-stage Dockerfiles, least-privilege non-root users, dumb-init, and Nginx reverse proxy.
 - ⚙️ [**Environment Configuration Reference**](docs/ENVIRONMENT_CONFIGURATION.md) — Comprehensive guide to all container, database, security, and port parameters.

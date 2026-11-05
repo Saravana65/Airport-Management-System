@@ -24,12 +24,16 @@ import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import operationsService from '../../services/operations.service';
 import './AirportDashboard.css';
 
-export function AirportDashboard() {
+export function AirportDashboard({ initialTab = 'gates' }) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('gates');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionSuccess, setActionSuccess] = useState('');
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   // Live Module Data
   const [gates, setGates] = useState([]);
