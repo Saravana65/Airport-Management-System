@@ -46,7 +46,7 @@ The **Airport Management System (AMS)** is a centralized operations platform eng
 The Airport Management System solves these problems by providing:
 1. **Centralized Relational Persistence**: A normalized 3NF/BCNF relational database schema implemented in Oracle SQL covering flights, routes, airports, passengers, employees, and ticket pricing.
 2. **Proactive Event Auditing**: Database triggers that capture flight delays and ticket price modifications the instant they occur.
-3. **Decoupled Multi-Tier Architecture**: A planned multi-language ecosystem combining a fast React web frontend, a Node.js/Express API gateway, C-based algorithmic schedulers, and Java enterprise transaction services.
+3. **Decoupled Multi-Tier Architecture**: A production-grade multi-language ecosystem combining a fast React web frontend, a Node.js/Express API gateway, C99 compiled algorithmic schedulers, and Java 17 enterprise OOP transaction services.
 
 ---
 
@@ -164,43 +164,47 @@ The following diagram illustrates the complete planned multi-tier system archite
 
 ```mermaid
 graph TB
-    subgraph Tier1 ["1. Presentation Tier [Planned]"]
-        UI_Admin["AOC Operations Dashboard\n(React.js / Vite)"]
-        UI_Pass["Passenger Self-Service Portal\n(React.js / Tailwind CSS)"]
+    subgraph Tier1 ["1. Presentation Tier [Implemented - React 18 / Vite]"]
+        UI_Admin["AOC Operations & Stations Dashboard\n(React.js / Vite / Tailwind)"]
+        UI_Pass["Passenger Self-Service & Booking Portal\n(React.js / Modular CSS)"]
+        UI_Algo["Algorithms & Dynamic Pricing Lab\n(Interactive Visualizers)"]
     end
 
-    subgraph Tier2 ["2. Application & API Tier [Planned]"]
+    subgraph Tier2 ["2. Application & API Gateway Tier [Implemented - Node.js / Express]"]
         API_Gateway["API Gateway & Router\n(Node.js / Express.js)"]
-        Auth["JWT & Role-Based Access Control"]
+        Auth["JWT & Role-Based Access Control (RBAC)"]
         Pool["Oracle DB Driver Connection Pool\n(node-oracledb)"]
+        IntegRouter["Multi-Language Integration Router\n(/api/integration/*)"]
     end
 
-    subgraph Tier3 ["3. Specialized Compute Services [Planned]"]
-        C_Alg["C Algorithm Engine\n- Gate Bipartite Matching\n- Runway Heap Queues"]
-        Java_Svc["Java Enterprise Services\n- Booking State Machine\n- Concurrency Management"]
+    subgraph Tier3 ["3. Specialized Compute Services [Implemented - C99 & Java 17]"]
+        C_Alg["C Algorithm Engine (c-engine.exe)\n- Gate Bipartite Matching O(F*G)\n- Runway Min-Heap Queue O(log N)\n- Dijkstra Baggage Conveyor O(V^2)"]
+        Java_Svc["Java OOP Microservice (Port 5050)\n- Strategy Pattern Dynamic Pricing\n- Lifecycle State Machine\n- Thread-Safe ConcurrentHashMap Store"]
     end
 
-    subgraph Tier4 ["4. Autonomous Airport Data Engine [Planned / Triggers Implemented]"]
-        AADE_Watcher["Integrity & Conflict Daemon [Planned]"]
+    subgraph Tier4 ["4. Autonomous Airport Data Engine (AADE) [Implemented]"]
+        AADE_Watcher["AADE Monitoring & Conflict Engine\n(10 Components & Relational Tables)"]
         AADE_Triggers["Oracle Event Triggers [Implemented]\nDELAYEDFLIGHTS, TICKET_PRICE_HISTORY, UPDATEDSalary"]
     end
 
     subgraph Tier5 ["5. Relational Persistence Tier (Oracle SQL) [Implemented]"]
-        Tables["Core Relational Tables (14 Tables)\nCITY, AIRPORT, AIRLINE, CONTAINS, FLIGHT,\nPASSENGER(1-3), EMPLOYEE(1-2), SERVES, TICKET(1-3)"]
-        AuditTables["Audit & History Tables (2 Tables)\nDELAYED_FLIGHTS, TICKET_PRICE_HISTORY"]
-        Procedures["Stored Procedures\nDFWECONOMYPASSENGERS(), FLIGHTSBYSTATUS()"]
+        Tables["Core Relational Tables (16 Tables)\nAIRPORTS, AIRLINES, AIRCRAFTS, FLIGHTS, GATES,\nPASSENGERS, BOOKINGS, TICKETS, BAGGAGE, EMPLOYEES..."]
+        AuditTables["Audit & AADE Tables (7 Tables)\nAADE_EVENTS, AADE_ALERTS, AADE_RECOMMENDATIONS,\nAADE_APPROVAL_REQUESTS, AADE_AUDIT_LOGS, DELAYED_FLIGHTS..."]
+        Procedures["Stored Procedures & Sequences\nAutonomous Sequences, Constraints, Triggers"]
     end
 
-    subgraph Tier6 ["6. Containerization & Deployment [Planned]"]
+    subgraph Tier6 ["6. Containerization & Deployment [Planned - Phase 10]"]
         Docker["Docker Multi-Container Orchestration\n(Frontend, API, Worker, Database)"]
     end
 
     UI_Admin -->|HTTPS / JSON REST| API_Gateway
     UI_Pass -->|HTTPS / JSON REST| API_Gateway
+    UI_Algo -->|HTTPS / JSON REST| API_Gateway
     API_Gateway --> Auth
     Auth --> Pool
-    API_Gateway <-->|N-API / IPC| C_Alg
-    API_Gateway <-->|gRPC / REST| Java_Svc
+    API_Gateway --> IntegRouter
+    IntegRouter <-->|child_process (CLI / JSON)| C_Alg
+    IntegRouter <-->|HTTP REST (Port 5050)| Java_Svc
     Pool <-->|Oracle Net Services (Port 1521)| Tables
     AADE_Triggers -->|Autonomously Populates| AuditTables
     AADE_Watcher <-->|Inspects Invariants| Tables
@@ -329,23 +333,52 @@ To deploy and execute the currently available source code, you need:
    SELECT * FROM TICKET_PRICE_HISTORY;
    ```
 
-### Application & API Setup
-- **Node.js / Express API**: *Pending Implementation (Phase 2)*
-- **React.js Frontend**: *Pending Implementation (Phase 5)*
-- **Docker Compose**: *Pending Implementation (Phase 6)*
+### Application & Service Setup
+
+1. **Node.js / Express API Gateway (Port 5000)**:
+   ```cmd
+   cd backend
+   npm install
+   npm start
+   ```
+
+2. **React.js Frontend Presentation Tier (Port 5173)**:
+   ```cmd
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+3. **C Algorithm Engine (Native CLI)**:
+   ```cmd
+   cd c-engine
+   build.bat
+   test_algorithms.exe
+   c-engine.exe --gate-alloc
+   ```
+
+4. **Java OOP Microservice (Port 5050)**:
+   ```cmd
+   cd java-service
+   build.bat
+   run.bat
+   ```
+
+5. **Docker Compose**: *Planned (Phase 10)*
 
 ---
 
-## 10. Application Screenshots
-
-*UI mockups and system monitoring screenshots will be populated upon completion of Phase 5 (Frontend Development).*
+## 10. Application Interfaces & Station Consoles
 
 | View | Description | Status |
 | :--- | :--- | :--- |
-| **Airport Operations Center (AOC) Dashboard** | *[Placeholder: Live flight radar, gate status grid, and active alerts]* | Planned (Phase 5) |
-| **Interactive Gate Allocation Matrix** | *[Placeholder: Bipartite matching visualizer for aircraft-to-gate assignments]* | Planned (Phase 5) |
-| **Passenger Booking & Seat Canvas** | *[Placeholder: Seat layout, class selector, and boarding pass generator]* | Planned (Phase 5) |
-| **Autonomous Data Engine Audit Stream** | *[Placeholder: Live telemetry stream of delay events and database health metrics]* | Planned (Phase 5) |
+| **Airport Operations Center (AOC) Dashboard** | Operational console for Admin, Airline Staff, and Airport Staff with real-time station metrics. | **Implemented (React UI)** |
+| **Interactive Gate Allocation Matrix** | C-powered Greedy Bipartite matching visualizer with wingspan & 30-min buffer conflict checks. | **Implemented (React UI & C Engine)** |
+| **Runway Priority Queue (Min-Heap)** | Visualizer for sequenced aircraft takeoffs with emergency pre-emption highlights. | **Implemented (React UI & C Engine)** |
+| **Baggage Conveyor Shortest Path** | Dijkstra graph traversal visualizer mapping baggage transit times across terminal checkpoints. | **Implemented (React UI & C Engine)** |
+| **Java Dynamic Pricing & State Machine** | Strategy pattern fare calculator and interactive booking lifecycle manager. | **Implemented (React UI & Java 17)** |
+| **Autonomous Data Engine (AADE) Console** | Live telemetry, invariant conflict detection, human-in-the-loop approval queue, and audit logs. | **Implemented (React UI & AADE)** |
+| **Passenger Booking & Travel Portal** | Flight search, PNR issuance, digital boarding pass (`BP-...`), and barcode baggage tags (`BAG-...`). | **Implemented (React UI)** |
 
 ---
 
