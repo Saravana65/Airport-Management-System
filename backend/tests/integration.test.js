@@ -164,11 +164,11 @@ server = app.listen(0, '127.0.0.1', async () => {
     try {
         dynamicPort = server.address().port;
         const success = await runIntegrationTests();
-        server.close(() => {
-            process.exit(success ? 0 : 1);
-        });
+        process.exitCode = success ? 0 : 1;
+        server.close();
     } catch (e) {
         console.error('Test execution failed:', e);
-        server.close(() => process.exit(1));
+        process.exitCode = 1;
+        server.close();
     }
 });

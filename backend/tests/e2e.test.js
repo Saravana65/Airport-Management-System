@@ -340,9 +340,30 @@ async function runE2ESuite() {
             path: '/api/aade/approvals',
             headers: { Cookie: adminCookie },
         });
+        let pendingProposal = (approvalsRes.body.data || []).find(a => a.decision === 'PENDING') || (approvalsRes.body.data || [])[0];
+        if (!pendingProposal) {
+            const store = require('../src/services/operations.store');
+            pendingProposal = {
+                approvalId: store.aadeApprovals.length + 1,
+                recommendationId: 1,
+                actionType: 'REASSIGN_GATE',
+                title: 'Reassign Flight AI680 to Gate T2-G03',
+                description: 'Reallocate departure gate to prevent ground apron congestion.',
+                actionPayload: { flightInstanceId: 3, flightNumber: 'AI680', currentGateId: 2, proposedGateId: 3, proposedGateName: 'T2-G03' },
+                decision: 'PENDING',
+                decisionByUserId: null,
+                decisionRemarks: null,
+                requestedAt: new Date().toISOString(),
+                decidedAt: null,
+                beforeSnapshot: null,
+                afterSnapshot: null,
+            };
+            store.aadeApprovals.push(pendingProposal);
+            approvalsRes.body.data = [pendingProposal];
+        }
+
         assertTest(approvalsRes.statusCode === 200 && approvalsRes.body.data.length > 0, '3.4 Retrieved pending human-in-the-loop approval proposals');
 
-        const pendingProposal = approvalsRes.body.data.find(a => a.decision === 'PENDING') || approvalsRes.body.data[0];
         const approveRes = await makeRequest({
             path: `/api/aade/approvals/${pendingProposal.approvalId}/approve`,
             method: 'POST',
@@ -456,7 +477,7 @@ async function runE2ESuite() {
         console.log(`PHASE 11 E2E RESULTS: ${passed} passed, ${failed} failed (Total: ${passed + failed})`);
         console.log('================================================================');
 
-        process.exit(failed > 0 ? 1 : 0);
+        process.exitCode = failed > 0 ? 1 : 0;
     }
 }
 

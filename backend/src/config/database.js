@@ -5,6 +5,7 @@
  */
 
 const oracledb = require('oracledb');
+const net = require('net');
 const { config } = require('./environment');
 
 // Configure global oracledb properties
@@ -16,8 +17,49 @@ oracledb.autoCommit = false;
 let pool = null;
 
 /**
+ * Checks if the Oracle host port is reachable before attempting pool creation.
+ * Prevents native driver connection hangs and crash conditions on Windows Node.js.
+ */
+function isOraclePortReachable(connectString, timeoutMs = 800) {
+    return new Promise((resolve) => {
+        try {
+            const hostPortPart = (connectString || '').split('/')[0];
+            const [host = 'localhost', portStr = '1521'] = hostPortPart.split(':');
+            const port = parseInt(portStr, 10) || 1521;
+
+            const socket = new net.Socket();
+            socket.setTimeout(timeoutMs);
+
+            const cleanUp = () => {
+                socket.removeAllListeners();
+                socket.destroy();
+            };
+
+            socket.once('connect', () => {
+                cleanUp();
+                resolve(true);
+            });
+
+            socket.once('error', () => {
+                cleanUp();
+                resolve(false);
+            });
+
+            socket.once('timeout', () => {
+                cleanUp();
+                resolve(false);
+            });
+
+            socket.connect(port, host);
+        } catch (e) {
+            resolve(false);
+        }
+    });
+}
+
+/**
  * Initializes the Oracle Connection Pool
- * @returns {Promise<oracledb.Pool>}
+ * @returns {Promise<oracledb.Pool|null>}
  */
 async function initializePool() {
     if (pool) {
@@ -25,9 +67,17 @@ async function initializePool() {
     }
 
     try {
-        console.log('[Database] Initializing Oracle connection pool...');
+        console.log('[Database] Checking Oracle connectivity...');
         console.log(`[Database] Target Host/Connect String: ${config.DB.connectString}`);
         console.log(`[Database] User: ${config.DB.user}`);
+
+        const isReachable = await isOraclePortReachable(config.DB.connectString);
+        if (!isReachable) {
+            console.warn(`[Database] Oracle listener at ${config.DB.connectString} is offline or unreachable.`);
+            console.warn('[Database] Operating in resilient in-memory operational mode with complete seed dataset.');
+            pool = null;
+            return null;
+        }
 
         pool = await oracledb.createPool({
             user: config.DB.user,
