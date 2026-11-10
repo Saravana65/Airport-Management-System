@@ -11,7 +11,13 @@ import {
   ShieldCheck,
   CheckCircle2,
   Info,
+  CalendarCheck,
+  Smartphone,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
+import { Lottie } from 'lottie-react';
+import bookingAnimation from '../../assets/appointment-booking.json';
 import useAuth from '../../hooks/useAuth';
 import './Login.css';
 
@@ -95,160 +101,219 @@ export function Login() {
       <div className="login-backdrop-grid"></div>
       <div className="radar-circle-bg"></div>
 
-      <div className="login-container">
-        {/* Card Header & Branding */}
-        <div className="login-card-header">
-          <div className="brand-badge">
-            <Plane size={24} className="brand-plane-icon" />
+      <div className="login-split-card">
+        {/* Left Showcase Panel: Appointment Booking & Smartphone Lottie */}
+        <div className="login-hero-showcase">
+          <div className="hero-badge-pill">
+            <Sparkles size={14} className="hero-sparkle-icon" />
+            <span>Smart Passenger & Operations Suite</span>
           </div>
-          <h1 className="login-title">AERO•OPS GATEWAY</h1>
-          <p className="login-subtitle">
-            Airport Operations & Flight Management Control System
+
+          <h2 className="hero-headline">
+            Intelligent Airport Booking & Terminal Dispatch
+          </h2>
+          <p className="hero-description">
+            Experience next-generation mobile flight booking, automated gate dispatch,
+            and real-time autonomous AADE operations in one unified aviation platform.
           </p>
+
+          {/* Interactive Lottie Smartphone Booking Container */}
+          <div className="hero-lottie-container">
+            <div className="lottie-glow-ring"></div>
+            <div className="lottie-frame">
+              <Lottie
+                src={bookingAnimation}
+                loop={true}
+                autoplay={true}
+                className="booking-lottie-player"
+              />
+            </div>
+
+            {/* Floating Context Badges */}
+            <div className="floating-badge badge-top-right">
+              <CalendarCheck size={14} className="floating-badge-icon" />
+              <span>Instant Mobile Booking</span>
+            </div>
+
+            <div className="floating-badge badge-bottom-left">
+              <Smartphone size={14} className="floating-badge-icon" />
+              <span>Digital Boarding Pass</span>
+            </div>
+          </div>
+
+          {/* Feature Highlights List */}
+          <div className="hero-features-list">
+            <div className="hero-feature-item">
+              <span className="feature-dot"></span>
+              <span>Self-Service Mobile Reservations</span>
+            </div>
+            <div className="hero-feature-item">
+              <span className="feature-dot"></span>
+              <span>Automated Gate & Baggage Handling</span>
+            </div>
+            <div className="hero-feature-item">
+              <span className="feature-dot"></span>
+              <span>Autonomous AI Engine Monitoring</span>
+            </div>
+          </div>
         </div>
 
-        {/* Network / Connection Failure Banner */}
-        {isNetworkError && (
-          <div className="login-alert-banner alert-danger">
-            <ServerCrash size={18} className="alert-icon" />
-            <div className="alert-body">
-              <strong>Backend Connection Unavailable</strong>
-              <p>
-                Cannot reach Node.js server at <code>http://localhost:5000</code>. Verify that backend is running (<code>npm run dev</code>).
-              </p>
+        {/* Right Panel: Aero•Ops Gateway Login Form */}
+        <div className="login-container">
+          {/* Card Header & Branding */}
+          <div className="login-card-header">
+            <div className="brand-badge">
+              <Plane size={24} className="brand-plane-icon" />
             </div>
-          </div>
-        )}
-
-        {/* Credentials / Validation Error Banner */}
-        {formError && !isNetworkError && (
-          <div className="login-alert-banner alert-warning">
-            <AlertTriangle size={18} className="alert-icon" />
-            <div className="alert-body">
-              <span>{formError}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Real Backend Authentication Form */}
-        <form onSubmit={handleSubmit} className="login-form" noValidate>
-          {/* Email Input */}
-          <div className="form-group">
-            <label htmlFor="station-email" className="form-label">
-              Station User / Operator Email
-            </label>
-            <div className="input-with-icon">
-              <Mail size={18} className="input-icon" />
-              <input
-                id="station-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="operator@airport.com"
-                disabled={loading}
-                autoComplete="email"
-                autoFocus
-              />
-            </div>
+            <h1 className="login-title">AERO•OPS GATEWAY</h1>
+            <p className="login-subtitle">
+              Airport Operations & Flight Management Control System
+            </p>
           </div>
 
-          {/* Password Input with Visibility Toggle */}
-          <div className="form-group">
-            <label htmlFor="station-password" className="form-label">
-              Station Access Password
-            </label>
-            <div className="input-with-icon">
-              <Lock size={18} className="input-icon" />
-              <input
-                id="station-password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                disabled={loading}
-                autoComplete="current-password"
-              />
+          {/* Network / Connection Failure Banner */}
+          {isNetworkError && (
+            <div className="login-alert-banner alert-danger">
+              <ServerCrash size={18} className="alert-icon" />
+              <div className="alert-body">
+                <strong>Backend Connection Unavailable</strong>
+                <p>
+                  Cannot reach Node.js server at <code>http://localhost:5000</code>. Verify that backend is running (<code>npm run dev</code>).
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Credentials / Validation Error Banner */}
+          {formError && !isNetworkError && (
+            <div className="login-alert-banner alert-warning">
+              <AlertTriangle size={18} className="alert-icon" />
+              <div className="alert-body">
+                <span>{formError}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Real Backend Authentication Form */}
+          <form onSubmit={handleSubmit} className="login-form" noValidate>
+            {/* Email Input */}
+            <div className="form-group">
+              <label htmlFor="station-email" className="form-label">
+                Station User / Operator Email
+              </label>
+              <div className="input-with-icon">
+                <Mail size={18} className="input-icon" />
+                <input
+                  id="station-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="operator@airport.com"
+                  disabled={loading}
+                  autoComplete="email"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Password Input with Visibility Toggle */}
+            <div className="form-group">
+              <label htmlFor="station-password" className="form-label">
+                Station Access Password
+              </label>
+              <div className="input-with-icon">
+                <Lock size={18} className="input-icon" />
+                <input
+                  id="station-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  disabled={loading}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="btn btn-primary login-submit-btn"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border animate-spin"></span>
+                  <span>Authenticating with Node.js Gateway...</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={18} />
+                  <span>Initialize Station Session</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Viva / Faculty Presentation Quick-Fill Helper */}
+          <div className="login-demo-helper">
+            <div className="demo-helper-header">
+              <Info size={14} className="demo-info-icon" />
+              <span>Viva / Faculty Demo Station Roles</span>
+            </div>
+            <div className="demo-pill-group">
               <button
                 type="button"
-                className="password-toggle-btn"
-                onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="demo-pill pill-admin"
+                onClick={() => fillCredentials('admin@airport.com', 'Admin@12345')}
+                title="Click to fill ADMIN credentials"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                ADMIN
+              </button>
+              <button
+                type="button"
+                className="demo-pill pill-airline"
+                onClick={() => fillCredentials('staff@airline.com', 'Airline@12345')}
+                title="Click to fill AIRLINE_STAFF credentials"
+              >
+                AIRLINE_STAFF
+              </button>
+              <button
+                type="button"
+                className="demo-pill pill-airport"
+                onClick={() => fillCredentials('ops@airport.com', 'Airport@12345')}
+                title="Click to fill AIRPORT_STAFF credentials"
+              >
+                AIRPORT_STAFF
+              </button>
+              <button
+                type="button"
+                className="demo-pill pill-passenger"
+                onClick={() => fillCredentials('passenger@gmail.com', 'Pass@12345')}
+                title="Click to fill PASSENGER credentials"
+              >
+                PASSENGER
               </button>
             </div>
+            <p className="demo-note">
+              Note: Authentication is strictly validated against the backend database.
+            </p>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="btn btn-primary login-submit-btn"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border animate-spin"></span>
-                <span>Authenticating with Node.js Gateway...</span>
-              </>
-            ) : (
-              <>
-                <ShieldCheck size={18} />
-                <span>Initialize Station Session</span>
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Viva / Faculty Presentation Quick-Fill Helper */}
-        <div className="login-demo-helper">
-          <div className="demo-helper-header">
-            <Info size={14} className="demo-info-icon" />
-            <span>Viva / Faculty Demo Station Roles</span>
+          {/* Security Notice */}
+          <div className="login-security-notice">
+            <CheckCircle2 size={12} className="security-check-icon" />
+            <span>Encrypted with bcrypt & HttpOnly JWT tokens</span>
           </div>
-          <div className="demo-pill-group">
-            <button
-              type="button"
-              className="demo-pill pill-admin"
-              onClick={() => fillCredentials('admin@airport.com', 'Admin@12345')}
-              title="Click to fill ADMIN credentials"
-            >
-              ADMIN
-            </button>
-            <button
-              type="button"
-              className="demo-pill pill-airline"
-              onClick={() => fillCredentials('staff@airline.com', 'Airline@12345')}
-              title="Click to fill AIRLINE_STAFF credentials"
-            >
-              AIRLINE_STAFF
-            </button>
-            <button
-              type="button"
-              className="demo-pill pill-airport"
-              onClick={() => fillCredentials('ops@airport.com', 'Airport@12345')}
-              title="Click to fill AIRPORT_STAFF credentials"
-            >
-              AIRPORT_STAFF
-            </button>
-            <button
-              type="button"
-              className="demo-pill pill-passenger"
-              onClick={() => fillCredentials('passenger@gmail.com', 'Pass@12345')}
-              title="Click to fill PASSENGER credentials"
-            >
-              PASSENGER
-            </button>
-          </div>
-          <p className="demo-note">
-            Note: Authentication is strictly validated against the backend database.
-          </p>
-        </div>
-
-        {/* Security Notice */}
-        <div className="login-security-notice">
-          <CheckCircle2 size={12} className="security-check-icon" />
-          <span>Encrypted with bcrypt & HttpOnly JWT tokens</span>
         </div>
       </div>
     </div>
