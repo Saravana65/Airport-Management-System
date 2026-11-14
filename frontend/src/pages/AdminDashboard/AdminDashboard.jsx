@@ -22,6 +22,7 @@ import {
 import useAuth from '../../hooks/useAuth';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
+import UltraQualityDataTable from '../../components/ui/ultra-quality-data-table';
 import operationsService from '../../services/operations.service';
 import api from '../../services/api';
 import './AdminDashboard.css';
@@ -404,31 +405,12 @@ export function AdminDashboard({ initialTab = 'airports' }) {
           )}
 
           {activeTab === 'flights' && (
-            <div className="table-responsive">
-              <table className="ops-table">
-                <thead>
-                  <tr>
-                    <th>Flight #</th>
-                    <th>Route</th>
-                    <th>Scheduled Times</th>
-                    <th>Aircraft Tail</th>
-                    <th>Base Fare</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {flights.map(f => (
-                    <tr key={f.flightInstanceId || f.flightNumber}>
-                      <td className="mono text-amber font-bold">{f.flightNumber}</td>
-                      <td className="mono">{f.originAirport} &rarr; {f.destAirport}</td>
-                      <td className="mono text-muted">{f.scheduledDepartureTime} - {f.scheduledArrivalTime}</td>
-                      <td className="mono">{f.aircraftRegistration || f.airlineCode}</td>
-                      <td className="mono font-bold">${f.baseFare}</td>
-                      <td><StatusBadge status={f.status} label={f.status} size="sm" /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ marginTop: '4px' }}>
+              <UltraQualityDataTable
+                title="Master Flight Operations & Status Board"
+                subtitle="Live radar tracking, route schedules, terminal assignments and status updates"
+                embedded={true}
+              />
             </div>
           )}
 

@@ -1,0 +1,988 @@
+/**
+ * UltraQualityDataTable.css
+ * Flight Status & Live Operations Control Center Data Table
+ * Theme: Aviation White + Navy Blue (#163A70) + Primary Blue (#2563EB) + Light Blue (#EAF3FF)
+ */
+
+.uq-datatable-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card, #E2E8F0);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 25px -5px rgba(22, 58, 112, 0.05), 0 8px 10px -6px rgba(22, 58, 112, 0.02);
+  color: var(--text-primary, #172B4D);
+  font-family: var(--font-sans, 'Inter', -apple-system, sans-serif);
+}
+
+/* ==========================================================
+   TABLE HEADER & TELEMETRY CONTROLS
+   ========================================================== */
+.uq-header-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-card, #E2E8F0);
+}
+
+.uq-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.uq-radar-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: var(--light-blue, #EAF3FF);
+  border: 1px solid var(--border-light-blue, #BFDBFE);
+  color: var(--blue-primary, #2563EB);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+
+.uq-header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy-primary, #163A70);
+  letter-spacing: -0.01em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.uq-header-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary, #64748B);
+  margin: 2px 0 0 0;
+}
+
+/* Live Telemetry & Refresh Info */
+.uq-telemetry-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.uq-live-pulse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background-color: var(--light-blue, #EAF3FF);
+  color: var(--blue-primary, #2563EB);
+  border: 1px solid var(--border-light-blue, #BFDBFE);
+}
+
+.uq-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #16A34A;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+  animation: uq-pulse 2s infinite;
+}
+
+.uq-pulse-dot.stale {
+  background-color: #D97706;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+}
+
+@keyframes uq-pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+.uq-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card, #E2E8F0);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy-primary, #163A70);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.uq-refresh-btn:hover:not(:disabled) {
+  background-color: var(--light-blue, #EAF3FF);
+  border-color: var(--blue-primary, #2563EB);
+  color: var(--blue-primary, #2563EB);
+}
+
+.uq-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uq-interval-select {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-card, #E2E8F0);
+  background-color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--navy-primary, #163A70);
+  outline: none;
+  cursor: pointer;
+}
+
+.uq-interval-select:focus {
+  border-color: var(--blue-primary, #2563EB);
+}
+
+/* ==========================================================
+   FILTER & SEARCH CONTROLS BAR
+   ========================================================== */
+.uq-controls-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.uq-search-and-selects {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.uq-search-box {
+  position: relative;
+  flex: 1 1 280px;
+  min-width: 240px;
+}
+
+.uq-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary, #64748B);
+  pointer-events: none;
+}
+
+.uq-search-input {
+  width: 100%;
+  padding: 9px 36px 9px 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border-card, #E2E8F0);
+  background-color: #FFFFFF;
+  font-size: 13px;
+  color: var(--text-primary, #172B4D);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.uq-search-input:focus {
+  border-color: var(--blue-primary, #2563EB);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.uq-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #64748B);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uq-search-clear:hover {
+  color: var(--navy-primary, #163A70);
+}
+
+.uq-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.uq-select-dropdown {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-card, #E2E8F0);
+  background-color: #FFFFFF;
+  font-size: 13px;
+  color: var(--navy-primary, #163A70);
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  min-width: 130px;
+}
+
+.uq-select-dropdown:focus {
+  border-color: var(--blue-primary, #2563EB);
+}
+
+/* Quick Filter Pills */
+.uq-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.uq-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border-card, #E2E8F0);
+  background-color: #FFFFFF;
+  color: var(--text-secondary, #64748B);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.uq-pill-btn:hover {
+  border-color: var(--blue-primary, #2563EB);
+  color: var(--blue-primary, #2563EB);
+  background-color: var(--light-blue, #EAF3FF);
+}
+
+.uq-pill-btn.active {
+  background-color: var(--navy-primary, #163A70);
+  border-color: var(--navy-primary, #163A70);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.uq-pill-count {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.uq-pill-btn.active .uq-pill-count {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+/* ==========================================================
+   DATA TABLE PRESENTATION
+   ========================================================== */
+.uq-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-card, #E2E8F0);
+  border-radius: 12px;
+  background-color: #FFFFFF;
+  position: relative;
+}
+
+.uq-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 13px;
+}
+
+.uq-table th {
+  background-color: #F8FAFC;
+  color: var(--navy-primary, #163A70);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-card, #E2E8F0);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.uq-table th.sortable {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.uq-table th.sortable:hover {
+  background-color: var(--light-blue, #EAF3FF);
+}
+
+.uq-th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.uq-sort-icon {
+  color: var(--text-secondary, #64748B);
+  flex-shrink: 0;
+}
+
+.uq-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-card, #E2E8F0);
+  vertical-align: middle;
+  background-color: #FFFFFF;
+  transition: background-color 0.15s;
+}
+
+.uq-table tbody tr {
+  cursor: pointer;
+}
+
+.uq-table tbody tr:hover td {
+  background-color: #F8FAFD;
+}
+
+.uq-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Cell Elements */
+.uq-flight-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.uq-flight-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--light-blue, #EAF3FF);
+  border: 1px solid var(--border-light-blue, #BFDBFE);
+  color: var(--blue-primary, #2563EB);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.uq-flight-num {
+  font-family: var(--font-mono, 'Courier New', monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy-primary, #163A70);
+}
+
+.uq-flight-type {
+  font-size: 10px;
+  color: var(--text-secondary, #64748B);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.uq-airline-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.uq-airline-name {
+  font-weight: 600;
+  color: var(--text-primary, #172B4D);
+}
+
+.uq-airline-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--text-secondary, #64748B);
+}
+
+.uq-route-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.uq-route-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy-primary, #163A70);
+}
+
+.uq-route-city {
+  font-size: 11px;
+  color: var(--text-secondary, #64748B);
+}
+
+/* Time Cells */
+.uq-time-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.uq-time-main {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy-primary, #163A70);
+}
+
+.uq-time-sub {
+  font-size: 10px;
+  color: var(--text-secondary, #64748B);
+}
+
+.uq-time-delayed {
+  color: #DC2626 !important;
+  font-weight: 700 !important;
+}
+
+.uq-time-ontime {
+  color: #16A34A !important;
+}
+
+/* Terminal & Gate */
+.uq-gate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #F1F5F9;
+  color: var(--navy-primary, #163A70);
+  border: 1px solid #CBD5E1;
+}
+
+/* Flight Status Badges */
+.uq-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.uq-status-green {
+  background-color: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+.uq-status-yellow {
+  background-color: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.uq-status-blue {
+  background-color: #EAF3FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.uq-status-red {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+
+.uq-status-grey {
+  background-color: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+.uq-op-message {
+  font-size: 11px;
+  color: var(--text-secondary, #64748B);
+  margin-top: 3px;
+  display: block;
+}
+
+.uq-details-btn {
+  padding: 5px 10px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card, #E2E8F0);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue-primary, #2563EB);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.uq-details-btn:hover {
+  background-color: var(--blue-primary, #2563EB);
+  color: #FFFFFF;
+  border-color: var(--blue-primary, #2563EB);
+}
+
+/* ==========================================================
+   PAGINATION FOOTER
+   ========================================================== */
+.uq-pagination-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-card, #E2E8F0);
+  font-size: 12px;
+}
+
+.uq-pagination-info {
+  color: var(--text-secondary, #64748B);
+  font-weight: 500;
+}
+
+.uq-page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary, #64748B);
+}
+
+.uq-page-size-select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-card, #E2E8F0);
+  background-color: #FFFFFF;
+  font-size: 12px;
+  color: var(--navy-primary, #163A70);
+  outline: none;
+}
+
+.uq-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.uq-page-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border-card, #E2E8F0);
+  background-color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--navy-primary, #163A70);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.uq-page-btn:hover:not(:disabled) {
+  border-color: var(--blue-primary, #2563EB);
+  background-color: var(--light-blue, #EAF3FF);
+  color: var(--blue-primary, #2563EB);
+}
+
+.uq-page-btn.active {
+  background-color: var(--blue-primary, #2563EB);
+  border-color: var(--blue-primary, #2563EB);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.uq-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ==========================================================
+   STATES: SKELETON LOADING, EMPTY, & ERROR
+   ========================================================== */
+.uq-skeleton-row td {
+  padding: 16px 14px;
+}
+
+.uq-skeleton-shimmer {
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: uq-shimmer 1.5s infinite;
+}
+
+@keyframes uq-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.uq-empty-box,
+.uq-error-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.uq-empty-icon,
+.uq-error-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.uq-empty-icon {
+  background-color: var(--light-blue, #EAF3FF);
+  color: var(--blue-primary, #2563EB);
+}
+
+.uq-error-icon {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+.uq-empty-title,
+.uq-error-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy-primary, #163A70);
+  margin: 0;
+}
+
+.uq-empty-desc,
+.uq-error-desc {
+  font-size: 13px;
+  color: var(--text-secondary, #64748B);
+  max-width: 400px;
+  margin: 0;
+}
+
+.uq-btn-reset {
+  margin-top: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: var(--blue-primary, #2563EB);
+  color: #FFFFFF;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.uq-btn-reset:hover {
+  background-color: var(--navy-primary, #163A70);
+}
+
+/* ==========================================================
+   FLIGHT DETAILS MODAL
+   ========================================================== */
+.uq-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(22, 58, 112, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.uq-modal-card {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid var(--border-card, #E2E8F0);
+  box-shadow: 0 25px 50px -12px rgba(22, 58, 112, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.uq-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-card, #E2E8F0);
+  background-color: #F8FAFD;
+  border-radius: 16px 16px 0 0;
+}
+
+.uq-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.uq-modal-flight-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy-primary, #163A70);
+}
+
+.uq-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #64748B);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uq-modal-close-btn:hover {
+  background-color: #E2E8F0;
+  color: var(--navy-primary, #163A70);
+}
+
+.uq-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Route Visual Banner */
+.uq-modal-route-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #F0F6FE 0%, #FFFFFF 100%);
+  border: 1px solid var(--border-light-blue, #BFDBFE);
+  border-radius: 12px;
+}
+
+.uq-modal-airport {
+  display: flex;
+  flex-direction: column;
+}
+
+.uq-modal-iata {
+  font-family: var(--font-mono, monospace);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--navy-primary, #163A70);
+}
+
+.uq-modal-city {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #172B4D);
+}
+
+.uq-modal-ap-name {
+  font-size: 11px;
+  color: var(--text-secondary, #64748B);
+}
+
+.uq-modal-plane-transit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue-primary, #2563EB);
+}
+
+.uq-modal-transit-line {
+  width: 100px;
+  height: 2px;
+  background: dashed 2px var(--blue-primary, #2563EB);
+  position: relative;
+}
+
+/* Timings Quadrant Grid */
+.uq-modal-timing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.uq-timing-card {
+  padding: 14px;
+  border-radius: 10px;
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-card, #E2E8F0);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.uq-timing-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary, #64748B);
+  letter-spacing: 0.04em;
+}
+
+.uq-timing-val {
+  font-family: var(--font-mono, monospace);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy-primary, #163A70);
+}
+
+.uq-timing-note {
+  font-size: 11px;
+  color: var(--text-secondary, #64748B);
+}
+
+/* Logistics Info Grid */
+.uq-modal-logistics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background-color: var(--light-blue, #EAF3FF);
+  border: 1px solid var(--border-light-blue, #BFDBFE);
+}
+
+.uq-logistics-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.uq-logistics-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--blue-primary, #2563EB);
+}
+
+.uq-logistics-val {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy-primary, #163A70);
+}
+
+/* Operational Advisory Box */
+.uq-modal-advisory {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: #FEF3C7;
+  border: 1px solid #FDE68A;
+  color: #B45309;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.uq-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-card, #E2E8F0);
+  background-color: #F8FAFD;
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.uq-modal-btn-close {
+  padding: 8px 18px;
+  background-color: var(--blue-primary, #2563EB);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.uq-modal-btn-close:hover {
+  background-color: var(--navy-primary, #163A70);
+}
+
+/* ==========================================================
+   RESPONSIVE MEDIA QUERIES
+   ========================================================== */
+@media (max-width: 768px) {
+  .uq-datatable-wrapper {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .uq-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .uq-telemetry-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .uq-search-and-selects {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .uq-search-box {
+    width: 100%;
+  }
+
+  .uq-select-dropdown {
+    width: 100%;
+  }
+
+  .uq-modal-timing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .uq-modal-logistics-grid {
+    grid-template-columns: 1fr;
+  }
+}

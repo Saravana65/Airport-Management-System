@@ -21,6 +21,7 @@ import {
 import useAuth from '../../hooks/useAuth';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
+import UltraQualityDataTable from '../../components/ui/ultra-quality-data-table';
 import operationsService from '../../services/operations.service';
 import './AirportDashboard.css';
 
@@ -216,6 +217,13 @@ export function AirportDashboard({ initialTab = 'gates' }) {
               <span>Gate Allocations ({gates.length})</span>
             </button>
             <button
+              className={`tab-btn ${activeTab === 'flights' ? 'active' : ''}`}
+              onClick={() => setActiveTab('flights')}
+            >
+              <Plane size={14} />
+              <span>Flight Operations ({flights.length})</span>
+            </button>
+            <button
               className={`tab-btn ${activeTab === 'baggage' ? 'active' : ''}`}
               onClick={() => setActiveTab('baggage')}
             >
@@ -288,6 +296,17 @@ export function AirportDashboard({ initialTab = 'gates' }) {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* TAB: LIVE FLIGHT OPERATIONS */}
+          {activeTab === 'flights' && (
+            <div style={{ marginTop: '4px' }}>
+              <UltraQualityDataTable
+                title="Airport Ground & Terminal Flight Operations"
+                subtitle="Live status board, terminal gate assignments, arrival landings, and departure sequencing"
+                embedded={true}
+              />
             </div>
           )}
 

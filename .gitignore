@@ -1,6 +1,7 @@
 # Ignore documents and images
 *.pdf
 *.png
+!docs/screenshots/*.png
 *.jpg
 *.jpeg
 *.tiff

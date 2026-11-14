@@ -128,7 +128,7 @@ export function AppRoutes() {
       >
         <Route index element={<Navigate to="/airport/dashboard" replace />} />
         <Route path="dashboard" element={<AirportDashboard initialTab="gates" />} />
-        <Route path="flights" element={<AirportDashboard initialTab="runway" />} />
+        <Route path="flights" element={<AirportDashboard initialTab="flights" />} />
         <Route path="gates" element={<AirportDashboard initialTab="gates" />} />
         <Route path="checkin" element={<AirportDashboard initialTab="checkin" />} />
         <Route path="baggage" element={<AirportDashboard initialTab="baggage" />} />
@@ -149,6 +149,7 @@ export function AppRoutes() {
         <Route index element={<Navigate to="/passenger/dashboard" replace />} />
         <Route path="dashboard" element={<PassengerDashboard initialTab="bookings" />} />
         <Route path="search" element={<PassengerDashboard initialTab="search" />} />
+        <Route path="flights" element={<PassengerDashboard initialTab="search" />} />
         <Route path="bookings" element={<PassengerDashboard initialTab="bookings" />} />
         <Route path="tickets" element={<PassengerDashboard initialTab="bookings" />} />
         <Route path="checkin" element={<PassengerDashboard initialTab="checkin" />} />

@@ -20,6 +20,7 @@ import {
 import useAuth from '../../hooks/useAuth';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
+import UltraQualityDataTable from '../../components/ui/ultra-quality-data-table';
 import operationsService from '../../services/operations.service';
 import './AirlineDashboard.css';
 
@@ -319,47 +320,13 @@ export function AirlineDashboard({ initialTab = 'dispatch' }) {
                 </form>
               )}
 
-              <div className="table-responsive">
-                <table className="ops-table">
-                  <thead>
-                    <tr>
-                      <th>Flight #</th>
-                      <th>Route</th>
-                      <th>Departure / Arrival</th>
-                      <th>Assigned Aircraft</th>
-                      <th>Operational Status</th>
-                      <th>Gate</th>
-                      <th>Dispatch Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {flights.map((f) => (
-                      <tr key={f.flightInstanceId || f.flightNumber}>
-                        <td className="mono font-bold text-amber">{f.flightNumber}</td>
-                        <td className="mono font-medium">
-                          {f.originAirport} <ArrowRight size={12} className="inline-icon text-muted" /> {f.destAirport}
-                        </td>
-                        <td className="mono">
-                          {f.scheduledDepartureTime} → {f.scheduledArrivalTime}
-                        </td>
-                        <td className="mono text-muted">{f.aircraftModel || 'Boeing 737'}</td>
-                        <td>
-                          <StatusBadge status={f.status} label={f.status} size="sm" />
-                        </td>
-                        <td className="mono text-white font-bold">{f.gateNumber || 'TBD'}</td>
-                        <td>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleOpenStatusModal(f)}
-                          >
-                            <Edit3 size={13} />
-                            <span>Update Status</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div style={{ marginTop: '14px' }}>
+                <UltraQualityDataTable
+                  title={`Fleet Flight Status & Schedule Board (${user?.airlineCode || 'Carrier Dispatch'})`}
+                  subtitle="Live flight progress, departure delays, gate assignments, and aircraft routing"
+                  embedded={true}
+                  onSelectFlight={(f) => handleOpenStatusModal(f)}
+                />
               </div>
             </div>
           )}

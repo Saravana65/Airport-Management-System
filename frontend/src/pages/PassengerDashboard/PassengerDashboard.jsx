@@ -23,6 +23,7 @@ import {
 import useAuth from '../../hooks/useAuth';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
+import { UltraQualityDataTable } from '../../components/ui/ultra-quality-data-table';
 import operationsService from '../../services/operations.service';
 import './PassengerDashboard.css';
 
@@ -379,55 +380,14 @@ export function PassengerDashboard({ initialTab = 'bookings' }) {
 
           {/* TAB 2: SEARCH & BOOK FLIGHTS */}
           {activeTab === 'search' && (
-            <div>
-              <div className="panel-actions-bar">
-                <span className="panel-subtitle">
-                  Showing {filteredFlights.length} available commercial flights ready for immediate reservation.
-                </span>
-              </div>
-
-              <div className="table-responsive">
-                <table className="ops-table">
-                  <thead>
-                    <tr>
-                      <th>Flight #</th>
-                      <th>Origin → Destination</th>
-                      <th>Departure / Arrival</th>
-                      <th>Aircraft</th>
-                      <th>Base Fare</th>
-                      <th>Status</th>
-                      <th>Booking Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredFlights.map((f) => (
-                      <tr key={f.flightInstanceId || f.flightNumber}>
-                        <td className="mono font-bold text-amber">{f.flightNumber}</td>
-                        <td className="mono font-medium text-white">
-                          {f.originAirport} <ArrowRight size={12} className="inline-icon text-muted" /> {f.destAirport}
-                        </td>
-                        <td className="mono">
-                          {f.scheduledDepartureTime} - {f.scheduledArrivalTime}
-                        </td>
-                        <td className="mono text-muted">{f.aircraftModel || 'Boeing 737'}</td>
-                        <td className="mono font-bold text-emerald">₹{f.baseFare || 4500}</td>
-                        <td>
-                          <StatusBadge status={f.status} label={f.status} size="sm" />
-                        </td>
-                        <td>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => handleOpenBookModal(f)}
-                          >
-                            <CreditCard size={13} />
-                            <span>Book Flight</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="passenger-flight-tracker-container">
+              <UltraQualityDataTable
+                title="Passenger Live Flight Status & Tracking"
+                subtitle="Search scheduled commercial flights, track terminal departure gates, review delay advisories, and reserve tickets"
+                embedded={true}
+                onSelectFlight={(f) => handleOpenBookModal(f)}
+                onBookFlight={(f) => handleOpenBookModal(f)}
+              />
             </div>
           )}
 
