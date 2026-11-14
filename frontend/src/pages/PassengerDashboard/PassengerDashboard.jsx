@@ -26,6 +26,12 @@ import {
   Plus,
   FileText,
   Sparkles,
+  Printer,
+  Zap,
+  Check,
+  ChevronRight,
+  MapPin,
+  Download,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
@@ -33,6 +39,12 @@ import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import { UltraQualityDataTable } from '../../components/ui/ultra-quality-data-table';
 import operationsService from '../../services/operations.service';
 import './PassengerDashboard.css';
+
+// Aircraft Seat Layout Definition (Rows 10 to 18, Seats A, B, C, D)
+const SEAT_ROWS = [10, 11, 12, 14, 15, 16, 17, 18];
+const SEAT_COLS_LEFT = ['A', 'B'];
+const SEAT_COLS_RIGHT = ['C', 'D'];
+const DEFAULT_OCCUPIED_SEATS = ['10B', '11C', '14D', '15A', '17B'];
 
 export function PassengerDashboard({ initialTab = 'overview' }) {
   const { user } = useAuth();
@@ -64,11 +76,23 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
   const [myBaggage, setMyBaggage] = useState([]);
   const [activeBoardingPass, setActiveBoardingPass] = useState(null);
 
-  // Booking Modal
+  // Booking Modal State
   const [bookModalOpen, setBookModalOpen] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState(null);
   const [cabinClass, setCabinClass] = useState('ECONOMY');
-  const [seatNumber, setSeatNumber] = useState('14A');
+  const [bookingSeat, setBookingSeat] = useState('12A');
+  const [bookingBaggageCount, setBookingBaggageCount] = useState(1);
+
+  // Post-Booking Confirmation Modal State
+  const [confirmedBookingData, setConfirmedBookingData] = useState(null);
+
+  // Interactive Real-Time Web Check-In State
+  const [checkingInTicket, setCheckingInTicket] = useState(null);
+  const [selectedCheckInSeat, setSelectedCheckInSeat] = useState('12A');
+  const [checkInBaggageCount, setCheckInBaggageCount] = useState(1);
+  const [checkInBaggageWeight, setCheckInBaggageWeight] = useState(15.0);
+  const [safetyDeclared, setSafetyDeclared] = useState(false);
+  const [checkInSearchPnr, setCheckInSearchPnr] = useState('');
 
   const loadPassengerData = async () => {
     setLoading(true);
@@ -95,63 +119,198 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
     loadPassengerData();
   }, []);
 
+  // 1. OPEN FLIGHT BOOKING MODAL
   const handleOpenBookModal = (flight) => {
     setSelectedFlight(flight);
-    setSeatNumber(`${Math.floor(10 + Math.random() * 20)}${['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)]}`);
+    const randRow = Math.floor(10 + Math.random() * 8);
+    const randCol = ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)];
+    setBookingSeat(`${randRow}${randCol}`);
+    setCabinClass('ECONOMY');
+    setBookingBaggageCount(1);
     setBookModalOpen(true);
   };
 
-  const handleConfirmBooking = async (e) => {
-    e.preventDefault();
+  // 2. CONFIRM BOOKING RESERVATION
+  const handleConfirmBooking = async (e, instantCheckIn = false) => {
+    if (e) e.preventDefault();
     if (!selectedFlight) return;
+
     try {
+      setLoading(true);
+      // Step 1: Create Booking & Issue Ticket
       const result = await operationsService.createBooking({
         flightInstanceId: selectedFlight.flightInstanceId,
         cabinClass,
-        seatNumber,
+        seatNumber: bookingSeat,
       });
-      setActionSuccess(
-        `Flight booked successfully! PNR: ${result.booking.bookingReference} (Seat ${seatNumber}).`
-      );
+
+      const issuedTicket = result.ticket;
+      const bookingRef = result.booking.bookingReference;
+
+      // Register Baggage if selected
+      if (bookingBaggageCount > 0 && issuedTicket?.ticketId) {
+        try {
+          await operationsService.registerBaggage({
+            ticketId: issuedTicket.ticketId,
+            weightKg: 15.0 * bookingBaggageCount,
+          });
+        } catch (bErr) {
+          console.warn('Optional baggage registration note:', bErr);
+        }
+      }
+
       setBookModalOpen(false);
-      loadPassengerData();
-      handleTabChange('bookings');
+      await loadPassengerData();
+
+      if (instantCheckIn && issuedTicket?.ticketId) {
+        // Step 2: Instant Web Check-In & Boarding Pass Issuance
+        const checkInRes = await operationsService.processCheckIn({
+          ticketId: issuedTicket.ticketId,
+          seatNumber: bookingSeat,
+        });
+
+        const bpData = checkInRes.checkIn || checkInRes;
+        setActiveBoardingPass({
+          ...bpData,
+          boardingPassNumber: bpData.boardingPassCode,
+          passengerName: user?.name || user?.email?.split('@')[0] || 'Traveler',
+          flightNumber: selectedFlight.flightNumber,
+          flightDate: selectedFlight.flightDate || 'Today',
+          origin: selectedFlight.originAirport,
+          destination: selectedFlight.destAirport,
+          originCity: selectedFlight.originCity,
+          destCity: selectedFlight.destCity,
+          seatNumber: bookingSeat,
+          cabinClass: cabinClass.toUpperCase(),
+          gateNumber: selectedFlight.gate || selectedFlight.departureGate || 'T2-G01',
+          terminal: selectedFlight.terminal || 'T2',
+          pnr: bookingRef,
+          ticketNumber: issuedTicket.ticketNumber,
+        });
+
+        setActionSuccess(
+          `Instant Web Check-In Complete! Flight booked and Boarding Pass issued for PNR ${bookingRef}.`
+        );
+        handleTabChange('checkin');
+      } else {
+        // Prompt with Option to Proceed to Check-In or View Bookings
+        setConfirmedBookingData({
+          booking: result.booking,
+          ticket: issuedTicket,
+          flight: selectedFlight,
+          seat: bookingSeat,
+        });
+      }
     } catch (err) {
       alert(`Booking Failed: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // 3. START CHECK-IN FOR A SPECIFIC TICKET
+  const handleStartTicketCheckIn = (ticket) => {
+    setCheckingInTicket(ticket);
+    setSelectedCheckInSeat(ticket.seatNumber || '12A');
+    setCheckInBaggageCount(1);
+    setCheckInBaggageWeight(15.0);
+    setSafetyDeclared(false);
+    setActiveBoardingPass(null);
+    handleTabChange('checkin');
+  };
+
+  // 4. CONFIRM REAL-TIME WEB CHECK-IN & ISSUE BOARDING PASS
+  const handleConfirmWebCheckIn = async (e) => {
+    if (e) e.preventDefault();
+    if (!checkingInTicket) return;
+
+    if (!safetyDeclared) {
+      alert('Please accept the civil aviation dangerous goods safety declaration to proceed.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Process Check-In API
+      const result = await operationsService.processCheckIn({
+        ticketId: checkingInTicket.ticketId,
+        seatNumber: selectedCheckInSeat,
+      });
+
+      // Register Checked Baggage if selected
+      let bagTagCode = null;
+      if (checkInBaggageCount > 0) {
+        try {
+          const bagResult = await operationsService.registerBaggage({
+            ticketId: checkingInTicket.ticketId,
+            weightKg: checkInBaggageWeight,
+          });
+          bagTagCode = bagResult.tagNumber || `BAG-${checkingInTicket.flightNumber}-001`;
+        } catch (bErr) {
+          console.warn('Baggage tagging note:', bErr.message);
+        }
+      }
+
+      const bpRecord = result.checkIn || result;
+      setActiveBoardingPass({
+        ...bpRecord,
+        boardingPassNumber: bpRecord.boardingPassCode,
+        passengerName: checkingInTicket.passengerName || user?.name || user?.email?.split('@')[0] || 'Traveler',
+        flightNumber: checkingInTicket.flightNumber,
+        flightDate: checkingInTicket.flightDate || 'Today',
+        origin: checkingInTicket.origin || 'DEL',
+        destination: checkingInTicket.destination || 'BOM',
+        seatNumber: selectedCheckInSeat,
+        cabinClass: checkingInTicket.cabinClass || 'ECONOMY',
+        gateNumber: bpRecord.gate || checkingInTicket.gate || 'T2-G01',
+        terminal: 'T2',
+        ticketNumber: checkingInTicket.ticketNumber,
+        bagTagCode,
+      });
+
+      setActionSuccess(`Boarding Pass issued successfully for ${checkingInTicket.flightNumber}! Seat: ${selectedCheckInSeat}.`);
+      setCheckingInTicket(null);
+      await loadPassengerData();
+    } catch (err) {
+      alert(`Check-In Failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 5. CANCEL BOOKING
   const handleCancelBooking = async (bookingId, pnr) => {
     if (!window.confirm(`Are you sure you want to cancel booking PNR: ${pnr}?`)) return;
     try {
       await operationsService.cancelBooking(bookingId);
-      setActionSuccess(`Reservation ${pnr} has been cancelled and seat released.`);
+      setActionSuccess(`Reservation ${pnr} has been cancelled and seats released.`);
       loadPassengerData();
     } catch (err) {
       alert(`Cancellation failed: ${err.message}`);
     }
   };
 
-  const handleCheckInTicket = async (ticket) => {
-    try {
-      const result = await operationsService.processCheckIn({
-        ticketId: ticket.ticketId,
-        seatNumber: ticket.seatNumber || '12B',
-      });
-      setActiveBoardingPass(result.checkIn || result);
-      setActionSuccess(`Web check-in confirmed! Boarding pass issued.`);
-      loadPassengerData();
-      setActiveTab('checkin');
-    } catch (err) {
-      alert(`Check-in failed: ${err.message}`);
-    }
+  // Trigger browser print for boarding pass
+  const handlePrintBoardingPass = () => {
+    window.print();
   };
+
+  // Filtered check-in tickets by PNR
+  const displayedCheckInTickets = eligibleTickets.filter((t) => {
+    if (!checkInSearchPnr) return true;
+    const q = checkInSearchPnr.toLowerCase();
+    return (
+      (t.ticketNumber && t.ticketNumber.toLowerCase().includes(q)) ||
+      (t.flightNumber && t.flightNumber.toLowerCase().includes(q)) ||
+      (t.destination && t.destination.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <div className="passenger-portal-wrapper">
-      {/* 1. Global Action Alerts */}
+      {/* Global Alerts */}
       {actionSuccess && (
-        <div className="alert-banner alert-success">
+        <div className="alert-banner alert-success no-print">
           <CheckCircle2 size={16} />
           <span>{actionSuccess}</span>
           <button className="close-btn" onClick={() => setActionSuccess('')}>×</button>
@@ -159,15 +318,15 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
       )}
 
       {error && (
-        <div className="alert-banner alert-error">
+        <div className="alert-banner alert-error no-print">
           <AlertCircle size={16} />
           <span>{error}</span>
           <button className="close-btn" onClick={() => setError('')}>×</button>
         </div>
       )}
 
-      {/* 2. Sleek Passenger Service Navigation Bar */}
-      <div className="passenger-service-nav">
+      {/* Modern Passenger Navigation Bar */}
+      <div className="passenger-service-nav no-print">
         <button
           type="button"
           className={`passenger-nav-pill ${activeTab === 'overview' ? 'active' : ''}`}
@@ -183,7 +342,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
           onClick={() => handleTabChange('search')}
         >
           <Plane size={15} />
-          <span>Flight Status & Booking</span>
+          <span>Flight Booking & Schedules</span>
         </button>
 
         <button
@@ -213,6 +372,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         >
           <ShieldCheck size={15} />
           <span>Web Check-In</span>
+          {eligibleTickets.length > 0 && <span className="pill-count active-pulse">{eligibleTickets.length}</span>}
         </button>
 
         <button
@@ -244,16 +404,16 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         </button>
       </div>
 
-      {/* 3. DEDICATED VIEW SECTIONS */}
-
-      {/* TAB A: TRAVELER OVERVIEW */}
+      {/* ========================================================================= */}
+      {/* TAB 1: TRAVELER OVERVIEW */}
+      {/* ========================================================================= */}
       {activeTab === 'overview' && (
         <div className="passenger-view-container">
           <div className="passenger-view-header">
             <div>
               <h2 className="passenger-view-title">Welcome, Traveler</h2>
               <p className="passenger-view-subtitle">
-                Logged in as <span className="mono font-bold text-navy">{user?.email || 'Passenger'}</span>. Here is your current travel itinerary and readiness summary.
+                Signed in as <span className="mono font-bold text-navy">{user?.email || 'Passenger'}</span>. Here is your current travel readiness.
               </p>
             </div>
             <div className="passenger-header-actions">
@@ -268,7 +428,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
             </div>
           </div>
 
-          {/* Quick Metrics Grid */}
+          {/* Quick Metrics */}
           <div className="metrics-grid">
             <DashboardCard
               title="Confirmed Bookings"
@@ -280,7 +440,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
               onClick={() => handleTabChange('bookings')}
             />
             <DashboardCard
-              title="Web Check-In Ready"
+              title="Ready for Web Check-In"
               icon={ShieldCheck}
               value={eligibleTickets.length}
               subtitle="Tickets ready for boarding pass"
@@ -301,18 +461,18 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
               title="Flight Network"
               icon={Plane}
               value={flights.length}
-              subtitle="Destinations currently active"
+              subtitle="Commercial routes available"
               badgeStatus="ON_TIME"
               badgeLabel="NETWORK"
               onClick={() => handleTabChange('search')}
             />
           </div>
 
-          {/* Latest Reservation Feature Card */}
+          {/* Featured Itinerary or Quick Booking Action */}
           {bookings.length > 0 ? (
             <div className="passenger-featured-card">
               <div className="featured-card-header">
-                <div className="featured-badge">NEXT CONFIRMED FLIGHT</div>
+                <div className="featured-badge">NEXT CONFIRMED ITINERARY</div>
                 <span className="mono font-bold text-navy">PNR: {bookings[0].bookingReference}</span>
               </div>
               <div className="featured-card-body">
@@ -345,11 +505,11 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                     <span className="meta-val">{bookings[0].tickets?.[0]?.cabinClass || 'ECONOMY'}</span>
                   </div>
                   <div>
-                    <span className="meta-label">Total Paid</span>
+                    <span className="meta-label">Total Amount</span>
                     <span className="meta-val text-emerald">₹{bookings[0].totalAmount || '4500'}</span>
                   </div>
                   <div>
-                    <span className="meta-label">Status</span>
+                    <span className="meta-label">Reservation Status</span>
                     <StatusBadge status={bookings[0].status} label={bookings[0].status} size="sm" />
                   </div>
                 </div>
@@ -359,7 +519,8 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                   View All Bookings ({bookings.length})
                 </button>
                 <button className="btn btn-primary btn-sm" onClick={() => handleTabChange('checkin')}>
-                  Proceed to Web Check-In
+                  <ShieldCheck size={14} />
+                  <span>Proceed to Web Check-In & Boarding Pass</span>
                 </button>
               </div>
             </div>
@@ -368,35 +529,39 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
               <Plane size={44} className="empty-hero-icon" />
               <h3 className="empty-hero-title">Ready for Your Next Journey?</h3>
               <p className="empty-hero-desc">
-                Browse our real-time flight schedules, check live gate assignments, and book commercial tickets in seconds.
+                Browse our real-time commercial flight schedules, monitor live gate allocations, and book tickets instantly with Web Check-In ready.
               </p>
               <button className="btn btn-primary" onClick={() => handleTabChange('search')}>
-                <Search size={15} />
-                <span>Search Scheduled Flights</span>
+                <Plane size={15} />
+                <span>Search Scheduled Flights & Book</span>
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* TAB B: FLIGHT STATUS & BOOKING (ULTRA QUALITY TABLE) */}
+      {/* ========================================================================= */}
+      {/* TAB 2: FLIGHT BOOKING & LIVE FLIGHT SCHEDULES SITE */}
+      {/* ========================================================================= */}
       {(activeTab === 'search' || activeTab === 'flights') && (
         <div className="passenger-view-container">
           <UltraQualityDataTable
-            title="Commercial Flight Status & Reservations"
-            subtitle="Search scheduled routes, monitor terminal gate assignments, check live delays, and reserve tickets"
+            title="Commercial Flight Schedules & Instant Booking"
+            subtitle="Search scheduled routes, check live departure gates, track delays, and reserve tickets with real-time web check-in"
             embedded={true}
             onBookFlight={(f) => handleOpenBookModal(f)}
           />
         </div>
       )}
 
-      {/* TAB C: MY BOOKINGS */}
+      {/* ========================================================================= */}
+      {/* TAB 3: MY BOOKINGS */}
+      {/* ========================================================================= */}
       {activeTab === 'bookings' && (
         <div className="passenger-view-container">
           <div className="passenger-view-header">
             <div>
-              <h2 className="passenger-view-title">My Bookings & Reservations</h2>
+              <h2 className="passenger-view-title">My Confirmed Reservations</h2>
               <p className="passenger-view-subtitle">
                 Your confirmed flight reservations, electronic tickets, and passenger PNR references.
               </p>
@@ -429,7 +594,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                     <th>Seat / Class</th>
                     <th>Total Paid</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th>Check-In / Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -455,12 +620,16 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                         <div style={{ display: 'inline-flex', gap: '6px' }}>
                           <button
                             type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleTabChange('tickets')}
-                            title="View electronic ticket"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => {
+                              const t = b.tickets?.[0];
+                              if (t) handleStartTicketCheckIn(t);
+                              else handleTabChange('checkin');
+                            }}
+                            title="Perform Web Check-In & Issue Boarding Pass"
                           >
-                            <FileText size={13} />
-                            <span>Ticket</span>
+                            <ShieldCheck size={13} />
+                            <span>Web Check-In</span>
                           </button>
                           {b.status === 'CONFIRMED' ? (
                             <button
@@ -484,7 +653,9 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         </div>
       )}
 
-      {/* TAB D: MY TICKETS */}
+      {/* ========================================================================= */}
+      {/* TAB 4: MY TICKETS */}
+      {/* ========================================================================= */}
       {activeTab === 'tickets' && (
         <div className="passenger-view-container">
           <div className="passenger-view-header">
@@ -508,7 +679,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                 Book a flight first to receive your official electronic ticket and passenger reservation record.
               </p>
               <button className="btn btn-primary btn-sm" onClick={() => handleTabChange('search')}>
-                Find Flights
+                Find Flights & Book
               </button>
             </div>
           ) : (
@@ -522,7 +693,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                     <th>Assigned Seat</th>
                     <th>Passenger Name</th>
                     <th>Ticket Status</th>
-                    <th>Next Step</th>
+                    <th>Web Check-In</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -542,10 +713,10 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                         <button
                           type="button"
                           className="btn btn-primary btn-sm"
-                          onClick={() => handleCheckInTicket(t)}
+                          onClick={() => handleStartTicketCheckIn(t)}
                         >
                           <ShieldCheck size={13} />
-                          <span>Generate Boarding Pass</span>
+                          <span>Check In & Get Boarding Pass</span>
                         </button>
                       </td>
                     </tr>
@@ -557,115 +728,452 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         </div>
       )}
 
-      {/* TAB E: WEB CHECK-IN & BOARDING PASS */}
+      {/* ========================================================================= */}
+      {/* TAB 5: ACTUAL REAL-TIME WEB CHECK-IN DESK & BOARDING PASS */}
+      {/* ========================================================================= */}
       {activeTab === 'checkin' && (
         <div className="passenger-view-container">
-          <div className="passenger-view-header">
+          <div className="passenger-view-header no-print">
             <div>
-              <h2 className="passenger-view-title">Web Check-In Desk</h2>
+              <h2 className="passenger-view-title">Airline Web Check-In Portal</h2>
               <p className="passenger-view-subtitle">
-                Select your confirmed ticket to verify security clearance and generate your official digital boarding pass.
+                Select your flight ticket, choose your aircraft seat on the live cabin map, declare baggage, and generate your official digital boarding pass.
               </p>
             </div>
+            {activeBoardingPass && (
+              <div className="passenger-header-actions">
+                <button className="btn btn-primary btn-sm" onClick={handlePrintBoardingPass}>
+                  <Printer size={14} />
+                  <span>Print Boarding Pass</span>
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setActiveBoardingPass(null);
+                    setCheckingInTicket(null);
+                  }}
+                >
+                  Check In Another Ticket
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* VIEW 1: ACTIVE DIGITAL BOARDING PASS (REAL-TIME DISPLAY) */}
           {activeBoardingPass && (
-            <div style={{ marginBottom: '24px' }}>
-              <div className="digital-boarding-pass">
-                <div className="pass-header">
-                  <div className="pass-airline">
-                    <Plane size={18} />
-                    <span>OFFICIAL DIGITAL BOARDING PASS</span>
+            <div className="boarding-pass-print-wrapper">
+              <div className="digital-boarding-pass-modern">
+                {/* Boarding Pass Header Ribbon */}
+                <div className="bp-header-bar">
+                  <div className="bp-airline-brand">
+                    <Plane size={22} className="bp-plane-icon" />
+                    <div>
+                      <span className="bp-airline-title">COMMERCIAL AIRWAYS</span>
+                      <span className="bp-pass-type">ELECTRONIC BOARDING PASS</span>
+                    </div>
                   </div>
-                  <StatusBadge status="ACTIVE" label="BOARDING AUTHORIZED" size="sm" />
-                </div>
-
-                <div className="pass-body">
-                  <div>
-                    <div className="pass-field-label">Boarding Pass #</div>
-                    <div className="pass-field-value text-navy">{activeBoardingPass.boardingPassNumber}</div>
-                  </div>
-                  <div>
-                    <div className="pass-field-label">Passenger Name</div>
-                    <div className="pass-field-value">{activeBoardingPass.passengerName || user?.name || 'Traveler'}</div>
-                  </div>
-                  <div>
-                    <div className="pass-field-label">Flight Number</div>
-                    <div className="pass-field-value">{activeBoardingPass.flightNumber || 'AI-101'}</div>
-                  </div>
-                  <div>
-                    <div className="pass-field-label">Assigned Seat</div>
-                    <div className="pass-field-value text-emerald">{activeBoardingPass.seatNumber || '14A'}</div>
-                  </div>
-                  <div>
-                    <div className="pass-field-label">Departure Gate</div>
-                    <div className="pass-field-value">{activeBoardingPass.gateNumber || 'Gate 14A'}</div>
+                  <div className="bp-status-tag">
+                    <ShieldCheck size={14} />
+                    <span>BOARDING AUTHORIZED</span>
                   </div>
                 </div>
 
-                <div className="pass-barcode-bar">
-                  <span className="simulated-barcode">||| | | |||| | ||| |||| | | ||</span>
-                  <span className="mono text-muted" style={{ fontSize: '11px' }}>
-                    SCAN AT SECURITY & AEROBRIDGE CHECKPOINT
-                  </span>
+                {/* Corridor Banner */}
+                <div className="bp-corridor-banner">
+                  <div className="bp-city-block">
+                    <span className="bp-city-iata">{activeBoardingPass.origin || 'DEL'}</span>
+                    <span className="bp-city-name">{activeBoardingPass.originCity || 'Origin'}</span>
+                  </div>
+                  <div className="bp-flight-transit">
+                    <span className="bp-flight-num">{activeBoardingPass.flightNumber}</span>
+                    <div className="bp-transit-arrow">
+                      <div className="bp-dot start"></div>
+                      <div className="bp-line"></div>
+                      <Plane size={16} style={{ transform: 'rotate(90deg)' }} />
+                      <div className="bp-line"></div>
+                      <div className="bp-dot end"></div>
+                    </div>
+                    <span className="bp-flight-mode">NON-STOP FLIGHT</span>
+                  </div>
+                  <div className="bp-city-block text-right">
+                    <span className="bp-city-iata">{activeBoardingPass.destination || 'BOM'}</span>
+                    <span className="bp-city-name">{activeBoardingPass.destCity || 'Destination'}</span>
+                  </div>
+                </div>
+
+                {/* 6-Quadrant Critical Travel Data Grid */}
+                <div className="bp-details-grid">
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">Passenger Name</span>
+                    <span className="bp-cell-val font-bold">{activeBoardingPass.passengerName || 'Verified Traveler'}</span>
+                  </div>
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">Assigned Seat</span>
+                    <span className="bp-cell-val font-bold text-emerald">{activeBoardingPass.seatNumber}</span>
+                  </div>
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">Terminal / Aerobridge Gate</span>
+                    <span className="bp-cell-val font-bold text-navy">{activeBoardingPass.gateNumber || 'T2 - G01'}</span>
+                  </div>
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">Boarding Time</span>
+                    <span className="bp-cell-val font-bold text-navy">45 mins prior to departure</span>
+                  </div>
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">Cabin Class</span>
+                    <span className="bp-cell-val">{activeBoardingPass.cabinClass || 'ECONOMY'}</span>
+                  </div>
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">PNR / Ticket Number</span>
+                    <span className="bp-cell-val mono">{activeBoardingPass.pnr || activeBoardingPass.ticketNumber || 'PNR-CONFIRMED'}</span>
+                  </div>
+                </div>
+
+                {/* Baggage Tag Notice if baggage registered */}
+                {activeBoardingPass.bagTagCode && (
+                  <div className="bp-baggage-notice">
+                    <Luggage size={16} />
+                    <span>Checked Baggage Registered: <strong>{activeBoardingPass.bagTagCode}</strong> (RFID Tag Activated)</span>
+                  </div>
+                )}
+
+                {/* Barcode & Security Clearance Footer */}
+                <div className="bp-barcode-footer">
+                  <div className="bp-barcode-strip">
+                    <span className="bp-simulated-barcode">|||| ||| | ||||| || |||||| | ||| || |||| | ||||| |||</span>
+                    <span className="bp-barcode-num">{activeBoardingPass.boardingPassNumber}</span>
+                  </div>
+                  <div className="bp-qr-box">
+                    <QrCode size={52} />
+                    <span className="bp-qr-note">GATE SCAN</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons Below Boarding Pass */}
+              <div className="bp-action-bar no-print">
+                <button type="button" className="btn btn-primary" onClick={handlePrintBoardingPass}>
+                  <Printer size={15} />
+                  <span>Print Official Boarding Pass</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => handleTabChange('baggage')}
+                >
+                  <Luggage size={15} />
+                  <span>Track Baggage Tag</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setActiveBoardingPass(null);
+                    setCheckingInTicket(null);
+                  }}
+                >
+                  Return to Check-In Desk
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 2: INTERACTIVE REAL-TIME CHECK-IN WORKSPACE (SEAT MAP & BAGGAGE) */}
+          {!activeBoardingPass && checkingInTicket && (
+            <div className="checkin-interactive-workspace">
+              {/* Ticket Summary Header */}
+              <div className="checkin-flight-summary-card">
+                <div className="summary-left">
+                  <div className="summary-plane-icon">
+                    <Plane size={24} />
+                  </div>
+                  <div>
+                    <h3 className="summary-flight-title">
+                      Web Check-In for Flight {checkingInTicket.flightNumber}
+                    </h3>
+                    <p className="summary-flight-route">
+                      {checkingInTicket.origin} → {checkingInTicket.destination} | Ticket #{checkingInTicket.ticketNumber}
+                    </p>
+                  </div>
+                </div>
+                <div className="summary-right">
+                  <span className="passenger-name-tag">Passenger: {checkingInTicket.passengerName || user?.email}</span>
+                </div>
+              </div>
+
+              {/* Real-Time Aircraft Seat Map Picker */}
+              <div className="checkin-seat-picker-card">
+                <div className="seat-picker-header">
+                  <div>
+                    <h4 className="picker-title">Select Your Airplane Seat (Live Cabin Map)</h4>
+                    <p className="picker-subtitle">
+                      Commercial Jetliner Boeing 737 / Airbus A320 Configuration (2x2 Aisle Corridor)
+                    </p>
+                  </div>
+                  <div className="seat-selection-badge">
+                    <span>Selected Seat:</span>
+                    <strong className="text-emerald">{selectedCheckInSeat}</strong>
+                  </div>
+                </div>
+
+                {/* Seat Map Legend */}
+                <div className="seat-map-legend">
+                  <div className="legend-item">
+                    <div className="legend-box available"></div>
+                    <span>Available</span>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-box selected"></div>
+                    <span>Your Selection</span>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-box occupied">X</div>
+                    <span>Occupied</span>
+                  </div>
+                </div>
+
+                {/* Cabin Layout */}
+                <div className="airplane-fuselage">
+                  <div className="airplane-nose">
+                    <Compass size={18} />
+                    <span>COCKPIT & FORWARD GALLEY</span>
+                  </div>
+
+                  <div className="airplane-cabin-grid">
+                    <div className="cabin-col-labels">
+                      <span>Seat A (Window)</span>
+                      <span>Seat B (Aisle)</span>
+                      <span className="aisle-label">AISLE</span>
+                      <span>Seat C (Aisle)</span>
+                      <span>Seat D (Window)</span>
+                    </div>
+
+                    {SEAT_ROWS.map((row) => (
+                      <div key={`row-${row}`} className="cabin-row">
+                        <span className="row-num">{row}</span>
+
+                        {/* Left Side (Seats A, B) */}
+                        <div className="seat-pair left">
+                          {SEAT_COLS_LEFT.map((col) => {
+                            const seatCode = `${row}${col}`;
+                            const isOccupied = DEFAULT_OCCUPIED_SEATS.includes(seatCode);
+                            const isSelected = selectedCheckInSeat === seatCode;
+
+                            return (
+                              <button
+                                key={seatCode}
+                                type="button"
+                                disabled={isOccupied}
+                                className={`seat-map-btn ${isSelected ? 'selected' : ''} ${isOccupied ? 'occupied' : 'available'}`}
+                                onClick={() => setSelectedCheckInSeat(seatCode)}
+                                title={isOccupied ? `Seat ${seatCode} Occupied` : `Select Seat ${seatCode}`}
+                              >
+                                {isSelected ? <Check size={12} /> : isOccupied ? '✕' : seatCode}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Center Aisle */}
+                        <div className="aisle-spacer">
+                          <span className="aisle-dot">•</span>
+                        </div>
+
+                        {/* Right Side (Seats C, D) */}
+                        <div className="seat-pair right">
+                          {SEAT_COLS_RIGHT.map((col) => {
+                            const seatCode = `${row}${col}`;
+                            const isOccupied = DEFAULT_OCCUPIED_SEATS.includes(seatCode);
+                            const isSelected = selectedCheckInSeat === seatCode;
+
+                            return (
+                              <button
+                                key={seatCode}
+                                type="button"
+                                disabled={isOccupied}
+                                className={`seat-map-btn ${isSelected ? 'selected' : ''} ${isOccupied ? 'occupied' : 'available'}`}
+                                onClick={() => setSelectedCheckInSeat(seatCode)}
+                                title={isOccupied ? `Seat ${seatCode} Occupied` : `Select Seat ${seatCode}`}
+                              >
+                                {isSelected ? <Check size={12} /> : isOccupied ? '✕' : seatCode}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <span className="row-num">{row}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Baggage & Hazardous Goods Declaration */}
+              <div className="checkin-declarations-card">
+                <h4 className="decl-title">Baggage Intake & Security Declaration</h4>
+
+                {/* Baggage Selection Group */}
+                <div className="baggage-options-row">
+                  <div
+                    className={`baggage-option-card ${checkInBaggageCount === 0 ? 'active' : ''}`}
+                    onClick={() => {
+                      setCheckInBaggageCount(0);
+                      setCheckInBaggageWeight(0);
+                    }}
+                  >
+                    <Luggage size={20} />
+                    <span className="bag-label">Cabin Bag Only</span>
+                    <span className="bag-sub">Free 7.0 kg</span>
+                  </div>
+
+                  <div
+                    className={`baggage-option-card ${checkInBaggageCount === 1 ? 'active' : ''}`}
+                    onClick={() => {
+                      setCheckInBaggageCount(1);
+                      setCheckInBaggageWeight(15.0);
+                    }}
+                  >
+                    <Luggage size={20} />
+                    <span className="bag-label">1 Checked Luggage</span>
+                    <span className="bag-sub">Standard 15.0 kg</span>
+                  </div>
+
+                  <div
+                    className={`baggage-option-card ${checkInBaggageCount === 2 ? 'active' : ''}`}
+                    onClick={() => {
+                      setCheckInBaggageCount(2);
+                      setCheckInBaggageWeight(25.0);
+                    }}
+                  >
+                    <Luggage size={20} />
+                    <span className="bag-label">2 Checked Luggage</span>
+                    <span className="bag-sub">Extended 25.0 kg</span>
+                  </div>
+                </div>
+
+                {/* Dangerous Goods Declaration Checkbox */}
+                <div className="safety-declaration-box">
+                  <label className="safety-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={safetyDeclared}
+                      onChange={(e) => setSafetyDeclared(e.target.checked)}
+                    />
+                    <span>
+                      I declare that I am <strong>not carrying any prohibited hazardous substances</strong>, flammable aerosols, fireworks, or spare loose lithium-ion power banks in checked baggage in compliance with ICAO/TSA civil aviation safety regulations.
+                    </span>
+                  </label>
+                </div>
+
+                {/* Complete Check-In Action Button */}
+                <div className="checkin-submit-bar">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setCheckingInTicket(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-lg"
+                    disabled={!safetyDeclared || loading}
+                    onClick={handleConfirmWebCheckIn}
+                  >
+                    <ShieldCheck size={16} />
+                    <span>Complete Web Check-In & Issue Boarding Pass (Seat {selectedCheckInSeat})</span>
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="table-responsive">
-            <table className="ops-table">
-              <thead>
-                <tr>
-                  <th>Ticket Number</th>
-                  <th>Flight</th>
-                  <th>Route</th>
-                  <th>Seat</th>
-                  <th>Passenger</th>
-                  <th>Status</th>
-                  <th>Check-In Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {eligibleTickets.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center text-muted" style={{ padding: '24px' }}>
-                      No tickets currently awaiting check-in. Book a flight first!
-                    </td>
-                  </tr>
-                ) : (
-                  eligibleTickets.map((t) => (
-                    <tr key={t.ticketId}>
-                      <td className="mono font-bold text-navy">{t.ticketNumber}</td>
-                      <td className="mono">{t.flightNumber}</td>
-                      <td className="mono">
-                        {t.origin} → {t.destination}
-                      </td>
-                      <td className="mono font-bold text-navy">{t.seatNumber}</td>
-                      <td>{t.passengerName || user?.name || 'Traveler'}</td>
-                      <td>
-                        <StatusBadge status="ACTIVE" label="READY" size="sm" />
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          onClick={() => handleCheckInTicket(t)}
-                        >
-                          <ShieldCheck size={13} />
-                          <span>Generate Boarding Pass</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+          {/* VIEW 3: TICKET LIST READY FOR WEB CHECK-IN */}
+          {!activeBoardingPass && !checkingInTicket && (
+            <div className="checkin-ticket-selection-view">
+              {/* PNR Search Box */}
+              <div className="checkin-search-bar">
+                <div className="search-box-left">
+                  <Search size={18} className="text-muted" />
+                  <input
+                    type="text"
+                    placeholder="Retrieve by PNR, Ticket Number, or Flight (e.g. AI2014 or BOM)..."
+                    value={checkInSearchPnr}
+                    onChange={(e) => setCheckInSearchPnr(e.target.value)}
+                    className="checkin-search-input"
+                  />
+                </div>
+                {checkInSearchPnr && (
+                  <button className="btn-clear" onClick={() => setCheckInSearchPnr('')}>
+                    Clear
+                  </button>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </div>
+
+              {/* Tickets Table */}
+              {displayedCheckInTickets.length === 0 ? (
+                <div className="passenger-empty-hero">
+                  <ShieldCheck size={44} className="empty-hero-icon" />
+                  <h3 className="empty-hero-title">No Tickets Awaiting Web Check-In</h3>
+                  <p className="empty-hero-desc">
+                    All your confirmed bookings have either been checked in or no tickets are currently issued. Book your next flight to initiate web check-in.
+                  </p>
+                  <button className="btn btn-primary" onClick={() => handleTabChange('search')}>
+                    <Plane size={15} />
+                    <span>Browse & Book Flights</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="ops-table">
+                    <thead>
+                      <tr>
+                        <th>Ticket Number</th>
+                        <th>Flight #</th>
+                        <th>Travel Corridor</th>
+                        <th>Preferred Seat</th>
+                        <th>Passenger Name</th>
+                        <th>Check-In Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayedCheckInTickets.map((t) => (
+                        <tr key={t.ticketId}>
+                          <td className="mono font-bold text-navy">{t.ticketNumber}</td>
+                          <td className="mono font-semibold">{t.flightNumber}</td>
+                          <td className="mono">
+                            {t.origin} <ArrowRight size={12} className="inline-icon text-muted" /> {t.destination}
+                          </td>
+                          <td className="mono font-bold text-emerald">{t.seatNumber || 'Unassigned'}</td>
+                          <td>{t.passengerName || user?.name || 'Traveler'}</td>
+                          <td>
+                            <StatusBadge status="OPERATIONAL" label="CHECK-IN OPEN" size="sm" />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              onClick={() => handleStartTicketCheckIn(t)}
+                            >
+                              <ShieldCheck size={13} />
+                              <span>Start Web Check-In</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* TAB F: BAGGAGE TRACKING */}
+      {/* ========================================================================= */}
+      {/* TAB 6: BAGGAGE TRACKING */}
+      {/* ========================================================================= */}
       {activeTab === 'baggage' && (
         <div className="passenger-view-container">
           <div className="passenger-view-header">
@@ -682,7 +1190,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
               <Luggage size={40} className="empty-hero-icon" />
               <h3 className="empty-hero-title">No Checked Baggage on File</h3>
               <p className="empty-hero-desc">
-                Your checked luggage will appear here once tagged at airport ground check-in.
+                Your checked luggage will appear here once tagged during web check-in or airport ground check-in.
               </p>
             </div>
           ) : (
@@ -716,7 +1224,9 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         </div>
       )}
 
-      {/* TAB G: TRAVEL GUIDELINES */}
+      {/* ========================================================================= */}
+      {/* TAB 7: TRAVEL GUIDELINES */}
+      {/* ========================================================================= */}
       {activeTab === 'travel-info' && (
         <div className="passenger-view-container">
           <div className="passenger-view-header">
@@ -772,7 +1282,9 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         </div>
       )}
 
-      {/* TAB H: MY PROFILE */}
+      {/* ========================================================================= */}
+      {/* TAB 8: MY PROFILE */}
+      {/* ========================================================================= */}
       {activeTab === 'profile' && (
         <div className="passenger-view-container">
           <div className="passenger-view-header">
@@ -830,55 +1342,86 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         </div>
       )}
 
-      {/* 4. BOOK FLIGHT MODAL */}
+      {/* ========================================================================= */}
+      {/* 4. FLIGHT BOOKING MODAL (WITH INSTANT CHECK-IN BUTTON) */}
+      {/* ========================================================================= */}
       {bookModalOpen && selectedFlight && (
         <div className="modal-overlay" onClick={() => setBookModalOpen(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card booking-modal-wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">
-                Reserve Flight: <span className="mono text-navy">{selectedFlight.flightNumber}</span>
+                Book Flight: <span className="mono text-navy">{selectedFlight.flightNumber}</span>
               </h3>
               <button className="modal-close" onClick={() => setBookModalOpen(false)}>×</button>
             </div>
 
-            <form onSubmit={handleConfirmBooking}>
+            <form onSubmit={(e) => handleConfirmBooking(e, false)}>
               <div className="modal-body">
-                <div className="form-group">
-                  <label>Journey Corridor</label>
-                  <p className="mono font-bold text-navy" style={{ fontSize: '15px' }}>
-                    {selectedFlight.originAirport} → {selectedFlight.destAirport} ({selectedFlight.scheduledDepartureTime})
-                  </p>
+                {/* Flight Route Banner */}
+                <div className="modal-route-banner">
+                  <div className="modal-station">
+                    <span className="iata">{selectedFlight.originAirport}</span>
+                    <span className="city">{selectedFlight.originCity || 'Origin'}</span>
+                  </div>
+                  <div className="modal-transit">
+                    <Plane size={20} />
+                    <span>Non-Stop Flight</span>
+                  </div>
+                  <div className="modal-station text-right">
+                    <span className="iata">{selectedFlight.destAirport}</span>
+                    <span className="city">{selectedFlight.destCity || 'Destination'}</span>
+                  </div>
+                </div>
+
+                <div className="form-grid-2">
+                  <div className="form-group">
+                    <label>Cabin Class Selection</label>
+                    <select
+                      value={cabinClass}
+                      onChange={(e) => setCabinClass(e.target.value)}
+                      required
+                    >
+                      <option value="ECONOMY">Economy Class (Base Fare)</option>
+                      <option value="BUSINESS">Business Class (2.5x Base Fare)</option>
+                      <option value="FIRST">First Class Suite (4.0x Base Fare)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Seat Number</label>
+                    <input
+                      type="text"
+                      value={bookingSeat}
+                      onChange={(e) => setBookingSeat(e.target.value.toUpperCase())}
+                      placeholder="e.g. 12A, 14C"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
-                  <label>Cabin Class Selection</label>
+                  <label>Checked Luggage Allocation</label>
                   <select
-                    value={cabinClass}
-                    onChange={(e) => setCabinClass(e.target.value)}
-                    required
+                    value={bookingBaggageCount}
+                    onChange={(e) => setBookingBaggageCount(Number(e.target.value))}
                   >
-                    <option value="ECONOMY">Economy Class (Standard Fare)</option>
-                    <option value="BUSINESS">Business Class (2.5x Base Fare)</option>
-                    <option value="FIRST">First Class (4.0x Luxury Suite)</option>
+                    <option value={0}>0 Checked Bags (Carry-on 7kg only)</option>
+                    <option value={1}>1 Checked Bag (15 kg allowance included)</option>
+                    <option value={2}>2 Checked Bags (25 kg allowance included)</option>
                   </select>
                 </div>
 
-                <div className="form-group">
-                  <label>Preferred Seat Selection</label>
-                  <input
-                    type="text"
-                    value={seatNumber}
-                    onChange={(e) => setSeatNumber(e.target.value.toUpperCase())}
-                    placeholder="e.g. 14A, 12B"
-                    required
-                  />
-                  <span className="mono text-muted" style={{ fontSize: '11px' }}>
-                    * The Oracle duplicate seat prevention engine validates seat allocation in real time.
-                  </span>
+                <div className="booking-fare-summary">
+                  <div className="fare-row">
+                    <span>Estimated Total Fare (including taxes):</span>
+                    <span className="fare-total">
+                      ₹{Math.round((selectedFlight.baseFare || 4500) * (cabinClass === 'BUSINESS' ? 2.5 : cabinClass === 'FIRST' ? 4.0 : 1.0))}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="modal-footer">
+              <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -886,11 +1429,68 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Confirm Reservation & Issue PNR
-                </button>
+                <div style={{ display: 'inline-flex', gap: '8px' }}>
+                  <button type="submit" className="btn btn-secondary" disabled={loading}>
+                    Book Reservation Only
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={loading}
+                    onClick={(e) => handleConfirmBooking(e, true)}
+                    title="Book ticket and instantly issue digital Boarding Pass"
+                  >
+                    <Zap size={14} />
+                    <span>Instant Book & Web Check-In</span>
+                  </button>
+                </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 5. POST-BOOKING CONFIRMATION MODAL */}
+      {/* ========================================================================= */}
+      {confirmedBookingData && (
+        <div className="modal-overlay" onClick={() => setConfirmedBookingData(null)}>
+          <div className="modal-card post-booking-card" onClick={(e) => e.stopPropagation()}>
+            <div className="post-booking-icon">
+              <CheckCircle2 size={48} className="text-emerald" />
+            </div>
+            <h3 className="post-booking-title">Flight Reservation Confirmed!</h3>
+            <p className="post-booking-pnr">
+              Booking Reference (PNR): <strong>{confirmedBookingData.booking.bookingReference}</strong>
+            </p>
+            <p className="post-booking-desc">
+              Your electronic ticket <strong>#{confirmedBookingData.ticket?.ticketNumber}</strong> has been issued for Flight <strong>{confirmedBookingData.flight.flightNumber}</strong> ({confirmedBookingData.flight.originAirport} → {confirmedBookingData.flight.destAirport}).
+            </p>
+
+            <div className="post-booking-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-lg"
+                onClick={() => {
+                  const t = confirmedBookingData.ticket;
+                  setConfirmedBookingData(null);
+                  handleStartTicketCheckIn(t);
+                }}
+              >
+                <ShieldCheck size={16} />
+                <span>Proceed to Web Check-In & Boarding Pass</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setConfirmedBookingData(null);
+                  handleTabChange('bookings');
+                }}
+              >
+                View Confirmed Bookings
+              </button>
+            </div>
           </div>
         </div>
       )}
