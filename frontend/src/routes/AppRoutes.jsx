@@ -130,7 +130,7 @@ export function AppRoutes() {
         <Route path="dashboard" element={<AirportDashboard initialTab="gates" />} />
         <Route path="flights" element={<AirportDashboard initialTab="flights" />} />
         <Route path="gates" element={<AirportDashboard initialTab="gates" />} />
-        <Route path="checkin" element={<AirportDashboard initialTab="checkin" />} />
+        <Route path="checkin" element={<AirportDashboard initialTab="checkins" />} />
         <Route path="baggage" element={<AirportDashboard initialTab="baggage" />} />
         <Route path="employees" element={<AirportDashboard initialTab="gates" />} />
         <Route path="aade" element={<AadeDashboard />} />
@@ -147,35 +147,15 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/passenger/dashboard" replace />} />
-        <Route path="dashboard" element={<PassengerDashboard initialTab="bookings" />} />
+        <Route path="dashboard" element={<PassengerDashboard initialTab="overview" />} />
         <Route path="search" element={<PassengerDashboard initialTab="search" />} />
         <Route path="flights" element={<PassengerDashboard initialTab="search" />} />
         <Route path="bookings" element={<PassengerDashboard initialTab="bookings" />} />
-        <Route path="tickets" element={<PassengerDashboard initialTab="bookings" />} />
+        <Route path="tickets" element={<PassengerDashboard initialTab="tickets" />} />
         <Route path="checkin" element={<PassengerDashboard initialTab="checkin" />} />
-        <Route
-          path="travel-info"
-          element={
-            <ComingSoon
-              moduleName="Travel Guidelines & Checkpoint Advisories"
-              description="Carry-on baggage limit: 7.0 kg. Check-in baggage allowance: 25.0 kg. Gate closes 25 minutes prior to scheduled flight departure."
-              phase="Information Active"
-              schemaTable="AIRPORTS & FLIGHTS"
-            />
-          }
-        />
-        <Route
-          path="profile"
-          element={
-            <ComingSoon
-              moduleName="Passenger Profile & Account Security"
-              description="View session details, authenticated email address, and encrypted biometric travel documentation on the station header."
-              phase="Profile Active"
-              schemaTable="PASSENGERS table"
-            />
-          }
-        />
-        <Route path="algorithms" element={<AlgorithmsDashboard />} />
+        <Route path="baggage" element={<PassengerDashboard initialTab="baggage" />} />
+        <Route path="travel-info" element={<PassengerDashboard initialTab="travel-info" />} />
+        <Route path="profile" element={<PassengerDashboard initialTab="profile" />} />
       </Route>
 
       {/* Catch-all 404 Route */}

@@ -82,8 +82,8 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
           { label: 'My Bookings', to: '/passenger/bookings', icon: Calendar },
           { label: 'My Tickets', to: '/passenger/tickets', icon: Ticket },
           { label: 'Web Check-in', to: '/passenger/checkin', icon: ShieldCheck },
+          { label: 'Baggage Tracking', to: '/passenger/baggage', icon: Luggage },
           { label: 'Travel Information', to: '/passenger/travel-info', icon: Compass },
-          { label: 'Dynamic Fare & Engines', to: '/passenger/algorithms', icon: Cpu },
           { label: 'My Profile', to: '/passenger/profile', icon: User },
         ];
       default:

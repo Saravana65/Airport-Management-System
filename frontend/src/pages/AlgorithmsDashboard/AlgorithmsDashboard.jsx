@@ -58,9 +58,9 @@ export default function AlgorithmsDashboard() {
     setLoading(true);
     try {
       const res = await integrationService.getGateAllocation();
-      setGateData(res.data);
+      setGateData(res.data || res);
     } catch (err) {
-      setMessage('Error loading gate allocation');
+      console.warn('Error loading gate allocation:', err);
     } finally {
       setLoading(false);
     }
@@ -71,9 +71,9 @@ export default function AlgorithmsDashboard() {
     setLoading(true);
     try {
       const res = await integrationService.getRunwayQueue();
-      setQueueData(res.data);
+      setQueueData(res.data || res);
     } catch (err) {
-      setMessage('Error loading runway queue');
+      console.warn('Error loading runway queue:', err);
     } finally {
       setLoading(false);
     }
@@ -84,9 +84,9 @@ export default function AlgorithmsDashboard() {
     setLoading(true);
     try {
       const res = await integrationService.getBaggageRouting();
-      setRouteData(res.data);
+      setRouteData(res.data || res);
     } catch (err) {
-      setMessage('Error loading baggage routing');
+      console.warn('Error loading baggage routing:', err);
     } finally {
       setLoading(false);
     }

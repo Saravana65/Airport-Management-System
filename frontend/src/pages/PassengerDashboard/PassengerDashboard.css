@@ -1,96 +1,459 @@
-.passenger-dashboard-container {
+.passenger-portal-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 22px;
 }
 
-.passenger-banner {
-  border-left-color: var(--blue-primary) !important;
-}
-
-.passenger-icon-box {
-  background-color: var(--light-blue) !important;
-  border-color: var(--border-light-blue) !important;
-  color: var(--blue-primary) !important;
-}
-
-/* Flight Search Bar */
-.flight-search-bar {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: 12px;
-  padding: 22px;
+/* 1. Sleek Passenger Service Top Navigation Bar */
+.passenger-service-nav {
   display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  flex-wrap: wrap;
-  box-shadow: var(--shadow-card);
-}
-
-.search-input-group {
-  flex: 1;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.search-input-group.date-group {
-  max-width: 180px;
-}
-
-.search-label {
-  font-size: 11px;
-  font-weight: var(--fw-semibold);
-  color: var(--navy-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.search-field {
-  width: 100%;
+  align-items: center;
+  gap: 8px;
   background-color: #FFFFFF;
   border: 1px solid var(--border-card);
-  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
-.search-action-btn {
-  height: 42px;
-  padding: 0 22px;
-  white-space: nowrap;
+.passenger-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.passenger-nav-pill:hover {
+  background-color: var(--light-blue);
+  color: var(--blue-primary);
+}
+
+.passenger-nav-pill.active {
   background-color: var(--blue-primary);
   color: #FFFFFF;
   font-weight: var(--fw-semibold);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
 
-.search-action-btn:hover:not(:disabled) {
-  background-color: var(--blue-hover);
+.passenger-nav-pill .pill-count {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: inherit;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  padding: 2px 6px;
+  border-radius: 10px;
 }
 
-.search-footnote {
-  font-size: 12px;
+.passenger-nav-pill.active .pill-count {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+/* 2. Focused View Container & Header */
+.passenger-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.passenger-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 18px 24px;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.passenger-view-title {
+  font-size: 1.25rem;
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
+  margin-bottom: 4px;
+}
+
+.passenger-view-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.passenger-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 3. Featured Itinerary Card (Overview) */
+.passenger-featured-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.featured-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 14px;
+}
+
+.featured-badge {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--blue-primary);
+  background-color: var(--light-blue);
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.featured-route {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #F8FAFC;
+  border-radius: var(--radius-sm);
+}
+
+.featured-station .iata {
+  font-size: 1.75rem;
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
+  display: block;
+}
+
+.featured-station .station-name {
+  font-size: 0.82rem;
   color: var(--text-secondary);
 }
 
-.search-footnote code {
+.featured-transit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   color: var(--blue-primary);
+  flex: 1;
+  padding: 0 24px;
+}
+
+.route-line {
+  width: 100%;
+  height: 2px;
+  background: repeating-linear-gradient(to right, var(--blue-primary) 0, var(--blue-primary) 6px, transparent 6px, transparent 10px);
+}
+
+.transit-mode {
+  font-size: 11px;
   font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+}
+
+.featured-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+  padding-top: 6px;
+}
+
+.meta-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+  margin-bottom: 3px;
+}
+
+.meta-val {
+  font-size: 0.95rem;
+  font-weight: var(--fw-semibold);
+  color: var(--navy-primary);
+}
+
+.featured-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--border-card);
+  padding-top: 16px;
+}
+
+/* 4. Empty Hero State */
+.passenger-empty-hero {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 48px 24px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.empty-hero-icon {
+  color: var(--blue-primary);
+  margin-bottom: 16px;
+}
+
+.empty-hero-title {
+  font-size: 1.25rem;
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
+  margin-bottom: 8px;
+}
+
+.empty-hero-desc {
+  color: var(--text-secondary);
+  max-width: 480px;
+  margin: 0 auto 22px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* 5. Guidelines Grid */
+.guidelines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.guideline-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guideline-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
   background-color: var(--light-blue);
-  padding: 2px 6px;
+  color: var(--blue-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guideline-title {
+  font-size: 1.05rem;
+  font-weight: var(--fw-semibold);
+  color: var(--navy-primary);
+}
+
+.guideline-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* 6. Passenger Profile Card */
+.passenger-profile-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.profile-top-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 20px;
+}
+
+.profile-avatar-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--light-blue) 0%, #D0E4FF 100%);
+  color: var(--blue-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-card);
+}
+
+.profile-full-name {
+  font-size: 1.35rem;
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
+  margin-bottom: 4px;
+}
+
+.profile-user-email {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.profile-badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-pill-badge {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  padding: 3px 9px;
   border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.profile-pill-badge.blue {
+  background-color: var(--light-blue);
+  color: var(--blue-primary);
+}
+
+.profile-pill-badge.emerald {
+  background-color: #DCFCE7;
+  color: #15803D;
+}
+
+.profile-pill-badge.gold {
+  background-color: #FEF3C7;
+  color: #B45309;
+}
+
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.profile-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: #F8FAFC;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+}
+
+.info-item-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+}
+
+.info-item-value {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+/* 7. Boarding Pass Card Enhancements */
+.digital-boarding-pass {
+  background-color: #FFFFFF;
+  border: 2px dashed var(--blue-primary);
+  border-radius: var(--radius-md);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.pass-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.pass-airline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
+  font-size: 0.95rem;
+}
+
+.pass-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.pass-field-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.pass-field-value {
+  font-size: 1.05rem;
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
+}
+
+.pass-barcode-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--border-card);
+  padding-top: 14px;
+}
+
+.simulated-barcode {
+  font-family: monospace;
+  font-size: 1.6rem;
+  letter-spacing: 0.25em;
+  color: var(--navy-primary);
 }
 
 @media (max-width: 768px) {
-  .flight-search-bar {
+  .passenger-service-nav {
+    padding: 6px;
+  }
+  .passenger-nav-pill {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  .featured-route {
     flex-direction: column;
-    align-items: stretch;
+    gap: 16px;
   }
-
-  .search-input-group.date-group {
-    max-width: 100%;
+  .featured-station {
+    text-align: center !important;
   }
-
-  .search-action-btn {
-    width: 100%;
+  .profile-top-section {
+    flex-direction: column;
+    text-align: center;
   }
 }
