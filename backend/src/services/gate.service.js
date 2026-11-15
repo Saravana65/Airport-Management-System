@@ -5,6 +5,7 @@
 
 const db = require('./database.service');
 const store = require('./operations.store');
+const notificationService = require('./notification.service');
 
 async function getAllGates(filters = {}) {
     let list = store.gates;
@@ -141,6 +142,17 @@ async function assignGateToFlight(data) {
     }
 
     gate.status = 'OCCUPIED';
+
+    // Broadcast gate assignment notification to booked passengers
+    try {
+        await notificationService.notifyFlightPassengers(flightInst.flightInstanceId, {
+            title: `Gate Assigned: Flight ${flightInst.flightNumber}`,
+            message: `Flight ${flightInst.flightNumber} has been assigned to Gate ${gate.terminal}-${gate.gateNumber} for ${gateType}.`,
+            type: 'GATE_UPDATE'
+        });
+    } catch (notifErr) {
+        console.warn('[Gate Service] Passenger notification broadcast note:', notifErr.message);
+    }
 
     return {
         flightInstance: flightInst,

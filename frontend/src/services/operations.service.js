@@ -119,6 +119,14 @@ export const operationsService = {
     return api.get(`/employees${query ? `?${query}` : ''}`).then(r => r.data || r);
   },
   createEmployee: (data) => api.post('/employees', data).then(r => r.data || r),
+
+  // Module 9: Flight & Operational Notifications
+  getNotifications: () => api.get('/notifications').then(r => r.data || r),
+  markNotificationRead: (id) => api.patch(`/notifications/${id}/read`).then(r => r.data || r),
+  markAllNotificationsRead: () => api.patch('/notifications/read-all').then(r => r.data || r),
+
+  // Module 10: Admin Operational Telemetry
+  getAdminStats: () => api.get('/admin/stats').then(r => r.data || r),
 };
 
 export default operationsService;

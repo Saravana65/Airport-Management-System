@@ -50,6 +50,16 @@ export function AdminDashboard({ initialTab = 'overview' }) {
   const [usersList, setUsersList] = useState([]);
   const [bookingsList, setBookingsList] = useState([]);
   const [bookingSearch, setBookingSearch] = useState('');
+  const [stats, setStats] = useState({
+    totalFlights: 0,
+    totalPassengers: 0,
+    totalBookings: 0,
+    confirmedBookings: 0,
+    cancelledBookings: 0,
+    checkedInPassengers: 0,
+    delayedFlights: 0,
+    availableSeats: 0,
+  });
 
   // Flight Status Modal State for Admin Dispatch
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -74,7 +84,7 @@ export function AdminDashboard({ initialTab = 'overview' }) {
     setLoading(true);
     setError(null);
     try {
-      const [ports, lines, planes, flts, emps, gts, usrRes, bks] = await Promise.all([
+      const [ports, lines, planes, flts, emps, gts, usrRes, bks, statsRes] = await Promise.all([
         operationsService.getAirports().catch(() => []),
         operationsService.getAirlines().catch(() => []),
         operationsService.getAircraft().catch(() => []),
@@ -83,6 +93,7 @@ export function AdminDashboard({ initialTab = 'overview' }) {
         operationsService.getGates().catch(() => []),
         api.get('/admin/users').catch(() => ({ data: { users: [] } })),
         operationsService.getBookings().catch(() => []),
+        operationsService.getAdminStats().catch(() => null),
       ]);
       setAirports(ports);
       setAirlines(lines);
@@ -92,6 +103,18 @@ export function AdminDashboard({ initialTab = 'overview' }) {
       setGates(gts);
       setUsersList(usrRes?.data?.users || usrRes?.users || []);
       setBookingsList(bks);
+      if (statsRes) {
+        setStats({
+          totalFlights: statsRes.totalFlights ?? flts.length,
+          totalPassengers: statsRes.totalPassengers ?? 0,
+          totalBookings: statsRes.totalBookings ?? bks.length,
+          confirmedBookings: statsRes.confirmedBookings ?? bks.filter(b => b.status === 'CONFIRMED').length,
+          cancelledBookings: statsRes.cancelledBookings ?? bks.filter(b => b.status === 'CANCELLED').length,
+          checkedInPassengers: statsRes.checkedInPassengers ?? 0,
+          delayedFlights: statsRes.delayedFlights ?? flts.filter(f => f.status === 'DELAYED').length,
+          availableSeats: statsRes.availableSeats ?? 0,
+        });
+      }
     } catch (err) {
       setError(err.message || 'Failed to load operational data.');
     } finally {
@@ -271,68 +294,89 @@ export function AdminDashboard({ initialTab = 'overview' }) {
           {/* Core Live System Statistics (EXCLUSIVE TO OVERVIEW) */}
           <section className="dashboard-section">
             <div className="section-header">
-              <h3 className="section-title">Live Operational Telemetry</h3>
+              <h3 className="section-title">Live Operational Database Telemetry</h3>
+              <span className="telemetry-pill">MySQL 8.0 Real-Time Queries</span>
             </div>
 
             <div className="metrics-grid">
               <DashboardCard
-                title="Operational Airports"
-                icon={Building2}
-                value={airports.length}
-                subtitle="IATA Certified Facilities"
+                title="Total Flights"
+                icon={Plane}
+                value={stats.totalFlights}
+                subtitle="All Flight Instances in DB"
+                badgeStatus="ACTIVE"
+                badgeLabel="FLIGHTS"
+                onClick={() => handleTabChange('flights')}
+              />
+
+              <DashboardCard
+                title="Total Passengers"
+                icon={Users}
+                value={stats.totalPassengers}
+                subtitle="Registered Passenger Profiles"
                 badgeStatus="OPERATIONAL"
-                badgeLabel="ACTIVE"
-                onClick={() => handleTabChange('airports')}
+                badgeLabel="PASSENGERS"
+                onClick={() => handleTabChange('users')}
               />
 
               <DashboardCard
-                title="Registered Carriers"
-                icon={Building2}
-                value={airlines.length}
-                subtitle="Commercial Partner Airlines"
+                title="Total Bookings"
+                icon={Ticket}
+                value={stats.totalBookings}
+                subtitle="Reservations in Database"
                 badgeStatus="ACTIVE"
-                badgeLabel="ONLINE"
-                onClick={() => handleTabChange('airlines')}
+                badgeLabel="BOOKINGS"
+                onClick={() => handleTabChange('bookings')}
               />
 
               <DashboardCard
-                title="Active Fleet Aircraft"
-                icon={Plane}
-                value={aircraft.length}
-                subtitle="Registered Commercial Jets"
-                badgeStatus="ACTIVE"
-                badgeLabel="FLEET"
-                onClick={() => handleTabChange('flights')}
+                title="Confirmed Bookings"
+                icon={CheckCircle2}
+                value={stats.confirmedBookings}
+                subtitle="Active Confirmed Tickets"
+                badgeStatus="CONFIRMED"
+                badgeLabel="CONFIRMED"
+                onClick={() => handleTabChange('bookings')}
               />
 
               <DashboardCard
-                title="Scheduled Flight Movements"
-                icon={Plane}
-                value={flights.length}
-                subtitle="Daily Flight Instances"
-                badgeStatus="ON_TIME"
-                badgeLabel="MOVEMENTS"
-                onClick={() => handleTabChange('flights')}
+                title="Cancelled Bookings"
+                icon={AlertCircle}
+                value={stats.cancelledBookings}
+                subtitle="Released Inventory Bookings"
+                badgeStatus="CANCELLED"
+                badgeLabel="CANCELLED"
+                onClick={() => handleTabChange('bookings')}
               />
 
               <DashboardCard
-                title="Airport & Airline Staff"
+                title="Checked-in Passengers"
                 icon={UserCheck}
-                value={employees.length}
-                subtitle="On-Duty Operations Personnel"
+                value={stats.checkedInPassengers}
+                subtitle="Boarding Passes Issued"
                 badgeStatus="ACTIVE"
-                badgeLabel="CREW"
-                onClick={() => handleTabChange('employees')}
+                badgeLabel="CHECKED-IN"
+                onClick={() => handleTabChange('bookings')}
               />
 
               <DashboardCard
-                title="Terminal Gates"
-                icon={Radio}
-                value={gates.length}
-                subtitle="Aerobridges & Apron Stands"
+                title="Delayed Flights"
+                icon={Clock}
+                value={stats.delayedFlights}
+                subtitle="Flights Delayed in System"
+                badgeStatus={stats.delayedFlights > 0 ? "DELAYED" : "ON_TIME"}
+                badgeLabel="DELAYED"
+                onClick={() => handleTabChange('flights')}
+              />
+
+              <DashboardCard
+                title="Available Seats"
+                icon={Layers}
+                value={stats.availableSeats}
+                subtitle="Live Unallocated Aircraft Seats"
                 badgeStatus="AVAILABLE"
-                badgeLabel="GATES"
-                onClick={() => handleTabChange('gates')}
+                badgeLabel="SEATS"
+                onClick={() => handleTabChange('flights')}
               />
             </div>
           </section>

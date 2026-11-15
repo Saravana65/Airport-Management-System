@@ -7,6 +7,7 @@
 
 const db = require('./database.service');
 const store = require('./operations.store');
+const notificationService = require('./notification.service');
 
 /**
  * Retrieves tickets eligible for online web check-in.
@@ -678,6 +679,16 @@ async function processCheckIn(data, user) {
             storeTicket.status = 'CHECKED_IN';
         }
         store.checkin.push(result.checkIn);
+
+        // Emit in-app notification in MySQL
+        if (result.ticket.userId) {
+            await notificationService.createNotification({
+                userId: result.ticket.userId,
+                title: `Check-in Complete: ${result.boardingPass.flightNumber}`,
+                message: `Boarding Pass issued: ${result.boardingPass.boardingPassNumber}. Gate: ${result.boardingPass.gate}, Seat: ${result.boardingPass.seatNumber}.`,
+                type: 'CHECKIN'
+            }).catch(err => console.warn('[CheckIn] Notification note:', err.message));
+        }
 
         return {
             checkIn: result.checkIn,

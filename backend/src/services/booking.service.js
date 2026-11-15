@@ -7,6 +7,7 @@
 const crypto = require('crypto');
 const db = require('./database.service');
 const store = require('./operations.store');
+const notificationService = require('./notification.service');
 
 function generatePNR() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -556,6 +557,16 @@ async function createBooking(data, user) {
         store.bookings.push(result.booking);
         store.tickets.push(result.ticket);
 
+        // Emit in-app notification in MySQL
+        if (user.userId) {
+            await notificationService.createNotification({
+                userId: user.userId,
+                title: `Booking Confirmed: ${result.booking.bookingReference}`,
+                message: `Your booking for flight ${result.flight?.flightNumber || ''} is confirmed. Allocated seat: ${result.ticket?.seatNumber || normSeat}.`,
+                type: 'BOOKING'
+            }).catch(err => console.warn('[Booking] Notification note:', err.message));
+        }
+
         return {
             booking: result.booking,
             ticket: result.ticket,
@@ -620,6 +631,16 @@ async function cancelBooking(id, user) {
             t.status = 'CANCELLED';
             t.seatNumber = null;
         });
+
+    // Emit in-app notification in MySQL
+    if (booking.userId) {
+        await notificationService.createNotification({
+            userId: booking.userId,
+            title: `Booking Cancelled: ${booking.bookingReference}`,
+            message: `Reservation ${booking.bookingReference} has been cancelled and seat ${booking.tickets?.[0]?.seatNumber || ''} has been released.`,
+            type: 'CANCELLATION'
+        }).catch(err => console.warn('[CancelBooking] Notification note:', err.message));
+    }
 
     return booking;
 }

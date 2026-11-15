@@ -152,6 +152,7 @@ export function AppRoutes() {
         <Route path="tickets" element={<PassengerDashboard initialTab="tickets" />} />
         <Route path="checkin" element={<PassengerDashboard initialTab="checkin" />} />
         <Route path="baggage" element={<PassengerDashboard initialTab="baggage" />} />
+        <Route path="notifications" element={<PassengerDashboard initialTab="notifications" />} />
         <Route path="travel-info" element={<PassengerDashboard initialTab="travel-info" />} />
         <Route path="profile" element={<PassengerDashboard initialTab="profile" />} />
       </Route>

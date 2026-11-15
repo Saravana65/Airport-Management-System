@@ -6,6 +6,7 @@
 
 const db = require('./database.service');
 const store = require('./operations.store');
+const notificationService = require('./notification.service');
 
 const VALID_STATUSES = [
     'SCHEDULED',
@@ -518,6 +519,24 @@ async function updateFlightStatus(id, newStatus, reason, userId, extraFields = {
     }
 
     store.flightStatusHistory.push(historyEntry);
+
+    // Broadcast flight status notification to booked passengers
+    try {
+        let notifMsg = `Flight ${instance.flightNumber} status updated to ${normalizedStatus}.`;
+        if (instance.delayMinutes) {
+            notifMsg += ` Estimated delay: ${instance.delayMinutes} mins.`;
+        }
+        if (instance.estimatedDeparture) {
+            notifMsg += ` New Est Departure: ${instance.estimatedDeparture}.`;
+        }
+        await notificationService.notifyFlightPassengers(numId, {
+            title: `Flight Update: ${instance.flightNumber} is now ${normalizedStatus}`,
+            message: notifMsg,
+            type: normalizedStatus === 'DELAYED' ? 'DELAY' : 'FLIGHT_STATUS'
+        });
+    } catch (notifErr) {
+        console.warn('[Flight Service] Passenger notification broadcast note:', notifErr.message);
+    }
 
     return {
         instance,

@@ -75,6 +75,14 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
   const [eligibleTickets, setEligibleTickets] = useState([]);
   const [myBaggage, setMyBaggage] = useState([]);
   const [activeBoardingPass, setActiveBoardingPass] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+
+  // Cancellation Modal State
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelTargetBooking, setCancelTargetBooking] = useState(null);
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [cancelError, setCancelError] = useState('');
 
   // Booking Modal State
   const [bookModalOpen, setBookModalOpen] = useState(false);
@@ -118,16 +126,24 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
     setLoading(true);
     setError(null);
     try {
-      const [flts, bks, elig, bags] = await Promise.all([
+      const [flts, bks, elig, bags, notifRes] = await Promise.all([
         operationsService.getFlights().catch(() => []),
         operationsService.getBookings().catch(() => []),
         operationsService.getEligibleTickets().catch(() => []),
         operationsService.getBaggage().catch(() => []),
+        operationsService.getNotifications().catch(() => ({ notifications: [], unreadCount: 0 })),
       ]);
       setFlights(flts);
       setBookings(bks);
       setEligibleTickets(elig);
       setMyBaggage(bags);
+      if (notifRes) {
+        const notifList = notifRes.notifications || notifRes || [];
+        setNotifications(Array.isArray(notifList) ? notifList : []);
+        setUnreadNotificationsCount(
+          notifRes.unreadCount ?? (Array.isArray(notifList) ? notifList.filter(n => n.isRead === 'N').length : 0)
+        );
+      }
     } catch (err) {
       setError(err.message || 'Failed to load traveler portal data.');
     } finally {
@@ -396,15 +412,58 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
     }
   };
 
-  // 5. CANCEL BOOKING
-  const handleCancelBooking = async (bookingId, pnr) => {
-    if (!window.confirm(`Are you sure you want to cancel booking PNR: ${pnr}?`)) return;
+  // 5. CANCEL BOOKING (OPEN MODAL)
+  const handleOpenCancelModal = (booking) => {
+    if (booking.status === 'CANCELLED') {
+      alert('This booking is already cancelled.');
+      return;
+    }
+    setCancelTargetBooking(booking);
+    setCancelError('');
+    setCancelModalOpen(true);
+  };
+
+  const handleConfirmCancelBooking = async () => {
+    if (!cancelTargetBooking) return;
+    setCancelSubmitting(true);
+    setCancelError('');
     try {
-      await operationsService.cancelBooking(bookingId);
-      setActionSuccess(`Reservation ${pnr} has been cancelled and seats released.`);
-      loadPassengerData();
+      await operationsService.cancelBooking(cancelTargetBooking.bookingId);
+      setActionSuccess(`Reservation ${cancelTargetBooking.bookingReference} has been cancelled and seat inventory released.`);
+      setCancelModalOpen(false);
+      setCancelTargetBooking(null);
+      await loadPassengerData();
     } catch (err) {
-      alert(`Cancellation failed: ${err.message}`);
+      setCancelError(err.message || 'Failed to cancel reservation.');
+    } finally {
+      setCancelSubmitting(false);
+    }
+  };
+
+  const handleCancelBooking = (bookingId, pnr) => {
+    const booking = bookings.find(b => b.bookingId === bookingId) || { bookingId, bookingReference: pnr };
+    handleOpenCancelModal(booking);
+  };
+
+  // 6. NOTIFICATION HANDLERS
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await operationsService.markNotificationRead(notificationId);
+      setNotifications(prev => prev.map(n => n.notificationId === notificationId ? { ...n, isRead: 'Y' } : n));
+      setUnreadNotificationsCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.warn('Mark as read note:', err.message);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await operationsService.markAllNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: 'Y' })));
+      setUnreadNotificationsCount(0);
+      setActionSuccess('All notifications marked as read.');
+    } catch (err) {
+      console.warn('Mark all read note:', err.message);
     }
   };
 
@@ -572,6 +631,16 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
           <Luggage size={15} />
           <span>Baggage Tracking</span>
           {myBaggage.length > 0 && <span className="pill-count">{myBaggage.length}</span>}
+        </button>
+
+        <button
+          type="button"
+          className={`passenger-nav-pill ${activeTab === 'notifications' ? 'active' : ''}`}
+          onClick={() => handleTabChange('notifications')}
+        >
+          <Bell size={15} />
+          <span>Notifications</span>
+          {unreadNotificationsCount > 0 && <span className="pill-count active-pulse">{unreadNotificationsCount}</span>}
         </button>
 
         <button
@@ -1540,6 +1609,104 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
       )}
 
       {/* ========================================================================= */}
+      {/* TAB: FLIGHT & OPERATIONAL NOTIFICATIONS */}
+      {/* ========================================================================= */}
+      {activeTab === 'notifications' && (
+        <div className="passenger-view-container">
+          <div className="passenger-view-header">
+            <div>
+              <h2 className="passenger-view-title">Flight & Operational Notifications</h2>
+              <p className="passenger-view-subtitle">
+                Real-time alerts stored in MySQL for booking confirmations, status changes, delays, gate reassignments, and web check-in.
+              </p>
+            </div>
+            <div className="passenger-header-actions">
+              {unreadNotificationsCount > 0 && (
+                <button className="btn btn-secondary btn-sm" onClick={handleMarkAllAsRead}>
+                  <CheckCircle2 size={14} />
+                  <span>Mark All as Read</span>
+                </button>
+              )}
+              <button className="btn btn-secondary btn-sm" onClick={loadPassengerData}>
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          {notifications.length === 0 ? (
+            <div className="passenger-empty-hero">
+              <Bell size={40} className="empty-hero-icon" />
+              <h3 className="empty-hero-title">No Notifications Yet</h3>
+              <p className="empty-hero-desc">
+                You will receive real-time notifications here when you book a flight, check in, or when flight status/gate updates occur.
+              </p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="ops-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Notification Title</th>
+                    <th>Message Details</th>
+                    <th>Received At</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {notifications.map((n) => (
+                    <tr key={n.notificationId} style={{ background: n.isRead === 'N' ? '#F0F9FF' : 'transparent' }}>
+                      <td>
+                        <span className={`profile-pill-badge ${
+                          n.type === 'BOOKING' ? 'emerald' :
+                          n.type === 'CANCELLATION' ? 'red' :
+                          n.type === 'CHECKIN' ? 'blue' :
+                          n.type === 'DELAY' ? 'gold' : 'blue'
+                        }`}>
+                          {n.type}
+                        </span>
+                      </td>
+                      <td className="font-semibold text-navy">
+                        {n.title}
+                      </td>
+                      <td style={{ fontSize: '13px', color: '#334155', maxWidth: '380px' }}>
+                        {n.message}
+                      </td>
+                      <td className="mono text-muted" style={{ fontSize: '12px' }}>
+                        {n.createdAt}
+                      </td>
+                      <td>
+                        {n.isRead === 'N' ? (
+                          <span className="profile-pill-badge gold" style={{ fontSize: '11px' }}>UNREAD</span>
+                        ) : (
+                          <span className="profile-pill-badge emerald" style={{ fontSize: '11px' }}>READ</span>
+                        )}
+                      </td>
+                      <td>
+                        {n.isRead === 'N' ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleMarkAsRead(n.notificationId)}
+                          >
+                            Mark Read
+                          </button>
+                        ) : (
+                          <span className="mono text-muted" style={{ fontSize: '12px' }}>✓ Read</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* TAB 7: TRAVEL GUIDELINES */}
       {/* ========================================================================= */}
       {activeTab === 'travel-info' && (
@@ -2196,6 +2363,96 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CANCELLATION CONFIRMATION MODAL */}
+      {/* ========================================================================= */}
+      {cancelModalOpen && cancelTargetBooking && (
+        <div className="modal-overlay" onClick={() => !cancelSubmitting && setCancelModalOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '1px solid #FEE2E2', background: '#FEF2F2' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertCircle size={20} color="#DC2626" />
+                <h3 className="modal-title" style={{ color: '#991B1B' }}>
+                  Cancel Reservation Confirmation
+                </h3>
+              </div>
+              <button
+                className="modal-close"
+                disabled={cancelSubmitting}
+                onClick={() => setCancelModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ padding: '20px' }}>
+              {cancelError && (
+                <div className="alert-banner alert-error" style={{ marginBottom: '14px' }}>
+                  <AlertCircle size={15} />
+                  <span>{cancelError}</span>
+                </div>
+              )}
+
+              <p style={{ fontSize: '14px', color: '#1E293B', marginBottom: '16px', lineHeight: '1.5' }}>
+                Are you sure you want to cancel booking PNR <strong className="mono text-navy">{cancelTargetBooking.bookingReference}</strong>?
+              </p>
+
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>PNR Reference</span>
+                    <strong className="mono text-navy">{cancelTargetBooking.bookingReference}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>Booking Status</span>
+                    <strong style={{ color: '#059669' }}>{cancelTargetBooking.status}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>Flight</span>
+                    <strong className="mono">{cancelTargetBooking.tickets?.[0]?.flightNumber || 'Scheduled Flight'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>Seat Released</span>
+                    <strong className="mono text-emerald">{cancelTargetBooking.tickets?.[0]?.seatNumber || 'Allocated Seat'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>Route</span>
+                    <span>{cancelTargetBooking.tickets?.[0]?.origin || '---'} → {cancelTargetBooking.tickets?.[0]?.destination || '---'}</span>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>Paid Amount</span>
+                    <strong className="mono">₹{cancelTargetBooking.totalAmount || 0}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '10px 12px', fontSize: '12px', color: '#92400E', lineHeight: '1.4' }}>
+                <strong>Important Policy:</strong> This cancellation is permanent. Your ticket will be marked <code>CANCELLED</code> in MySQL and the seat will be released back to the airline inventory immediately. No real monetary refund is processed in this system.
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '14px 20px', borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={cancelSubmitting}
+                onClick={() => setCancelModalOpen(false)}
+              >
+                Keep Booking
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={cancelSubmitting}
+                onClick={handleConfirmCancelBooking}
+              >
+                {cancelSubmitting ? 'Cancelling...' : 'Confirm Cancellation'}
+              </button>
+            </div>
           </div>
         </div>
       )}

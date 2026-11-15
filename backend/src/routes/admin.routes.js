@@ -13,6 +13,7 @@ router.use(authenticateUser);
 router.use(authorizeRoles('ADMIN'));
 
 // Administrative Operations
+router.get('/stats', adminController.getDashboardStats);
 router.get('/users', adminController.getUsers);
 router.put('/users/:id/role', adminController.updateUserRole);
 router.put('/users/:id/status', adminController.updateUserStatus);

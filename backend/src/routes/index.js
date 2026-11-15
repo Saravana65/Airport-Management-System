@@ -20,6 +20,7 @@ const checkinRoutes = require('./checkin.routes');
 const baggageRoutes = require('./baggage.routes');
 const gateRoutes = require('./gate.routes');
 const employeeRoutes = require('./employee.routes');
+const notificationRoutes = require('./notification.routes');
 const aadeRoutes = require('./aade.routes');
 const integrationRoutes = require('./integration.routes');
 
@@ -55,6 +56,9 @@ router.use('/gates', gateRoutes);
 
 // Module 8: Employee & Workforce Management
 router.use('/employees', employeeRoutes);
+
+// Module 9: Notifications
+router.use('/notifications', notificationRoutes);
 
 // Phase 08: Autonomous Airport Data Engine (AADE)
 router.use('/aade', aadeRoutes);
