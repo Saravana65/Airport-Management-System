@@ -104,6 +104,16 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
   const [safetyDeclared, setSafetyDeclared] = useState(false);
   const [checkInSearchPnr, setCheckInSearchPnr] = useState('');
 
+  // Passenger Baggage Management State
+  const [bagFilterSearch, setBagFilterSearch] = useState('');
+  const [showAddBagModal, setShowAddBagModal] = useState(false);
+  const [addBagTicketId, setAddBagTicketId] = useState('');
+  const [addBagWeight, setAddBagWeight] = useState(15.0);
+  const [addBagType, setAddBagType] = useState('CHECKED_LUGGAGE');
+  const [addBagDesc, setAddBagDesc] = useState('Standard rolling suitcase');
+  const [addBagSubmitting, setAddBagSubmitting] = useState(false);
+  const [addBagError, setAddBagError] = useState('');
+
   const loadPassengerData = async () => {
     setLoading(true);
     setError(null);
@@ -402,6 +412,77 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
   const handlePrintBoardingPass = () => {
     window.print();
   };
+
+  // Confirmed tickets eligible for baggage registration
+  const confirmedTicketsForBaggage = [];
+  (bookings || []).forEach(b => {
+    if (b.status === 'CONFIRMED' || b.status === 'ISSUED') {
+      (b.tickets || []).forEach(t => {
+        if (t.status !== 'CANCELLED') {
+          confirmedTicketsForBaggage.push({
+            ticketId: t.ticketId,
+            ticketNumber: t.ticketNumber,
+            pnr: b.bookingReference,
+            flightNumber: t.flightNumber || b.flightNumber || 'Scheduled Flight',
+            passengerName: t.passengerName || 'Passenger',
+            seatNumber: t.seatNumber || 'Unassigned',
+            cabinClass: t.cabinClass || 'ECONOMY',
+          });
+        }
+      });
+    }
+  });
+
+  const handleOpenAddBagModal = () => {
+    setAddBagTicketId(confirmedTicketsForBaggage[0]?.ticketId || '');
+    setAddBagWeight(15.0);
+    setAddBagType('CHECKED_LUGGAGE');
+    setAddBagDesc('Standard rolling suitcase');
+    setAddBagError('');
+    setShowAddBagModal(true);
+  };
+
+  const handleRegisterPassengerBag = async (e) => {
+    e.preventDefault();
+    setAddBagError('');
+    if (!addBagTicketId) {
+      setAddBagError('Please select a confirmed booking ticket for baggage registration.');
+      return;
+    }
+    const weight = parseFloat(addBagWeight);
+    if (isNaN(weight) || weight <= 0 || weight > 60) {
+      setAddBagError('Baggage weight must be between 0.1 kg and 60.0 kg.');
+      return;
+    }
+    setAddBagSubmitting(true);
+    try {
+      const res = await operationsService.registerBaggage({
+        ticketId: parseInt(addBagTicketId, 10),
+        weightKg: weight,
+        baggageType: addBagType,
+        description: addBagDesc,
+      });
+      setActionSuccess(`Baggage registered successfully with tag ${res.tagNumber || 'BAG-AMS'}!`);
+      setShowAddBagModal(false);
+      const bags = await operationsService.getBaggage();
+      setMyBaggage(bags || []);
+    } catch (err) {
+      setAddBagError(err.message || 'Failed to register baggage.');
+    } finally {
+      setAddBagSubmitting(false);
+    }
+  };
+
+  const filteredMyBaggage = (myBaggage || []).filter(b => {
+    if (!bagFilterSearch.trim()) return true;
+    const q = bagFilterSearch.toLowerCase().trim();
+    return (
+      b.tagNumber?.toLowerCase().includes(q) ||
+      b.flightNumber?.toLowerCase().includes(q) ||
+      b.bookingReference?.toLowerCase().includes(q) ||
+      b.status?.toLowerCase().includes(q)
+    );
+  });
 
   // Filtered check-in tickets by PNR
   const displayedCheckInTickets = eligibleTickets.filter((t) => {
@@ -1317,26 +1398,102 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 6: BAGGAGE TRACKING */}
+      {/* TAB 6: BAGGAGE TRACKING & REGISTRATION */}
       {/* ========================================================================= */}
       {activeTab === 'baggage' && (
         <div className="passenger-view-container">
           <div className="passenger-view-header">
             <div>
-              <h2 className="passenger-view-title">Baggage Tracking Station</h2>
+              <h2 className="passenger-view-title">Baggage Tracking & Registration</h2>
               <p className="passenger-view-subtitle">
-                Live RFID scan telemetry, baggage weight clearance, and carousel allocation for your checked luggage.
+                Live RFID scan telemetry, baggage weight clearance, and claim carousel allocation for your checked luggage.
               </p>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={handleOpenAddBagModal}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Plus size={14} />
+                <span>Add Baggage to Booking</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={loadPassengerData}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <span>Refresh</span>
+              </button>
             </div>
           </div>
 
-          {myBaggage.length === 0 ? (
+          {/* Demo Baggage Allowance Advisory Card */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
+            border: '1px solid #BFDBFE',
+            borderRadius: '10px',
+            padding: '14px 18px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+          }}>
+            <AlertCircle size={20} color="#1D4ED8" style={{ marginTop: '2px', flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '13px', color: '#1E40AF', marginBottom: '2px' }}>
+                DEMO BAGGAGE ALLOWANCE ADVISORY
+              </div>
+              <div style={{ fontSize: '12px', color: '#334155', lineHeight: 1.5 }}>
+                Standard complimentary allowance is <strong>1 checked bag up to 15.0 kg</strong> for Economy and <strong>2 checked bags up to 25.0 kg</strong> for Business. All baggage policies, excess weight charges, and conveyor routings are for academic simulation only.
+              </div>
+            </div>
+          </div>
+
+          {/* Search Filter Bar */}
+          <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+            <div style={{ position: 'relative', flex: 1, maxWidth: '420px' }}>
+              <Search size={15} style={{ position: 'absolute', left: '12px', top: '11px', color: '#94A3B8' }} />
+              <input
+                type="text"
+                placeholder="Search by tag #, flight #, PNR, or status..."
+                value={bagFilterSearch}
+                onChange={(e) => setBagFilterSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 34px',
+                  borderRadius: '6px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '13px',
+                }}
+              />
+            </div>
+          </div>
+
+          {filteredMyBaggage.length === 0 ? (
             <div className="passenger-empty-hero">
               <Luggage size={40} className="empty-hero-icon" />
-              <h3 className="empty-hero-title">No Checked Baggage on File</h3>
+              <h3 className="empty-hero-title">
+                {myBaggage.length === 0 ? 'No Checked Baggage on File' : 'No Baggage Matching Filter'}
+              </h3>
               <p className="empty-hero-desc">
-                Your checked luggage will appear here once tagged during web check-in or airport ground check-in.
+                {myBaggage.length === 0
+                  ? 'Your checked luggage units will appear here once registered online or at the airport check-in counter.'
+                  : 'Try adjusting your search criteria.'}
               </p>
+              {confirmedTicketsForBaggage.length > 0 && myBaggage.length === 0 && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={handleOpenAddBagModal}
+                  style={{ marginTop: '12px' }}
+                >
+                  <Plus size={14} /> Register Baggage Now
+                </button>
+              )}
             </div>
           ) : (
             <div className="table-responsive">
@@ -1344,21 +1501,34 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                 <thead>
                   <tr>
                     <th>Baggage Tag #</th>
-                    <th>Flight #</th>
+                    <th>Booking PNR</th>
+                    <th>Flight Corridor</th>
                     <th>Weight (kg)</th>
-                    <th>Conveyor / Reclaim Carousel</th>
-                    <th>Live Tracking Status</th>
+                    <th>Claim Carousel</th>
+                    <th>Handling Status</th>
+                    <th>Registration Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {myBaggage.map((b) => (
+                  {filteredMyBaggage.map((b) => (
                     <tr key={b.baggageId}>
                       <td className="mono font-bold text-navy">{b.tagNumber}</td>
-                      <td className="mono">{b.flightNumber || 'AI-101'}</td>
+                      <td className="mono font-semibold" style={{ color: '#0F766E' }}>
+                        {b.bookingReference || 'N/A'}
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{b.flightNumber || 'Scheduled'}</div>
+                        <div style={{ fontSize: '11px', color: '#64748B' }}>
+                          {b.originAirport && b.destAirport ? `${b.originAirport} → ${b.destAirport}` : 'Confirmed Route'}
+                        </div>
+                      </td>
                       <td className="mono font-bold text-navy">{b.weightKg} kg</td>
-                      <td className="mono text-muted">{b.claimCarousel || 'Carousel-04'}</td>
+                      <td className="mono text-muted">{b.carouselNumber || 'Pending Allocation'}</td>
                       <td>
                         <StatusBadge status={b.status} label={b.status} size="sm" />
+                      </td>
+                      <td style={{ fontSize: '12px', color: '#64748B' }}>
+                        {b.createdAt || 'Recent'}
                       </td>
                     </tr>
                   ))}
@@ -1890,6 +2060,142 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                 View in My Bookings
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PASSENGER ADD BAGGAGE MODAL */}
+      {/* ========================================================================= */}
+      {showAddBagModal && (
+        <div className="modal-overlay" onClick={() => setShowAddBagModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Luggage size={18} color="#2563EB" />
+                <span>Add Checked Baggage</span>
+              </h3>
+              <button className="modal-close" onClick={() => setShowAddBagModal(false)}>×</button>
+            </div>
+
+            <form onSubmit={handleRegisterPassengerBag}>
+              <div className="modal-body">
+                {addBagError && (
+                  <div style={{
+                    background: '#FEF2F2',
+                    border: '1px solid #FCA5A5',
+                    color: '#B91C1C',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    marginBottom: '14px',
+                  }}>
+                    {addBagError}
+                  </div>
+                )}
+
+                <div className="form-group" style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                    Select Confirmed Flight Ticket *
+                  </label>
+                  {confirmedTicketsForBaggage.length === 0 ? (
+                    <div style={{ fontSize: '12px', color: '#DC2626', padding: '8px 0' }}>
+                      No eligible confirmed booking tickets found. Please book a flight first.
+                    </div>
+                  ) : (
+                    <select
+                      value={addBagTicketId}
+                      onChange={(e) => setAddBagTicketId(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                    >
+                      {confirmedTicketsForBaggage.map((t) => (
+                        <option key={t.ticketId} value={t.ticketId}>
+                          PNR: {t.pnr} | Flight {t.flightNumber} | Seat {t.seatNumber} ({t.passengerName})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+                  <div className="form-group">
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Baggage Weight (kg) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      max="60"
+                      value={addBagWeight}
+                      onChange={(e) => setAddBagWeight(parseFloat(e.target.value) || 0)}
+                      required
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                    />
+                    <span style={{ fontSize: '11px', color: '#64748B' }}>Allowed: 0.1 - 60.0 kg</span>
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Baggage Category
+                    </label>
+                    <select
+                      value={addBagType}
+                      onChange={(e) => setAddBagType(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                    >
+                      <option value="CHECKED_LUGGAGE">Standard Checked Luggage</option>
+                      <option value="FRAGILE">Fragile / Priority Tag</option>
+                      <option value="SPORTS_EQUIPMENT">Sports / Musical Equipment</option>
+                      <option value="CABIN_EXCESS">Cabin Excess Drop</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                    Item Description (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Navy blue hard-shell suitcase with TSA lock"
+                    value={addBagDesc}
+                    onChange={(e) => setAddBagDesc(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div style={{
+                  background: '#F1F5F9',
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  color: '#475569',
+                  lineHeight: 1.5,
+                }}>
+                  RFID tracking tag will be automatically generated and linked to your passenger reservation in MySQL.
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '14px 20px', borderTop: '1px solid #E2E8F0' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowAddBagModal(false)}
+                  disabled={addBagSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={addBagSubmitting || confirmedTicketsForBaggage.length === 0}
+                >
+                  {addBagSubmitting ? 'Registering...' : 'Register Baggage Tag'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

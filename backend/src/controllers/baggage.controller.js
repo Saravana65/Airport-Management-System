@@ -26,7 +26,7 @@ async function getBaggageByTag(req, res, next) {
 
 async function registerBaggage(req, res, next) {
     try {
-        const bag = await baggageService.registerBaggage(req.body);
+        const bag = await baggageService.registerBaggage(req.body, req.user);
         return successResponse(res, bag, 'Baggage registered with barcode tag.', 201);
     } catch (error) {
         next(error);
@@ -43,9 +43,19 @@ async function updateBaggageStatus(req, res, next) {
     }
 }
 
+async function getStaffBaggageOverview(req, res, next) {
+    try {
+        const overview = await baggageService.getStaffBaggageOverview(req.user);
+        return successResponse(res, overview, 'Staff baggage handling telemetry retrieved.');
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     getBaggage,
     getBaggageByTag,
     registerBaggage,
     updateBaggageStatus,
+    getStaffBaggageOverview,
 };

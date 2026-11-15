@@ -18,6 +18,7 @@ import {
   Plus,
   ArrowRight,
   TrendingUp,
+  Search,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
@@ -46,31 +47,46 @@ export function AirportDashboard({ initialTab = 'overview' }) {
   const [checkInOverview, setCheckInOverview] = useState(null);
   const [checkInSearch, setCheckInSearch] = useState('');
 
+  // Staff Baggage Operations State
+  const [staffBaggageOverview, setStaffBaggageOverview] = useState(null);
+  const [baggageSearch, setBaggageSearch] = useState('');
+  const [baggageStatusFilter, setBaggageStatusFilter] = useState('ALL');
+  const [showStaffAddBagModal, setShowStaffAddBagModal] = useState(false);
+  const [staffBagTicketId, setStaffBagTicketId] = useState('');
+  const [staffBagWeight, setStaffBagWeight] = useState(18.5);
+  const [staffBagCarousel, setStaffBagCarousel] = useState('BELT-01');
+  const [staffBagTag, setStaffBagTag] = useState('');
+  const [staffBagSubmitting, setStaffBagSubmitting] = useState(false);
+  const [staffBagError, setStaffBagError] = useState('');
+  const [selectedBagForStatus, setSelectedBagForStatus] = useState(null);
+  const [newBagStatus, setNewBagStatus] = useState('');
+  const [newBagCarousel, setNewBagCarousel] = useState('');
+  const [statusUpdateSubmitting, setStatusUpdateSubmitting] = useState(false);
+  const [statusUpdateError, setStatusUpdateError] = useState('');
+
   // Gate Assignment Modal
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedGate, setSelectedGate] = useState(null);
   const [selectedFlightInstanceId, setSelectedFlightInstanceId] = useState('');
 
-  // Baggage Register Modal
-  const [showAddBaggage, setShowAddBaggage] = useState(false);
-  const [newBaggage, setNewBaggage] = useState({ ticketId: 1, weightKg: 18.5 });
-
   const loadAirportData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [gts, flts, bags, chks, overview] = await Promise.all([
+      const [gts, flts, bags, chks, overview, bagOverview] = await Promise.all([
         operationsService.getGates().catch(() => []),
         operationsService.getFlights().catch(() => []),
         operationsService.getBaggage().catch(() => []),
         operationsService.getCheckIns().catch(() => []),
         operationsService.getStaffCheckInOverview().catch(() => null),
+        operationsService.getStaffBaggageOverview().catch(() => null),
       ]);
       setGates(gts);
       setFlights(flts);
       setBaggage(bags);
       setCheckins(chks);
       setCheckInOverview(overview);
+      setStaffBaggageOverview(bagOverview);
     } catch (err) {
       setError(err.message || 'Failed to load ground telemetry.');
     } finally {
@@ -110,24 +126,103 @@ export function AirportDashboard({ initialTab = 'overview' }) {
     }
   };
 
-  const handleAdvanceBaggage = async (bag) => {
-    const nextStatusMap = {
-      'REGISTERED': 'CHECKED_IN',
-      'CHECKED_IN': 'SECURITY_CLEARED',
-      'SECURITY_CLEARED': 'LOADED',
-      'LOADED': 'IN_TRANSIT',
-      'IN_TRANSIT': 'CLAIM_READY',
-      'CLAIM_READY': 'COLLECTED',
-    };
-    const nextStatus = nextStatusMap[bag.status] || 'COLLECTED';
+  const STATUS_TRANSITIONS = {
+    'REGISTERED': ['CHECKED_IN', 'SECURITY_CLEARED', 'DELAYED'],
+    'CHECKED_IN': ['SECURITY_CLEARED', 'LOADED', 'IN_TRANSIT', 'DELAYED'],
+    'SECURITY_CLEARED': ['IN_TRANSIT', 'LOADED', 'DELAYED'],
+    'IN_TRANSIT': ['LOADED', 'ARRIVED', 'DELAYED'],
+    'LOADED': ['IN_TRANSIT', 'ARRIVED', 'CLAIM_READY', 'DELAYED'],
+    'ARRIVED': ['CLAIM_READY', 'DELIVERED', 'COLLECTED', 'DELAYED'],
+    'CLAIM_READY': ['DELIVERED', 'COLLECTED', 'DELAYED'],
+    'DELAYED': ['CHECKED_IN', 'SECURITY_CLEARED', 'IN_TRANSIT', 'LOADED', 'ARRIVED', 'CLAIM_READY', 'DELIVERED'],
+    'DELIVERED': [],
+    'COLLECTED': [],
+  };
+
+  const handleOpenStatusModal = (bag) => {
+    setSelectedBagForStatus(bag);
+    const validNext = STATUS_TRANSITIONS[bag.status] || [];
+    setNewBagStatus(validNext[0] || bag.status);
+    setNewBagCarousel(bag.carouselNumber || 'BELT-01');
+    setStatusUpdateError('');
+  };
+
+  const handleConfirmStatusUpdate = async (e) => {
+    e.preventDefault();
+    if (!selectedBagForStatus) return;
+    setStatusUpdateSubmitting(true);
+    setStatusUpdateError('');
     try {
-      await operationsService.updateBaggageStatus(bag.baggageId, nextStatus, 'Carousel-04');
-      setActionSuccess(`Baggage ${bag.tagNumber} advanced to ${nextStatus}!`);
+      await operationsService.updateBaggageStatus(
+        selectedBagForStatus.baggageId,
+        newBagStatus,
+        newBagCarousel
+      );
+      setActionSuccess(`Baggage ${selectedBagForStatus.tagNumber} updated to ${newBagStatus}!`);
+      setSelectedBagForStatus(null);
       loadAirportData();
     } catch (err) {
-      alert(`Baggage status update failed: ${err.message}`);
+      setStatusUpdateError(err.message || 'Failed to update baggage status.');
+    } finally {
+      setStatusUpdateSubmitting(false);
     }
   };
+
+  const handleStaffRegisterBaggage = async (e) => {
+    e.preventDefault();
+    setStaffBagSubmitting(true);
+    setStaffBagError('');
+    try {
+      const payload = {
+        weightKg: parseFloat(staffBagWeight),
+        carouselNumber: staffBagCarousel,
+      };
+      const cleaned = (staffBagTicketId || '').trim();
+      if (!cleaned) {
+        setStaffBagError('Ticket ID or Booking Reference (PNR) is required.');
+        setStaffBagSubmitting(false);
+        return;
+      }
+      if (/^\d+$/.test(cleaned)) {
+        payload.ticketId = parseInt(cleaned, 10);
+      } else {
+        payload.bookingReference = cleaned;
+      }
+      if (staffBagTag && staffBagTag.trim()) {
+        payload.tagNumber = staffBagTag.trim().toUpperCase();
+      }
+      const res = await operationsService.registerBaggage(payload);
+      setActionSuccess(`Baggage registered with barcode ${res.tagNumber || 'BAG-AMS'}!`);
+      setShowStaffAddBagModal(false);
+      setStaffBagTicketId('');
+      setStaffBagTag('');
+      loadAirportData();
+    } catch (err) {
+      setStaffBagError(err.message || 'Failed to register baggage.');
+    } finally {
+      setStaffBagSubmitting(false);
+    }
+  };
+
+  const filteredBaggage = (baggage || []).filter((b) => {
+    if (baggageStatusFilter === 'PENDING') {
+      if (!['REGISTERED', 'CHECKED_IN', 'SECURITY_CLEARED', 'IN_TRANSIT', 'LOADED'].includes(b.status)) {
+        return false;
+      }
+    } else if (baggageStatusFilter !== 'ALL' && b.status !== baggageStatusFilter) {
+      return false;
+    }
+    if (baggageSearch.trim()) {
+      const q = baggageSearch.toLowerCase().trim();
+      const matchTag = b.tagNumber?.toLowerCase().includes(q);
+      const matchPnr = b.bookingReference?.toLowerCase().includes(q);
+      const matchFlight = b.flightNumber?.toLowerCase().includes(q);
+      const matchPassenger = b.passengerName?.toLowerCase().includes(q);
+      const matchTicket = String(b.ticketId).includes(q) || b.ticketNumber?.toLowerCase().includes(q);
+      return matchTag || matchPnr || matchFlight || matchPassenger || matchTicket;
+    }
+    return true;
+  });
 
   const availableGatesCount = gates.filter((g) => g.status === 'AVAILABLE').length;
 
@@ -538,7 +633,7 @@ export function AirportDashboard({ initialTab = 'overview' }) {
       })()}
 
       {/* ========================================================================= */}
-      {/* TAB 5: BAGGAGE MANAGEMENT (DIRECT VIEW, NO METRICS CARDS) */}
+      {/* TAB 5: BAGGAGE MANAGEMENT & RECLAIM CAROUSELS */}
       {/* ========================================================================= */}
       {activeTab === 'baggage' && (
         <div className="airport-view-container">
@@ -546,21 +641,131 @@ export function AirportDashboard({ initialTab = 'overview' }) {
             <div>
               <h2 className="airport-view-title">Baggage Handling & Reclaim Carousels</h2>
               <p className="airport-view-subtitle">
-                Barcode RFID telemetry, weight scale screening, conveyor loading, and carousel claim status.
+                RFID telemetry, scale screening, conveyor routing, and carousel claim status across international flights.
               </p>
             </div>
-            <button className="btn btn-secondary btn-sm" onClick={loadAirportData}>
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              <span>Refresh Logistics</span>
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  setStaffBagTicketId('');
+                  setStaffBagWeight(18.5);
+                  setStaffBagCarousel('BELT-01');
+                  setStaffBagTag('');
+                  setStaffBagError('');
+                  setShowStaffAddBagModal(true);
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Plus size={14} />
+                <span>Register Baggage</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={loadAirportData}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <span>Refresh Logistics</span>
+              </button>
+            </div>
           </div>
 
+          {/* KPI Telemetry Cards */}
+          <div className="airport-overview-kpi-grid" style={{ marginBottom: '20px' }}>
+            <DashboardCard
+              title="Total Baggage Units"
+              value={staffBaggageOverview?.summary?.totalBaggage || baggage.length}
+              icon={Luggage}
+              color="indigo"
+              trend="Tracked in MySQL"
+            />
+            <DashboardCard
+              title="Pending Ground Handling"
+              value={staffBaggageOverview?.summary?.pendingCount || baggage.filter(b => ['REGISTERED', 'CHECKED_IN', 'SECURITY_CLEARED', 'IN_TRANSIT', 'LOADED'].includes(b.status)).length}
+              icon={Clock}
+              color="amber"
+              trend="Check-in to Loading"
+            />
+            <DashboardCard
+              title="In Transit / Loaded"
+              value={(staffBaggageOverview?.summary?.loadedCount || 0) + (staffBaggageOverview?.summary?.inTransitCount || 0)}
+              icon={Plane}
+              color="blue"
+              trend="Aircraft Holds"
+            />
+            <DashboardCard
+              title="Arrived / Delivered"
+              value={staffBaggageOverview?.summary?.deliveredCount || baggage.filter(b => ['ARRIVED', 'CLAIM_READY', 'DELIVERED', 'COLLECTED'].includes(b.status)).length}
+              icon={CheckCircle2}
+              color="emerald"
+              trend="Carousel Clearances"
+            />
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '12px',
+            marginBottom: '16px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '280px', maxWidth: '420px' }}>
+              <Search size={15} style={{ position: 'absolute', left: '12px', top: '11px', color: '#94A3B8' }} />
+              <input
+                type="text"
+                placeholder="Search by PNR, Tag #, Flight #, or Passenger..."
+                value={baggageSearch}
+                onChange={(e) => setBaggageSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 34px',
+                  borderRadius: '6px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '13px',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>Lifecycle Filter:</span>
+              <select
+                value={baggageStatusFilter}
+                onChange={(e) => setBaggageStatusFilter(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '13px',
+                  background: '#FFFFFF',
+                }}
+              >
+                <option value="ALL">All Handling Stages ({baggage.length})</option>
+                <option value="PENDING">Pending Only (Unprocessed)</option>
+                <option value="CHECKED_IN">CHECKED_IN</option>
+                <option value="SECURITY_CLEARED">SECURITY_CLEARED</option>
+                <option value="LOADED">LOADED</option>
+                <option value="IN_TRANSIT">IN_TRANSIT</option>
+                <option value="ARRIVED">ARRIVED</option>
+                <option value="CLAIM_READY">CLAIM_READY</option>
+                <option value="DELIVERED">DELIVERED</option>
+                <option value="DELAYED">DELAYED</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table */}
           <div className="table-responsive">
             <table className="ops-table">
               <thead>
                 <tr>
                   <th>Baggage Tag #</th>
-                  <th>Associated Ticket</th>
+                  <th>PNR & Passenger</th>
+                  <th>Flight Corridor</th>
                   <th>Weight (kg)</th>
                   <th>Reclaim Carousel</th>
                   <th>Handling Status</th>
@@ -568,28 +773,43 @@ export function AirportDashboard({ initialTab = 'overview' }) {
                 </tr>
               </thead>
               <tbody>
-                {baggage.length === 0 ? (
+                {filteredBaggage.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center text-muted" style={{ padding: '32px' }}>
-                      No checked luggage units registered for current shift.
+                    <td colSpan="7" className="text-center text-muted" style={{ padding: '32px' }}>
+                      No baggage records found matching current query and filter.
                     </td>
                   </tr>
                 ) : (
-                  baggage.map((b) => (
+                  filteredBaggage.map((b) => (
                     <tr key={b.baggageId}>
                       <td className="mono font-bold text-navy">{b.tagNumber}</td>
-                      <td className="mono">Ticket #{b.ticketId}</td>
+                      <td>
+                        <div className="mono font-semibold" style={{ color: '#0F766E' }}>
+                          {b.bookingReference || `Tkt #${b.ticketId}`}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#64748B' }}>
+                          {b.passengerName || 'Traveler'}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{b.flightNumber || 'AI-101'}</div>
+                        <div style={{ fontSize: '11px', color: '#64748B' }}>
+                          {b.originAirport && b.destAirport ? `${b.originAirport} → ${b.destAirport}` : 'DEL → BOM'}
+                        </div>
+                      </td>
                       <td className="mono font-bold">{b.weightKg} kg</td>
-                      <td className="mono text-muted">{b.carouselNumber || 'Carousel-04'}</td>
+                      <td className="mono text-muted">{b.carouselNumber || 'Pending'}</td>
                       <td><StatusBadge status={b.status} label={b.status} size="sm" /></td>
                       <td>
                         <button
+                          type="button"
                           className="btn btn-secondary btn-sm"
-                          onClick={() => handleAdvanceBaggage(b)}
-                          title="Advance baggage to next handling stage"
+                          onClick={() => handleOpenStatusModal(b)}
+                          title="Transition status or update carousel assignment"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                         >
                           <TrendingUp size={13} />
-                          <span>Advance Status</span>
+                          <span>Update Status</span>
                         </button>
                       </td>
                     </tr>
@@ -642,6 +862,233 @@ export function AirportDashboard({ initialTab = 'overview' }) {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   Confirm Gate Docking
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* STAFF BAGGAGE STATUS TRANSITION MODAL */}
+      {/* ========================================================================= */}
+      {selectedBagForStatus && (
+        <div className="modal-overlay" onClick={() => setSelectedBagForStatus(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TrendingUp size={18} color="#2563EB" />
+                <span>Update Baggage Handling Status</span>
+              </h3>
+              <button className="modal-close" onClick={() => setSelectedBagForStatus(null)}>×</button>
+            </div>
+
+            <form onSubmit={handleConfirmStatusUpdate}>
+              <div className="modal-body">
+                {statusUpdateError && (
+                  <div style={{
+                    background: '#FEF2F2',
+                    border: '1px solid #FCA5A5',
+                    color: '#B91C1C',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    marginBottom: '14px',
+                  }}>
+                    {statusUpdateError}
+                  </div>
+                )}
+
+                <div style={{
+                  background: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '6px',
+                  padding: '12px',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ color: '#64748B' }}>Baggage Barcode Tag:</span>
+                    <span className="mono font-bold text-navy">{selectedBagForStatus.tagNumber}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ color: '#64748B' }}>Passenger / PNR:</span>
+                    <span style={{ fontWeight: 600 }}>{selectedBagForStatus.passengerName || 'Passenger'} ({selectedBagForStatus.bookingReference || 'PNR'})</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ color: '#64748B' }}>Current Status:</span>
+                    <StatusBadge status={selectedBagForStatus.status} label={selectedBagForStatus.status} size="sm" />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#64748B' }}>Recorded Weight:</span>
+                    <span className="mono font-bold">{selectedBagForStatus.weightKg} kg</span>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                    Next Permitted Status *
+                  </label>
+                  {(STATUS_TRANSITIONS[selectedBagForStatus.status] || []).length === 0 ? (
+                    <div style={{ fontSize: '12px', color: '#64748B', padding: '6px 0' }}>
+                      Baggage has reached terminal state ({selectedBagForStatus.status}). No further transitions allowed.
+                    </div>
+                  ) : (
+                    <select
+                      value={newBagStatus}
+                      onChange={(e) => setNewBagStatus(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                    >
+                      {(STATUS_TRANSITIONS[selectedBagForStatus.status] || []).map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                    Conveyor / Reclaim Carousel Assignment
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. BELT-01, BELT-02, C01, C02"
+                    value={newBagCarousel}
+                    onChange={(e) => setNewBagCarousel(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '14px 20px', borderTop: '1px solid #E2E8F0' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setSelectedBagForStatus(null)}
+                  disabled={statusUpdateSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={statusUpdateSubmitting || (STATUS_TRANSITIONS[selectedBagForStatus.status] || []).length === 0}
+                >
+                  {statusUpdateSubmitting ? 'Saving...' : 'Confirm Status Update'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* STAFF REGISTER BAGGAGE MODAL */}
+      {/* ========================================================================= */}
+      {showStaffAddBagModal && (
+        <div className="modal-overlay" onClick={() => setShowStaffAddBagModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Luggage size={18} color="#2563EB" />
+                <span>Register Ground Luggage Unit</span>
+              </h3>
+              <button className="modal-close" onClick={() => setShowStaffAddBagModal(false)}>×</button>
+            </div>
+
+            <form onSubmit={handleStaffRegisterBaggage}>
+              <div className="modal-body">
+                {staffBagError && (
+                  <div style={{
+                    background: '#FEF2F2',
+                    border: '1px solid #FCA5A5',
+                    color: '#B91C1C',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    marginBottom: '14px',
+                  }}>
+                    {staffBagError}
+                  </div>
+                )}
+
+                <div className="form-group" style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                    Booking PNR or Ticket ID *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 6DRGBT or Ticket #45"
+                    value={staffBagTicketId}
+                    onChange={(e) => setStaffBagTicketId(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                  />
+                  <span style={{ fontSize: '11px', color: '#64748B' }}>Enter 6-char alphanumeric PNR or numeric Ticket ID</span>
+                </div>
+
+                <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+                  <div className="form-group">
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Scaled Weight (kg) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      max="60"
+                      value={staffBagWeight}
+                      onChange={(e) => setStaffBagWeight(parseFloat(e.target.value) || 0)}
+                      required
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                    />
+                    <span style={{ fontSize: '11px', color: '#64748B' }}>Valid range: 0.1 - 60.0 kg</span>
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Conveyor Belt / Carousel
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. BELT-01, C01"
+                      value={staffBagCarousel}
+                      onChange={(e) => setStaffBagCarousel(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                    Custom RFID / Barcode Tag (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Leave blank to auto-generate (e.g. BAG-AI-55123)"
+                    value={staffBagTag}
+                    onChange={(e) => setStaffBagTag(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '14px 20px', borderTop: '1px solid #E2E8F0' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowStaffAddBagModal(false)}
+                  disabled={staffBagSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={staffBagSubmitting}
+                >
+                  {staffBagSubmitting ? 'Registering...' : 'Register Luggage Tag'}
                 </button>
               </div>
             </form>

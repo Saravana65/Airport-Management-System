@@ -99,6 +99,8 @@ export const operationsService = {
     const query = new URLSearchParams(params).toString();
     return api.get(`/baggage${query ? `?${query}` : ''}`).then(r => r.data || r);
   },
+  getBaggageByTag: (tagNumber) => api.get(`/baggage/${encodeURIComponent(tagNumber)}`).then(r => r.data || r),
+  getStaffBaggageOverview: () => api.get('/baggage/staff/overview').then(r => r.data || r),
   registerBaggage: (data) => api.post('/baggage', data).then(r => r.data || r),
   updateBaggageStatus: (id, status, carouselNumber) =>
     api.patch(`/baggage/${id}/status`, { status, carouselNumber }).then(r => r.data || r),
