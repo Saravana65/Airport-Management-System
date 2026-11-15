@@ -49,6 +49,8 @@ export function AirlineDashboard({ initialTab = 'overview' }) {
   const [selectedFlight, setSelectedFlight] = useState(null);
   const [newStatus, setNewStatus] = useState('BOARDING');
   const [statusReason, setStatusReason] = useState('');
+  const [estimatedDeparture, setEstimatedDeparture] = useState('');
+  const [estimatedArrival, setEstimatedArrival] = useState('');
 
   // Form State for Scheduling New Flight
   const [showAddFlight, setShowAddFlight] = useState(false);
@@ -95,7 +97,14 @@ export function AirlineDashboard({ initialTab = 'overview' }) {
   const handleOpenStatusModal = (flight) => {
     setSelectedFlight(flight);
     setNewStatus(flight.status || 'BOARDING');
-    setStatusReason('');
+    setStatusReason(flight.remarks || '');
+    const toInputFormat = (dt) => {
+      if (!dt) return '';
+      const s = dt.replace(' ', 'T');
+      return s.length >= 16 ? s.substring(0, 16) : s;
+    };
+    setEstimatedDeparture(toInputFormat(flight.estimatedDeparture || flight.scheduledDeparture));
+    setEstimatedArrival(toInputFormat(flight.estimatedArrival || flight.scheduledArrival));
     setStatusModalOpen(true);
   };
 
@@ -106,9 +115,13 @@ export function AirlineDashboard({ initialTab = 'overview' }) {
       await operationsService.updateFlightStatus(
         selectedFlight.flightInstanceId,
         newStatus,
-        statusReason || `Updated by dispatcher ${user?.email}`
+        statusReason || `Updated by dispatcher ${user?.email}`,
+        {
+          estimatedDeparture: estimatedDeparture ? estimatedDeparture.replace('T', ' ') + (estimatedDeparture.length === 16 ? ':00' : '') : null,
+          estimatedArrival: estimatedArrival ? estimatedArrival.replace('T', ' ') + (estimatedArrival.length === 16 ? ':00' : '') : null,
+        }
       );
-      setActionSuccess(`Flight ${selectedFlight.flightNumber} status transitioned to ${newStatus}!`);
+      setActionSuccess(`Flight ${selectedFlight.flightNumber} status and estimated timings updated!`);
       setStatusModalOpen(false);
       loadAirlineData();
     } catch (err) {
@@ -557,6 +570,30 @@ export function AirlineDashboard({ initialTab = 'overview' }) {
                     <option value="DELAYED">DELAYED (Holding Pattern)</option>
                     <option value="CANCELLED">CANCELLED (Grounded)</option>
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Manual Estimated Departure Time</label>
+                  <input
+                    type="datetime-local"
+                    value={estimatedDeparture}
+                    onChange={(e) => setEstimatedDeparture(e.target.value)}
+                  />
+                  <small style={{ color: '#64748B', fontSize: '11px', display: 'block', marginTop: '2px' }}>
+                    Overrides automated calculation and recalculates delay duration
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label>Manual Estimated Arrival Time</label>
+                  <input
+                    type="datetime-local"
+                    value={estimatedArrival}
+                    onChange={(e) => setEstimatedArrival(e.target.value)}
+                  />
+                  <small style={{ color: '#64748B', fontSize: '11px', display: 'block', marginTop: '2px' }}>
+                    Projected arrival timestamp
+                  </small>
                 </div>
 
                 <div className="form-group">

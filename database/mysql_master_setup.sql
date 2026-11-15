@@ -1,0 +1,359 @@
+-- ============================================================================
+-- SCRIPT: mysql_master_setup.sql
+-- PROJECT: Airport Management System
+-- TARGET: MySQL 8.0+
+-- DESCRIPTION: Master MySQL schema creation script with strict foreign keys,
+--              unique constraints, and check constraints matching the Oracle architecture.
+-- ============================================================================
+
+CREATE DATABASE IF NOT EXISTS airport_management_db
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE airport_management_db;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS OPERATIONAL_LOGS;
+DROP TABLE IF EXISTS NOTIFICATIONS;
+DROP TABLE IF EXISTS FLIGHT_STATUS_HISTORY;
+DROP TABLE IF EXISTS BAGGAGE;
+DROP TABLE IF EXISTS CHECK_IN;
+DROP TABLE IF EXISTS TICKETS;
+DROP TABLE IF EXISTS BOOKINGS;
+DROP TABLE IF EXISTS EMPLOYEES;
+DROP TABLE IF EXISTS PASSENGERS;
+DROP TABLE IF EXISTS USERS;
+DROP TABLE IF EXISTS FLIGHT_INSTANCES;
+DROP TABLE IF EXISTS FLIGHTS;
+DROP TABLE IF EXISTS AIRCRAFT;
+DROP TABLE IF EXISTS GATES;
+DROP TABLE IF EXISTS AIRLINES;
+DROP TABLE IF EXISTS AIRPORTS;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- 1. AIRPORTS
+CREATE TABLE AIRPORTS (
+    AIRPORT_CODE    VARCHAR(3)      NOT NULL,
+    AIRPORT_NAME    VARCHAR(100)    NOT NULL,
+    CITY            VARCHAR(50)     NOT NULL,
+    STATE           VARCHAR(50),
+    COUNTRY         VARCHAR(50)     NOT NULL,
+    TIMEZONE        VARCHAR(50)     DEFAULT 'UTC' NOT NULL,
+    IS_ACTIVE       CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_AT      DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (AIRPORT_CODE),
+    CONSTRAINT chk_airports_active CHECK (IS_ACTIVE IN ('Y', 'N'))
+) ENGINE=InnoDB COMMENT='Stores international and domestic airport facilities identified by IATA code.';
+
+-- 2. AIRLINES
+CREATE TABLE AIRLINES (
+    AIRLINE_CODE        VARCHAR(3)      NOT NULL,
+    AIRLINE_NAME        VARCHAR(100)    NOT NULL,
+    THREE_DIGIT_CODE    VARCHAR(3),
+    COUNTRY             VARCHAR(50)     NOT NULL,
+    CONTACT_EMAIL       VARCHAR(100),
+    IS_ACTIVE           CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_AT          DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (AIRLINE_CODE),
+    UNIQUE KEY uq_airline_3digit (THREE_DIGIT_CODE),
+    CONSTRAINT chk_airlines_active CHECK (IS_ACTIVE IN ('Y', 'N'))
+) ENGINE=InnoDB COMMENT='Stores registered commercial airlines and accounting codes.';
+
+-- 3. GATES
+CREATE TABLE GATES (
+    GATE_ID         INT AUTO_INCREMENT NOT NULL,
+    AIRPORT_CODE    VARCHAR(3)      NOT NULL,
+    TERMINAL        VARCHAR(10)     NOT NULL,
+    GATE_NUMBER     VARCHAR(10)     NOT NULL,
+    STATUS          VARCHAR(20)     DEFAULT 'AVAILABLE' NOT NULL,
+    IS_ACTIVE       CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_AT      DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (GATE_ID),
+    UNIQUE KEY uq_gate_location (AIRPORT_CODE, TERMINAL, GATE_NUMBER),
+    KEY idx_gates_airport (AIRPORT_CODE),
+    CONSTRAINT fk_gates_airport FOREIGN KEY (AIRPORT_CODE)
+        REFERENCES AIRPORTS (AIRPORT_CODE) ON DELETE CASCADE,
+    CONSTRAINT chk_gate_status CHECK (STATUS IN ('AVAILABLE', 'OCCUPIED', 'MAINTENANCE')),
+    CONSTRAINT chk_gates_active CHECK (IS_ACTIVE IN ('Y', 'N'))
+) ENGINE=InnoDB COMMENT='Stores terminal gate facilities across airports for aircraft docking and boarding.';
+
+-- 4. AIRCRAFT
+CREATE TABLE AIRCRAFT (
+    AIRCRAFT_ID         INT AUTO_INCREMENT NOT NULL,
+    REGISTRATION_NO     VARCHAR(20)     NOT NULL,
+    MODEL               VARCHAR(50)     NOT NULL,
+    AIRLINE_CODE        VARCHAR(3)      NOT NULL,
+    TOTAL_SEATS         INT             NOT NULL,
+    ECONOMY_SEATS       INT             DEFAULT 0 NOT NULL,
+    BUSINESS_SEATS      INT             DEFAULT 0 NOT NULL,
+    FIRST_SEATS         INT             DEFAULT 0 NOT NULL,
+    STATUS              VARCHAR(20)     DEFAULT 'ACTIVE' NOT NULL,
+    CREATED_AT          DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (AIRCRAFT_ID),
+    UNIQUE KEY uq_aircraft_reg (REGISTRATION_NO),
+    KEY idx_aircraft_airline (AIRLINE_CODE),
+    CONSTRAINT fk_aircraft_airline FOREIGN KEY (AIRLINE_CODE)
+        REFERENCES AIRLINES (AIRLINE_CODE) ON DELETE CASCADE,
+    CONSTRAINT chk_aircraft_status CHECK (STATUS IN ('ACTIVE', 'MAINTENANCE', 'RETIRED'))
+) ENGINE=InnoDB COMMENT='Fleet records including tail numbers, aircraft models, and cabin seat breakdowns.';
+
+-- 5. FLIGHTS
+CREATE TABLE FLIGHTS (
+    FLIGHT_NUMBER               VARCHAR(10)     NOT NULL,
+    AIRLINE_CODE                VARCHAR(3)      NOT NULL,
+    ORIGIN_AIRPORT              VARCHAR(3)      NOT NULL,
+    DEST_AIRPORT                VARCHAR(3)      NOT NULL,
+    SCHEDULED_DEPARTURE_TIME    VARCHAR(5)      NOT NULL,
+    SCHEDULED_ARRIVAL_TIME      VARCHAR(5)      NOT NULL,
+    FLIGHT_TYPE                 VARCHAR(20)     DEFAULT 'DIRECT' NOT NULL,
+    BASE_FARE                   DECIMAL(10,2)   DEFAULT 5000.00 NOT NULL,
+    IS_ACTIVE                   CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_AT                  DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (FLIGHT_NUMBER),
+    KEY idx_flights_route (ORIGIN_AIRPORT, DEST_AIRPORT),
+    CONSTRAINT fk_flights_airline FOREIGN KEY (AIRLINE_CODE)
+        REFERENCES AIRLINES (AIRLINE_CODE) ON DELETE CASCADE,
+    CONSTRAINT fk_flights_origin FOREIGN KEY (ORIGIN_AIRPORT)
+        REFERENCES AIRPORTS (AIRPORT_CODE) ON DELETE CASCADE,
+    CONSTRAINT fk_flights_dest FOREIGN KEY (DEST_AIRPORT)
+        REFERENCES AIRPORTS (AIRPORT_CODE) ON DELETE CASCADE,
+    CONSTRAINT chk_flight_type CHECK (FLIGHT_TYPE IN ('DIRECT', 'NON-STOP', 'CONNECTING')),
+    CONSTRAINT chk_flights_active CHECK (IS_ACTIVE IN ('Y', 'N'))
+) ENGINE=InnoDB COMMENT='Recurring flight schedule templates with route metadata and base fares.';
+
+-- 6. FLIGHT_INSTANCES
+CREATE TABLE FLIGHT_INSTANCES (
+    FLIGHT_INSTANCE_ID      INT AUTO_INCREMENT NOT NULL,
+    FLIGHT_NUMBER           VARCHAR(10)     NOT NULL,
+    FLIGHT_DATE             DATE            NOT NULL,
+    AIRCRAFT_ID             INT,
+    DEPARTURE_GATE_ID       INT,
+    ARRIVAL_GATE_ID         INT,
+    SCHEDULED_DEPARTURE     DATETIME        NOT NULL,
+    ESTIMATED_DEPARTURE     DATETIME,
+    ACTUAL_DEPARTURE        DATETIME,
+    SCHEDULED_ARRIVAL       DATETIME        NOT NULL,
+    ESTIMATED_ARRIVAL       DATETIME,
+    ACTUAL_ARRIVAL          DATETIME,
+    STATUS                  VARCHAR(20)     DEFAULT 'SCHEDULED' NOT NULL,
+    REMARKS                 VARCHAR(255),
+    CREATED_AT              DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (FLIGHT_INSTANCE_ID),
+    UNIQUE KEY uq_flight_date (FLIGHT_NUMBER, FLIGHT_DATE),
+    KEY idx_instances_date (FLIGHT_DATE, STATUS),
+    KEY idx_instances_depgate (DEPARTURE_GATE_ID),
+    CONSTRAINT fk_instance_flight FOREIGN KEY (FLIGHT_NUMBER)
+        REFERENCES FLIGHTS (FLIGHT_NUMBER) ON DELETE CASCADE,
+    CONSTRAINT fk_instance_aircraft FOREIGN KEY (AIRCRAFT_ID)
+        REFERENCES AIRCRAFT (AIRCRAFT_ID) ON DELETE SET NULL,
+    CONSTRAINT fk_instance_dep_gate FOREIGN KEY (DEPARTURE_GATE_ID)
+        REFERENCES GATES (GATE_ID) ON DELETE SET NULL,
+    CONSTRAINT fk_instance_arr_gate FOREIGN KEY (ARRIVAL_GATE_ID)
+        REFERENCES GATES (GATE_ID) ON DELETE SET NULL,
+    CONSTRAINT chk_instance_status CHECK (
+        STATUS IN ('SCHEDULED', 'BOARDING', 'DEPARTED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'ARRIVED')
+    )
+) ENGINE=InnoDB COMMENT='Daily physical flight occurrences tracked with real-time operational status and gate assignments.';
+
+-- 7. USERS
+CREATE TABLE USERS (
+    USER_ID         INT AUTO_INCREMENT NOT NULL,
+    EMAIL           VARCHAR(100)    NOT NULL,
+    PASSWORD_HASH   VARCHAR(255)    NOT NULL,
+    ROLE            VARCHAR(20)     NOT NULL,
+    IS_ACTIVE       CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_AT      DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (USER_ID),
+    UNIQUE KEY uq_user_email (EMAIL),
+    CONSTRAINT chk_user_role CHECK (ROLE IN ('ADMIN', 'AIRLINE_STAFF', 'AIRPORT_STAFF', 'PASSENGER')),
+    CONSTRAINT chk_user_active CHECK (IS_ACTIVE IN ('Y', 'N'))
+) ENGINE=InnoDB COMMENT='Authentication credentials and security roles for all system actors.';
+
+-- 8. PASSENGERS
+CREATE TABLE PASSENGERS (
+    PASSENGER_ID    INT AUTO_INCREMENT NOT NULL,
+    USER_ID         INT,
+    FIRST_NAME      VARCHAR(50)     NOT NULL,
+    LAST_NAME       VARCHAR(50)     NOT NULL,
+    PASSPORT_NUMBER VARCHAR(20)     NOT NULL,
+    PHONE           VARCHAR(20),
+    EMAIL           VARCHAR(100),
+    DATE_OF_BIRTH   DATE,
+    GENDER          VARCHAR(1),
+    CREATED_AT      DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (PASSENGER_ID),
+    UNIQUE KEY uq_passenger_passport (PASSPORT_NUMBER),
+    KEY idx_passengers_passport (PASSPORT_NUMBER),
+    KEY idx_passengers_user (USER_ID),
+    CONSTRAINT fk_passengers_user FOREIGN KEY (USER_ID)
+        REFERENCES USERS (USER_ID) ON DELETE SET NULL,
+    CONSTRAINT chk_passenger_gender CHECK (GENDER IN ('M', 'F', 'O'))
+) ENGINE=InnoDB COMMENT='Traveler demographic records verified via unique passport numbers.';
+
+-- 9. EMPLOYEES
+CREATE TABLE EMPLOYEES (
+    EMPLOYEE_ID     INT AUTO_INCREMENT NOT NULL,
+    USER_ID         INT             NOT NULL,
+    AIRPORT_CODE    VARCHAR(3)      NOT NULL,
+    AIRLINE_CODE    VARCHAR(3),
+    FIRST_NAME      VARCHAR(50)     NOT NULL,
+    LAST_NAME       VARCHAR(50)     NOT NULL,
+    JOB_TITLE       VARCHAR(50)     NOT NULL,
+    SHIFT           VARCHAR(20)     DEFAULT 'DAY' NOT NULL,
+    CONTACT_PHONE   VARCHAR(20),
+    IS_ACTIVE       CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_AT      DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (EMPLOYEE_ID),
+    KEY idx_emp_airport (AIRPORT_CODE),
+    KEY idx_emp_airline (AIRLINE_CODE),
+    CONSTRAINT fk_emp_user FOREIGN KEY (USER_ID)
+        REFERENCES USERS (USER_ID) ON DELETE CASCADE,
+    CONSTRAINT fk_emp_airport FOREIGN KEY (AIRPORT_CODE)
+        REFERENCES AIRPORTS (AIRPORT_CODE) ON DELETE CASCADE,
+    CONSTRAINT fk_emp_airline FOREIGN KEY (AIRLINE_CODE)
+        REFERENCES AIRLINES (AIRLINE_CODE) ON DELETE SET NULL,
+    CONSTRAINT chk_emp_shift CHECK (SHIFT IN ('DAY', 'NIGHT')),
+    CONSTRAINT chk_emp_active CHECK (IS_ACTIVE IN ('Y', 'N'))
+) ENGINE=InnoDB COMMENT='Airport and airline staff records, duty assignments, and shifts.';
+
+-- 10. BOOKINGS
+CREATE TABLE BOOKINGS (
+    BOOKING_ID          INT AUTO_INCREMENT NOT NULL,
+    BOOKING_REFERENCE   VARCHAR(10)     NOT NULL,
+    USER_ID             INT             NOT NULL,
+    BOOKING_DATE        DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    TOTAL_AMOUNT        DECIMAL(10,2)   NOT NULL,
+    STATUS              VARCHAR(20)     DEFAULT 'CONFIRMED' NOT NULL,
+    CREATED_AT          DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (BOOKING_ID),
+    UNIQUE KEY uq_booking_ref (BOOKING_REFERENCE),
+    CONSTRAINT fk_bookings_user FOREIGN KEY (USER_ID)
+        REFERENCES USERS (USER_ID) ON DELETE CASCADE,
+    CONSTRAINT chk_booking_status CHECK (STATUS IN ('CONFIRMED', 'CANCELLED', 'REFUNDED'))
+) ENGINE=InnoDB COMMENT='Passenger reservation records grouped under a unique PNR code.';
+
+-- 11. TICKETS
+CREATE TABLE TICKETS (
+    TICKET_ID           INT AUTO_INCREMENT NOT NULL,
+    BOOKING_ID          INT             NOT NULL,
+    FLIGHT_INSTANCE_ID  INT             NOT NULL,
+    PASSENGER_ID        INT             NOT NULL,
+    TICKET_NUMBER       VARCHAR(20)     NOT NULL,
+    SEAT_NUMBER         VARCHAR(5),
+    CABIN_CLASS         VARCHAR(20)     NOT NULL,
+    PRICE               DECIMAL(10,2)   NOT NULL,
+    STATUS              VARCHAR(20)     DEFAULT 'ISSUED' NOT NULL,
+    CREATED_AT          DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (TICKET_ID),
+    UNIQUE KEY uq_ticket_number (TICKET_NUMBER),
+    UNIQUE KEY uq_flight_seat (FLIGHT_INSTANCE_ID, SEAT_NUMBER),
+    KEY idx_tickets_booking (BOOKING_ID),
+    KEY idx_tickets_instance (FLIGHT_INSTANCE_ID),
+    KEY idx_tickets_passenger (PASSENGER_ID),
+    CONSTRAINT fk_tickets_booking FOREIGN KEY (BOOKING_ID)
+        REFERENCES BOOKINGS (BOOKING_ID) ON DELETE CASCADE,
+    CONSTRAINT fk_tickets_instance FOREIGN KEY (FLIGHT_INSTANCE_ID)
+        REFERENCES FLIGHT_INSTANCES (FLIGHT_INSTANCE_ID) ON DELETE CASCADE,
+    CONSTRAINT fk_tickets_passenger FOREIGN KEY (PASSENGER_ID)
+        REFERENCES PASSENGERS (PASSENGER_ID) ON DELETE CASCADE,
+    CONSTRAINT chk_ticket_class CHECK (CABIN_CLASS IN ('ECONOMY', 'BUSINESS', 'FIRST')),
+    CONSTRAINT chk_ticket_status CHECK (STATUS IN ('ISSUED', 'CHECKED_IN', 'BOARDED', 'CANCELLED'))
+) ENGINE=InnoDB COMMENT='Individual flight tickets with seat assignments and cabin class fares.';
+
+-- 12. CHECK_IN
+CREATE TABLE CHECK_IN (
+    CHECK_IN_ID         INT AUTO_INCREMENT NOT NULL,
+    TICKET_ID           INT             NOT NULL,
+    CHECK_IN_TIME       DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    BOARDING_PASS_CODE  VARCHAR(50)     NOT NULL,
+    BOARDING_TIME       DATETIME,
+    GATE_ID             INT,
+    STATUS              VARCHAR(20)     DEFAULT 'COMPLETED' NOT NULL,
+    CREATED_AT          DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (CHECK_IN_ID),
+    UNIQUE KEY uq_checkin_ticket (TICKET_ID),
+    UNIQUE KEY uq_boarding_pass (BOARDING_PASS_CODE),
+    KEY idx_checkin_gate (GATE_ID),
+    CONSTRAINT fk_checkin_ticket FOREIGN KEY (TICKET_ID)
+        REFERENCES TICKETS (TICKET_ID) ON DELETE CASCADE,
+    CONSTRAINT fk_checkin_gate FOREIGN KEY (GATE_ID)
+        REFERENCES GATES (GATE_ID) ON DELETE SET NULL,
+    CONSTRAINT chk_checkin_status CHECK (STATUS IN ('COMPLETED', 'BOARDED'))
+) ENGINE=InnoDB COMMENT='Passenger airport or web check-in records and issued boarding passes.';
+
+-- 13. BAGGAGE
+CREATE TABLE BAGGAGE (
+    BAGGAGE_ID          INT AUTO_INCREMENT NOT NULL,
+    TICKET_ID           INT             NOT NULL,
+    TAG_NUMBER          VARCHAR(30)     NOT NULL,
+    WEIGHT_KG           DECIMAL(5,2)    NOT NULL,
+    STATUS              VARCHAR(30)     DEFAULT 'CHECKED_IN' NOT NULL,
+    CAROUSEL_NUMBER     VARCHAR(10),
+    CREATED_AT          DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (BAGGAGE_ID),
+    UNIQUE KEY uq_baggage_tag (TAG_NUMBER),
+    KEY idx_baggage_ticket (TICKET_ID),
+    CONSTRAINT fk_baggage_ticket FOREIGN KEY (TICKET_ID)
+        REFERENCES TICKETS (TICKET_ID) ON DELETE CASCADE,
+    CONSTRAINT chk_baggage_weight CHECK (WEIGHT_KG >= 0.0 AND WEIGHT_KG <= 60.0),
+    CONSTRAINT chk_baggage_status CHECK (
+        STATUS IN ('CHECKED_IN', 'SECURITY_CLEARED', 'LOADED', 'TRANSIT', 'CLAIM_READY', 'COLLECTED')
+    )
+) ENGINE=InnoDB COMMENT='Checked baggage items tracked from ticket intake to baggage reclaim carousels.';
+
+-- 14. FLIGHT_STATUS_HISTORY
+CREATE TABLE FLIGHT_STATUS_HISTORY (
+    HISTORY_ID              INT AUTO_INCREMENT NOT NULL,
+    FLIGHT_INSTANCE_ID      INT             NOT NULL,
+    OLD_STATUS              VARCHAR(20),
+    NEW_STATUS              VARCHAR(20)     NOT NULL,
+    REASON                  VARCHAR(255),
+    CHANGED_AT              DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CHANGED_BY_USER_ID      INT,
+    PRIMARY KEY (HISTORY_ID),
+    KEY idx_history_instance (FLIGHT_INSTANCE_ID),
+    CONSTRAINT fk_history_instance FOREIGN KEY (FLIGHT_INSTANCE_ID)
+        REFERENCES FLIGHT_INSTANCES (FLIGHT_INSTANCE_ID) ON DELETE CASCADE,
+    CONSTRAINT fk_history_user FOREIGN KEY (CHANGED_BY_USER_ID)
+        REFERENCES USERS (USER_ID) ON DELETE SET NULL
+) ENGINE=InnoDB COMMENT='Chronological audit trail tracking flight timetable transitions and delays.';
+
+-- 15. NOTIFICATIONS
+CREATE TABLE NOTIFICATIONS (
+    NOTIFICATION_ID INT AUTO_INCREMENT NOT NULL,
+    USER_ID         INT             NOT NULL,
+    TITLE           VARCHAR(100)    NOT NULL,
+    MESSAGE         VARCHAR(500)    NOT NULL,
+    NOTIFICATION_TYPE VARCHAR(30)   DEFAULT 'SYSTEM' NOT NULL,
+    IS_READ         CHAR(1)         DEFAULT 'N' NOT NULL,
+    CREATED_AT      DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (NOTIFICATION_ID),
+    KEY idx_notifications_user (USER_ID, IS_READ),
+    CONSTRAINT fk_notifications_user FOREIGN KEY (USER_ID)
+        REFERENCES USERS (USER_ID) ON DELETE CASCADE,
+    CONSTRAINT chk_notification_type CHECK (
+        NOTIFICATION_TYPE IN ('FLIGHT_DELAY', 'GATE_CHANGE', 'BOARDING', 'CHECKIN_REMINDER', 'SYSTEM')
+    ),
+    CONSTRAINT chk_notification_read CHECK (IS_READ IN ('Y', 'N'))
+) ENGINE=InnoDB COMMENT='Personalized flight alerts and system messages delivered to users.';
+
+-- 16. OPERATIONAL_LOGS
+CREATE TABLE OPERATIONAL_LOGS (
+    LOG_ID                  INT AUTO_INCREMENT NOT NULL,
+    EVENT_CATEGORY          VARCHAR(50)     NOT NULL,
+    SEVERITY                VARCHAR(20)     DEFAULT 'INFO' NOT NULL,
+    DETAILS                 VARCHAR(1000)   NOT NULL,
+    ACTION_TAKEN            VARCHAR(500),
+    REQUIRES_ADMIN_APPROVAL CHAR(1)         DEFAULT 'N' NOT NULL,
+    APPROVAL_STATUS         VARCHAR(20)     DEFAULT 'NOT_REQUIRED' NOT NULL,
+    LOGGED_AT               DATETIME        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (LOG_ID),
+    KEY idx_oplogs_category (EVENT_CATEGORY, LOGGED_AT),
+    CONSTRAINT chk_log_severity CHECK (SEVERITY IN ('INFO', 'WARNING', 'CRITICAL')),
+    CONSTRAINT chk_log_approval_flag CHECK (REQUIRES_ADMIN_APPROVAL IN ('Y', 'N')),
+    CONSTRAINT chk_log_approval_status CHECK (
+        APPROVAL_STATUS IN ('NOT_REQUIRED', 'PENDING', 'APPROVED', 'REJECTED')
+    )
+) ENGINE=InnoDB COMMENT='Core foundation table for tracking operational events and approvals.';

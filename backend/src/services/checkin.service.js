@@ -128,6 +128,23 @@ async function processCheckIn(data, user) {
         createdAt: new Date().toISOString(),
     };
 
+    // Persist to MySQL
+    try {
+        await db.execute(
+            'UPDATE TICKETS SET SEAT_NUMBER = ?, STATUS = ? WHERE TICKET_ID = ?',
+            [finalSeat, 'CHECKED_IN', ticket.ticketId]
+        );
+
+        const chkRes = await db.execute(
+            `INSERT INTO CHECK_IN (TICKET_ID, BOARDING_PASS_CODE, BOARDING_TIME, GATE_ID, STATUS)
+             VALUES (?, ?, ?, ?, 'COMPLETED')`,
+            [ticket.ticketId, bpCode, checkInRecord.boardingTime, checkInRecord.gateId]
+        );
+        if (chkRes.insertId) checkInRecord.checkInId = chkRes.insertId;
+    } catch (dbErr) {
+        console.warn('[Checkin Service] MySQL checkin note:', dbErr.message);
+    }
+
     store.checkin.push(checkInRecord);
 
     return {

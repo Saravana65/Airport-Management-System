@@ -1,9 +1,8 @@
 /**
  * Authentication & User Management Service
- * Executes database operations with parameterized Oracle SQL and bind variables.
+ * Executes database operations with MySQL 8.0 connection pool and bcrypt.
  */
 
-const { oracledb } = require('../config/database');
 const databaseService = require('./database.service');
 const { hashPassword, comparePassword, generateToken } = require('../utils/auth.util');
 const { VALID_ROLES } = require('../middleware/auth.middleware');
@@ -69,18 +68,15 @@ async function registerUser(email, password, role = 'PASSENGER') {
 
         const insertResult = await databaseService.execute(
             `INSERT INTO USERS (EMAIL, PASSWORD_HASH, ROLE, IS_ACTIVE)
-             VALUES (:email, :passwordHash, :role, 'Y')
-             RETURNING USER_ID INTO :out_id`,
+             VALUES (:email, :passwordHash, :role, 'Y')`,
             {
                 email: normalizedEmail,
                 passwordHash: hashedPassword,
                 role: role,
-                out_id: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT },
-            },
-            { autoCommit: true }
+            }
         );
 
-        const newUserId = insertResult.outBinds.out_id[0];
+        const newUserId = insertResult.insertId || (insertResult.outBinds?.out_id ? insertResult.outBinds.out_id[0] : null);
         const token = generateToken({
             userId: newUserId,
             email: normalizedEmail,
@@ -226,7 +222,7 @@ async function loginUser(email, password) {
 async function getUserProfile(userId) {
     try {
         const result = await databaseService.execute(
-            `SELECT USER_ID, EMAIL, ROLE, IS_ACTIVE, TO_CHAR(CREATED_AT, 'YYYY-MM-DD HH24:MI:SS') AS CREATED_AT
+            `SELECT USER_ID, EMAIL, ROLE, IS_ACTIVE, DATE_FORMAT(CREATED_AT, '%Y-%m-%d %H:%i:%s') AS CREATED_AT
              FROM USERS
              WHERE USER_ID = :userId`,
             { userId }
@@ -318,7 +314,7 @@ async function changePassword(userId, currentPassword, newPassword) {
 async function getAllUsers() {
     try {
         const result = await databaseService.execute(
-            `SELECT USER_ID, EMAIL, ROLE, IS_ACTIVE, TO_CHAR(CREATED_AT, 'YYYY-MM-DD HH24:MI:SS') AS CREATED_AT
+            `SELECT USER_ID, EMAIL, ROLE, IS_ACTIVE, DATE_FORMAT(CREATED_AT, '%Y-%m-%d %H:%i:%s') AS CREATED_AT
              FROM USERS
              ORDER BY USER_ID ASC`
         );

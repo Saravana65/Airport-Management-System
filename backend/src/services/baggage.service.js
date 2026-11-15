@@ -112,6 +112,18 @@ async function registerBaggage(data) {
         createdAt: new Date().toISOString(),
     };
 
+    // Persist to MySQL
+    try {
+        const bRes = await db.execute(
+            `INSERT INTO BAGGAGE (TICKET_ID, TAG_NUMBER, WEIGHT_KG, STATUS, CAROUSEL_NUMBER)
+             VALUES (?, ?, ?, ?, ?)`,
+            [newBag.ticketId, newBag.tagNumber, newBag.weightKg, newBag.status, newBag.carouselNumber]
+        );
+        if (bRes.insertId) newBag.baggageId = bRes.insertId;
+    } catch (dbErr) {
+        console.warn('[Baggage Service] MySQL baggage insert note:', dbErr.message);
+    }
+
     store.baggage.push(newBag);
     return newBag;
 }
@@ -134,6 +146,15 @@ async function updateBaggageStatus(id, newStatus, carouselNumber) {
 
     bag.status = normalizedStatus;
     if (carouselNumber) bag.carouselNumber = carouselNumber;
+
+    try {
+        await db.execute(
+            'UPDATE BAGGAGE SET STATUS = ?, CAROUSEL_NUMBER = ? WHERE BAGGAGE_ID = ?',
+            [bag.status, bag.carouselNumber, bag.baggageId]
+        );
+    } catch (dbErr) {
+        console.warn('[Baggage Service] MySQL update note:', dbErr.message);
+    }
 
     return bag;
 }

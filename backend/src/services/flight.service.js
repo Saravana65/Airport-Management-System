@@ -48,6 +48,15 @@ async function getAllFlights(filters = {}, user = null) {
         let estimatedDeparture = inst.estimatedDeparture || null;
         let estimatedArrival = inst.estimatedArrival || null;
 
+        // When estimated departure is set, derive delay duration relative to scheduled departure
+        if (estimatedDeparture && inst.scheduledDeparture) {
+            const schedTime = new Date(inst.scheduledDeparture.replace(' ', 'T')).getTime();
+            const estTime = new Date(estimatedDeparture.replace(' ', 'T')).getTime();
+            if (!isNaN(schedTime) && !isNaN(estTime) && estTime > schedTime) {
+                delayMinutes = Math.round((estTime - schedTime) / 60000);
+            }
+        }
+
         if (inst.status === 'DELAYED') {
             delayMinutes = delayMinutes || 45;
             if (!estimatedDeparture && inst.scheduledDeparture) {
@@ -78,6 +87,13 @@ async function getAllFlights(filters = {}, user = null) {
         const estDepTimeStr = estimatedDeparture ? estimatedDeparture.substring(11, 16) : '';
         const arrTimeStr = (inst.scheduledArrival || '').substring(11, 16) || route.scheduledArrivalTime || '';
         const actArrTimeStr = inst.actualArrival ? inst.actualArrival.substring(11, 16) : '';
+
+        // Available seats calculation (null if aircraft capacity is unassigned)
+        const bookedSeats = store.tickets
+            ? store.tickets.filter(t => t.flightInstanceId === inst.flightInstanceId && t.status !== 'CANCELLED').length
+            : 0;
+        const totalSeats = (aircraft && aircraft.totalSeats != null) ? Number(aircraft.totalSeats) : null;
+        const availableSeats = totalSeats !== null ? Math.max(0, totalSeats - bookedSeats) : null;
 
         let operationalMessage = inst.remarks || '';
         switch (inst.status) {
@@ -153,6 +169,11 @@ async function getAllFlights(filters = {}, user = null) {
             operationalMessage,
             aircraftModel: aircraft?.model || null,
             aircraftReg: aircraft?.registrationNo || null,
+            totalSeats,
+            bookedSeats,
+            availableSeats,
+            price: route.baseFare != null ? parseFloat(route.baseFare) : null,
+            baseFare: route.baseFare != null ? parseFloat(route.baseFare) : null,
         };
     });
 
@@ -236,7 +257,13 @@ async function getFlightById(id) {
     let estimatedDeparture = inst.estimatedDeparture || inst.scheduledDeparture;
     let estimatedArrival = inst.estimatedArrival || inst.scheduledArrival;
 
-    if (inst.status === 'DELAYED' && !inst.estimatedDeparture && inst.scheduledDeparture) {
+    if (inst.estimatedDeparture && inst.scheduledDeparture) {
+        const schedTime = new Date(inst.scheduledDeparture.replace(' ', 'T')).getTime();
+        const estTime = new Date(inst.estimatedDeparture.replace(' ', 'T')).getTime();
+        if (!isNaN(schedTime) && !isNaN(estTime) && estTime > schedTime) {
+            delayMinutes = Math.round((estTime - schedTime) / 60000);
+        }
+    } else if (inst.status === 'DELAYED' && !inst.estimatedDeparture && inst.scheduledDeparture) {
         delayMinutes = delayMinutes || 45;
         const schedDepDate = new Date(inst.scheduledDeparture.replace(' ', 'T'));
         if (!isNaN(schedDepDate.getTime())) {
@@ -343,11 +370,30 @@ async function createFlight(data, user) {
         createdAt: new Date().toISOString(),
     };
 
+    // Persist to MySQL
+    try {
+        await db.execute(
+            `INSERT INTO FLIGHTS (FLIGHT_NUMBER, AIRLINE_CODE, ORIGIN_AIRPORT, DEST_AIRPORT, SCHEDULED_DEPARTURE_TIME, SCHEDULED_ARRIVAL_TIME, FLIGHT_TYPE, BASE_FARE, IS_ACTIVE)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Y')
+             ON DUPLICATE KEY UPDATE BASE_FARE = VALUES(BASE_FARE)`,
+            [route.flightNumber, route.airlineCode, route.originAirport, route.destAirport, route.scheduledDepartureTime, route.scheduledArrivalTime, route.flightType, route.baseFare]
+        );
+
+        const instRes = await db.execute(
+            `INSERT INTO FLIGHT_INSTANCES (FLIGHT_NUMBER, FLIGHT_DATE, AIRCRAFT_ID, DEPARTURE_GATE_ID, ARRIVAL_GATE_ID, SCHEDULED_DEPARTURE, SCHEDULED_ARRIVAL, STATUS, REMARKS)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [newInstance.flightNumber, newInstance.flightDate, newInstance.aircraftId, newInstance.departureGateId, newInstance.arrivalGateId, newInstance.scheduledDeparture, newInstance.scheduledArrival, newInstance.status, newInstance.remarks]
+        );
+        if (instRes.insertId) newInstance.flightInstanceId = instRes.insertId;
+    } catch (dbErr) {
+        console.warn('[Flight Service] MySQL flight insert note:', dbErr.message);
+    }
+
     store.flightInstances.push(newInstance);
     return newInstance;
 }
 
-async function updateFlightStatus(id, newStatus, reason, userId) {
+async function updateFlightStatus(id, newStatus, reason, userId, extraFields = {}) {
     const numId = parseInt(id, 10);
     const instance = store.flightInstances.find(i => i.flightInstanceId === numId);
     if (!instance) {
@@ -356,11 +402,14 @@ async function updateFlightStatus(id, newStatus, reason, userId) {
         throw err;
     }
 
-    const normalizedStatus = (newStatus || '').toUpperCase().trim();
-    if (!VALID_STATUSES.includes(normalizedStatus)) {
-        const err = new Error(`Invalid flight status. Permitted: ${VALID_STATUSES.join(', ')}`);
-        err.statusCode = 400;
-        throw err;
+    let normalizedStatus = instance.status;
+    if (newStatus) {
+        normalizedStatus = (newStatus || '').toUpperCase().trim();
+        if (!VALID_STATUSES.includes(normalizedStatus)) {
+            const err = new Error(`Invalid flight status. Permitted: ${VALID_STATUSES.join(', ')}`);
+            err.statusCode = 400;
+            throw err;
+        }
     }
 
     const oldStatus = instance.status;
@@ -374,16 +423,100 @@ async function updateFlightStatus(id, newStatus, reason, userId) {
         instance.actualArrival = new Date().toISOString().replace('T', ' ').substring(0, 19);
     }
 
+    // Helper to format ISO or datetime-local string to 'YYYY-MM-DD HH:MM:SS'
+    const normalizeDateTime = (dt) => {
+        if (!dt) return null;
+        const s = String(dt).trim().replace('T', ' ');
+        if (s.length === 16) return s + ':00'; // handles 'YYYY-MM-DD HH:MM' from datetime-local
+        if (s.length >= 19) return s.substring(0, 19);
+        return s;
+    };
+
+    const timeChangeNotes = [];
+
+    // Manual Estimated Departure
+    if (extraFields.estimatedDeparture !== undefined) {
+        const formattedEstDep = normalizeDateTime(extraFields.estimatedDeparture);
+        instance.estimatedDeparture = formattedEstDep;
+        if (formattedEstDep) {
+            timeChangeNotes.push(`Est Dep: ${formattedEstDep}`);
+            if (instance.scheduledDeparture) {
+                const schedTime = new Date(instance.scheduledDeparture.replace(' ', 'T')).getTime();
+                const estTime = new Date(formattedEstDep.replace(' ', 'T')).getTime();
+                if (!isNaN(schedTime) && !isNaN(estTime)) {
+                    const diff = Math.round((estTime - schedTime) / 60000);
+                    if (diff > 0) instance.delayMinutes = diff;
+                }
+            }
+        }
+    }
+
+    // Manual Estimated Arrival
+    if (extraFields.estimatedArrival !== undefined) {
+        const formattedEstArr = normalizeDateTime(extraFields.estimatedArrival);
+        instance.estimatedArrival = formattedEstArr;
+        if (formattedEstArr) {
+            timeChangeNotes.push(`Est Arr: ${formattedEstArr}`);
+        }
+    }
+
+    // Delay Minutes override if explicitly provided
+    if (extraFields.delayMinutes !== undefined && extraFields.delayMinutes !== null && extraFields.delayMinutes !== '') {
+        instance.delayMinutes = parseInt(extraFields.delayMinutes, 10) || 0;
+    }
+
+    // Formulate Audit Reason
+    let auditReason = reason || '';
+    if (timeChangeNotes.length > 0) {
+        auditReason = auditReason
+            ? `${auditReason} [Manual timings: ${timeChangeNotes.join(', ')}]`
+            : `Manual estimated timings updated [${timeChangeNotes.join(', ')}]`;
+    }
+    if (!auditReason) {
+        auditReason = oldStatus !== normalizedStatus
+            ? `Status transitioned from ${oldStatus} to ${normalizedStatus}`
+            : 'Operational status update';
+    }
+
     // Log to FLIGHT_STATUS_HISTORY
     const historyEntry = {
         historyId: store.flightStatusHistory.length + 1,
         flightInstanceId: numId,
         oldStatus,
         newStatus: normalizedStatus,
-        reason: reason || 'Operational status update',
+        reason: auditReason,
         changedAt: new Date().toISOString(),
         changedByUserId: userId || null,
     };
+
+    // Persist to MySQL FLIGHT_INSTANCES and FLIGHT_STATUS_HISTORY
+    try {
+        await db.execute(
+            `UPDATE FLIGHT_INSTANCES 
+             SET STATUS = ?, REMARKS = ?, ACTUAL_DEPARTURE = ?, ACTUAL_ARRIVAL = ?, 
+                 ESTIMATED_DEPARTURE = ?, ESTIMATED_ARRIVAL = ? 
+             WHERE FLIGHT_INSTANCE_ID = ?`,
+            [
+                instance.status,
+                instance.remarks,
+                instance.actualDeparture,
+                instance.actualArrival,
+                instance.estimatedDeparture || null,
+                instance.estimatedArrival || null,
+                numId
+            ]
+        );
+
+        const histRes = await db.execute(
+            `INSERT INTO FLIGHT_STATUS_HISTORY (FLIGHT_INSTANCE_ID, OLD_STATUS, NEW_STATUS, REASON, CHANGED_BY_USER_ID)
+             VALUES (?, ?, ?, ?, ?)`,
+            [numId, oldStatus, normalizedStatus, auditReason, userId || null]
+        );
+        if (histRes.insertId) historyEntry.historyId = histRes.insertId;
+    } catch (dbErr) {
+        console.warn('[Flight Service] MySQL status update note:', dbErr.message);
+    }
+
     store.flightStatusHistory.push(historyEntry);
 
     return {
@@ -392,9 +525,301 @@ async function updateFlightStatus(id, newStatus, reason, userId) {
     };
 }
 
+/**
+ * Task 3: Comprehensive Flight Search directly queried from MySQL database
+ * Validates search criteria, calculates live available seats, formatting, and operational delay messaging.
+ */
+async function searchFlights({ origin, destination, date }) {
+    const cleanOrigin = origin ? origin.trim() : null;
+    const cleanDest = destination ? destination.trim() : null;
+    const cleanDate = date ? date.trim() : null;
+
+    // Validation 1: Origin and destination cannot be identical
+    if (cleanOrigin && cleanDest && cleanOrigin.toUpperCase() === cleanDest.toUpperCase()) {
+        const err = new Error('Departure and arrival airports cannot be identical.');
+        err.statusCode = 400;
+        throw err;
+    }
+
+    // Validation 2: Validate date format YYYY-MM-DD if provided
+    if (cleanDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate) || isNaN(Date.parse(cleanDate))) {
+            const err = new Error('Invalid travel date format. Please use YYYY-MM-DD.');
+            err.statusCode = 400;
+            throw err;
+        }
+    }
+
+    let sql = `
+        SELECT 
+            fi.FLIGHT_INSTANCE_ID AS flightInstanceId,
+            fi.FLIGHT_NUMBER AS flightNumber,
+            DATE_FORMAT(fi.FLIGHT_DATE, '%Y-%m-%d') AS flightDate,
+            fi.STATUS AS status,
+            fi.REMARKS AS remarks,
+            DATE_FORMAT(fi.SCHEDULED_DEPARTURE, '%Y-%m-%d %H:%i:%s') AS scheduledDeparture,
+            DATE_FORMAT(fi.ESTIMATED_DEPARTURE, '%Y-%m-%d %H:%i:%s') AS estimatedDeparture,
+            DATE_FORMAT(fi.ACTUAL_DEPARTURE, '%Y-%m-%d %H:%i:%s') AS actualDeparture,
+            DATE_FORMAT(fi.SCHEDULED_ARRIVAL, '%Y-%m-%d %H:%i:%s') AS scheduledArrival,
+            DATE_FORMAT(fi.ESTIMATED_ARRIVAL, '%Y-%m-%d %H:%i:%s') AS estimatedArrival,
+            DATE_FORMAT(fi.ACTUAL_ARRIVAL, '%Y-%m-%d %H:%i:%s') AS actualArrival,
+            
+            al.AIRLINE_CODE AS airlineCode,
+            al.AIRLINE_NAME AS airlineName,
+            al.COUNTRY AS airlineCountry,
+            
+            f.ORIGIN_AIRPORT AS originAirport,
+            orig.AIRPORT_NAME AS originAirportName,
+            orig.CITY AS originCity,
+            orig.COUNTRY AS originCountry,
+            orig.TIMEZONE AS originTimezone,
+            
+            f.DEST_AIRPORT AS destAirport,
+            dest.AIRPORT_NAME AS destAirportName,
+            dest.CITY AS destCity,
+            dest.COUNTRY AS destCountry,
+            dest.TIMEZONE AS destTimezone,
+            
+            f.FLIGHT_TYPE AS flightType,
+            CAST(f.BASE_FARE AS DECIMAL(10,2)) AS baseFare,
+            f.SCHEDULED_DEPARTURE_TIME AS scheduledDepartureTime,
+            f.SCHEDULED_ARRIVAL_TIME AS scheduledArrivalTime,
+            
+            depGate.TERMINAL AS departureTerminal,
+            depGate.GATE_NUMBER AS departureGateNumber,
+            CONCAT(COALESCE(depGate.TERMINAL, 'T2'), '-', COALESCE(depGate.GATE_NUMBER, 'G01')) AS departureGate,
+            
+            arrGate.TERMINAL AS arrivalTerminal,
+            arrGate.GATE_NUMBER AS arrivalGateNumber,
+            CONCAT(COALESCE(arrGate.TERMINAL, 'T1'), '-', COALESCE(arrGate.GATE_NUMBER, 'A01')) AS arrivalGate,
+            
+            ac.AIRCRAFT_ID AS aircraftId,
+            ac.MODEL AS aircraftModel,
+            ac.REGISTRATION_NO AS aircraftRegistration,
+            ac.TOTAL_SEATS AS totalSeats,
+            ac.ECONOMY_SEATS AS economySeats,
+            ac.BUSINESS_SEATS AS businessSeats,
+            
+            COUNT(CASE WHEN t.STATUS != 'CANCELLED' THEN 1 END) AS bookedSeats,
+            CASE 
+                WHEN ac.TOTAL_SEATS IS NOT NULL THEN (ac.TOTAL_SEATS - COUNT(CASE WHEN t.STATUS != 'CANCELLED' THEN 1 END))
+                ELSE NULL 
+            END AS availableSeats
+
+        FROM FLIGHT_INSTANCES fi
+        JOIN FLIGHTS f ON fi.FLIGHT_NUMBER = f.FLIGHT_NUMBER
+        JOIN AIRLINES al ON f.AIRLINE_CODE = al.AIRLINE_CODE
+        JOIN AIRPORTS orig ON f.ORIGIN_AIRPORT = orig.AIRPORT_CODE
+        JOIN AIRPORTS dest ON f.DEST_AIRPORT = dest.AIRPORT_CODE
+        LEFT JOIN GATES depGate ON fi.DEPARTURE_GATE_ID = depGate.GATE_ID
+        LEFT JOIN GATES arrGate ON fi.ARRIVAL_GATE_ID = arrGate.GATE_ID
+        LEFT JOIN AIRCRAFT ac ON fi.AIRCRAFT_ID = ac.AIRCRAFT_ID
+        LEFT JOIN TICKETS t ON fi.FLIGHT_INSTANCE_ID = t.FLIGHT_INSTANCE_ID
+        WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (cleanOrigin) {
+        sql += ` AND (f.ORIGIN_AIRPORT = ? OR UPPER(orig.CITY) = ? OR UPPER(orig.AIRPORT_NAME) LIKE ?)`;
+        const upperOrig = cleanOrigin.toUpperCase();
+        params.push(upperOrig, upperOrig, `%${upperOrig}%`);
+    }
+
+    if (cleanDest) {
+        sql += ` AND (f.DEST_AIRPORT = ? OR UPPER(dest.CITY) = ? OR UPPER(dest.AIRPORT_NAME) LIKE ?)`;
+        const upperDest = cleanDest.toUpperCase();
+        params.push(upperDest, upperDest, `%${upperDest}%`);
+    }
+
+    if (cleanDate) {
+        sql += ` AND DATE(fi.FLIGHT_DATE) = ?`;
+        params.push(cleanDate);
+    }
+
+    sql += `
+        GROUP BY 
+            fi.FLIGHT_INSTANCE_ID, fi.FLIGHT_NUMBER, fi.FLIGHT_DATE, fi.STATUS, fi.REMARKS, 
+            fi.SCHEDULED_DEPARTURE, fi.ESTIMATED_DEPARTURE, fi.ACTUAL_DEPARTURE, 
+            fi.SCHEDULED_ARRIVAL, fi.ESTIMATED_ARRIVAL, fi.ACTUAL_ARRIVAL, 
+            al.AIRLINE_CODE, al.AIRLINE_NAME, al.COUNTRY, 
+            f.ORIGIN_AIRPORT, orig.AIRPORT_NAME, orig.CITY, orig.COUNTRY, orig.TIMEZONE, 
+            f.DEST_AIRPORT, dest.AIRPORT_NAME, dest.CITY, dest.COUNTRY, dest.TIMEZONE, 
+            f.FLIGHT_TYPE, f.BASE_FARE, f.SCHEDULED_DEPARTURE_TIME, f.SCHEDULED_ARRIVAL_TIME, 
+            depGate.TERMINAL, depGate.GATE_NUMBER, arrGate.TERMINAL, arrGate.GATE_NUMBER, 
+            ac.AIRCRAFT_ID, ac.MODEL, ac.REGISTRATION_NO, ac.TOTAL_SEATS, ac.ECONOMY_SEATS, ac.BUSINESS_SEATS
+        ORDER BY fi.SCHEDULED_DEPARTURE ASC
+    `;
+
+    const dbResult = await db.execute(sql, params);
+    const rows = dbResult.rows || [];
+
+    return rows.map(row => {
+        let delayMinutes = 0;
+        let estimatedDeparture = row.estimatedDeparture;
+        let estimatedArrival = row.estimatedArrival;
+
+        // When estimated departure is set, derive delay duration relative to scheduled departure
+        if (estimatedDeparture && row.scheduledDeparture) {
+            const schedTime = new Date(row.scheduledDeparture.replace(' ', 'T')).getTime();
+            const estTime = new Date(estimatedDeparture.replace(' ', 'T')).getTime();
+            if (!isNaN(schedTime) && !isNaN(estTime) && estTime > schedTime) {
+                delayMinutes = Math.round((estTime - schedTime) / 60000);
+            }
+        }
+
+        // Automatic delay calculation when status is DELAYED without manual estimated time
+        if (row.status === 'DELAYED') {
+            delayMinutes = delayMinutes || 45;
+            if (!estimatedDeparture && row.scheduledDeparture) {
+                const schedDepDate = new Date(row.scheduledDeparture.replace(' ', 'T'));
+                if (!isNaN(schedDepDate.getTime())) {
+                    const estDate = new Date(schedDepDate.getTime() + delayMinutes * 60000);
+                    estimatedDeparture = estDate.toISOString().replace('T', ' ').substring(0, 19);
+                }
+            }
+            if (!estimatedArrival && row.scheduledArrival) {
+                const schedArrDate = new Date(row.scheduledArrival.replace(' ', 'T'));
+                if (!isNaN(schedArrDate.getTime())) {
+                    const estDate = new Date(schedArrDate.getTime() + delayMinutes * 60000);
+                    estimatedArrival = estDate.toISOString().replace('T', ' ').substring(0, 19);
+                }
+            }
+        } else if (row.status === 'CANCELLED') {
+            estimatedDeparture = null;
+            estimatedArrival = null;
+        } else {
+            if (!estimatedDeparture && row.scheduledDeparture) estimatedDeparture = row.scheduledDeparture;
+            if (!estimatedArrival && row.scheduledArrival) estimatedArrival = row.scheduledArrival;
+        }
+
+        const depTimeStr = (row.scheduledDeparture || '').substring(11, 16) || row.scheduledDepartureTime || '';
+        const estDepTimeStr = estimatedDeparture ? estimatedDeparture.substring(11, 16) : '';
+        const arrTimeStr = (row.scheduledArrival || '').substring(11, 16) || row.scheduledArrivalTime || '';
+        const actArrTimeStr = row.actualArrival ? row.actualArrival.substring(11, 16) : '';
+
+        let operationalMessage = row.remarks || '';
+        switch (row.status) {
+            case 'ON_TIME':
+            case 'SCHEDULED':
+                operationalMessage = `On Time — Scheduled departure at ${depTimeStr}`;
+                break;
+            case 'DELAYED':
+                operationalMessage = `Delayed — Estimated departure at ${estDepTimeStr || 'TBD'} (+${delayMinutes}m)`;
+                break;
+            case 'BOARDING':
+                operationalMessage = `Boarding — Gate ${row.departureGate}`;
+                break;
+            case 'GATE_CLOSED':
+                operationalMessage = `Gate Closed — Final call closed`;
+                break;
+            case 'CHECK_IN':
+                operationalMessage = `Check-In Open — Terminal ${row.departureTerminal}`;
+                break;
+            case 'DEPARTED':
+                operationalMessage = `Departed — Airborne on flight path`;
+                break;
+            case 'IN_AIR':
+                operationalMessage = `In Flight — En route to ${row.destAirport}`;
+                break;
+            case 'LANDED':
+            case 'ARRIVED':
+                operationalMessage = `Landed — Actual arrival at ${actArrTimeStr || arrTimeStr}`;
+                break;
+            case 'CANCELLED':
+                operationalMessage = `Cancelled — Contact airline customer desk`;
+                break;
+            default:
+                operationalMessage = row.remarks || 'Standard operations';
+        }
+
+        return {
+            ...row,
+            baseFare: parseFloat(row.baseFare),
+            price: parseFloat(row.baseFare),
+            totalSeats: parseInt(row.totalSeats, 10),
+            bookedSeats: parseInt(row.bookedSeats, 10),
+            availableSeats: Math.max(0, parseInt(row.availableSeats, 10)),
+            delayMinutes,
+            estimatedDeparture,
+            estimatedArrival,
+            operationalMessage,
+            terminal: row.departureTerminal,
+            gate: row.departureGateNumber,
+        };
+    });
+}
+
+/**
+ * Retrieves occupied seat numbers and remaining capacity for a flight instance.
+ */
+async function getFlightSeats(id) {
+    const numId = parseInt(id, 10);
+    try {
+        const fiRes = await db.execute(
+            `SELECT fi.FLIGHT_INSTANCE_ID as flightInstanceId, fi.FLIGHT_NUMBER as flightNumber, fi.STATUS as status,
+                    fi.AIRCRAFT_ID as aircraftId, a.TOTAL_SEATS as totalSeats, a.MODEL as aircraftModel,
+                    f.BASE_FARE as baseFare, f.ORIGIN_AIRPORT as originAirport, f.DEST_AIRPORT as destAirport
+             FROM FLIGHT_INSTANCES fi
+             JOIN FLIGHTS f ON fi.FLIGHT_NUMBER = f.FLIGHT_NUMBER
+             LEFT JOIN AIRCRAFT a ON fi.AIRCRAFT_ID = a.AIRCRAFT_ID
+             WHERE fi.FLIGHT_INSTANCE_ID = ? OR fi.FLIGHT_NUMBER = ?
+             LIMIT 1`,
+            [isNaN(numId) ? 0 : numId, String(id)]
+        );
+
+        if (!fiRes.rows.length) return null;
+        const fi = fiRes.rows[0];
+
+        const tRes = await db.execute(
+            `SELECT UPPER(SEAT_NUMBER) as seatNumber, CABIN_CLASS as cabinClass, STATUS as status
+             FROM TICKETS
+             WHERE FLIGHT_INSTANCE_ID = ? AND STATUS != 'CANCELLED' AND SEAT_NUMBER IS NOT NULL`,
+            [fi.flightInstanceId]
+        );
+
+        const occupiedSeats = tRes.rows.map(r => r.seatNumber);
+        const totalSeats = fi.totalSeats != null ? Number(fi.totalSeats) : null;
+        const availableSeats = totalSeats !== null ? Math.max(0, totalSeats - occupiedSeats.length) : null;
+
+        return {
+            flightInstanceId: fi.flightInstanceId,
+            flightNumber: fi.flightNumber,
+            status: fi.status,
+            originAirport: fi.originAirport,
+            destAirport: fi.destAirport,
+            baseFare: Number(fi.baseFare),
+            aircraftModel: fi.aircraftModel,
+            totalSeats,
+            occupiedSeats,
+            availableSeats,
+        };
+    } catch (err) {
+        console.warn('[Flight Service] getFlightSeats error:', err.message);
+        // Fallback to store
+        const inst = store.flightInstances.find(f => f.flightInstanceId === numId || f.flightNumber === id);
+        if (!inst) return null;
+        const aircraft = store.aircraft.find(a => a.aircraftId === inst.aircraftId);
+        const occupiedSeats = store.tickets
+            .filter(t => t.flightInstanceId === inst.flightInstanceId && t.status !== 'CANCELLED' && t.seatNumber)
+            .map(t => t.seatNumber.toUpperCase());
+        const totalSeats = aircraft && aircraft.totalSeats != null ? Number(aircraft.totalSeats) : null;
+        return {
+            flightInstanceId: inst.flightInstanceId,
+            flightNumber: inst.flightNumber,
+            status: inst.status,
+            totalSeats,
+            occupiedSeats,
+            availableSeats: totalSeats !== null ? Math.max(0, totalSeats - occupiedSeats.length) : null,
+        };
+    }
+}
+
 module.exports = {
     getAllFlights,
+    searchFlights,
     getFlightById,
+    getFlightSeats,
     createFlight,
     updateFlightStatus,
 };

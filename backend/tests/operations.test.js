@@ -73,6 +73,18 @@ async function runOperationsTests() {
     });
 
     try {
+        const db = require('../src/services/database.service');
+        const store = require('../src/services/operations.store');
+        try {
+            await db.execute("DELETE FROM AIRPORTS WHERE AIRPORT_CODE = 'DXB'");
+            await db.execute("DELETE FROM AIRCRAFT WHERE REGISTRATION_NO = 'VT-TEST1'");
+            await db.execute("DELETE FROM PASSENGERS WHERE PASSPORT_NUMBER = 'K9812401'");
+            await db.execute("DELETE FROM EMPLOYEES WHERE FIRST_NAME = 'Karan' AND LAST_NAME = 'Malhotra'");
+            await db.execute("DELETE FROM CHECK_IN WHERE TICKET_ID = 1");
+            await db.execute("UPDATE TICKETS SET STATUS = 'ISSUED' WHERE TICKET_ID = 1");
+            await store.syncWithDatabase();
+        } catch (e) {}
+
         // --- MODULE 1: AIRPORTS, AIRLINES, AIRCRAFT ---
         console.log('--- Module 1: Airport, Airline & Aircraft Management ---');
 

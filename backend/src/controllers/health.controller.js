@@ -31,7 +31,7 @@ function getAppHealth(req, res) {
 }
 
 /**
- * Checks Oracle database connection and measures round-trip query latency
+ * Checks MySQL database connection and measures round-trip query latency
  * GET /api/health/database
  */
 async function getDatabaseHealth(req, res) {
@@ -42,12 +42,13 @@ async function getDatabaseHealth(req, res) {
             res,
             {
                 status: 'UP',
-                dialect: 'Oracle SQL',
-                targetHost: config.DB.connectString,
+                dialect: 'MySQL 8.0',
+                database: config.DB.database,
+                targetHost: `${config.DB.host}:${config.DB.port}`,
                 latencyMs: dbTest.latencyMs,
                 serverTime: dbTest.serverTime,
             },
-            'Oracle database connection is healthy and responsive.',
+            'MySQL database connection is healthy and responsive.',
             200
         );
     }
@@ -55,11 +56,12 @@ async function getDatabaseHealth(req, res) {
     // If database is not reachable, respond with 503 Service Unavailable
     return res.status(503).json({
         success: false,
-        message: 'Oracle database connection is currently unavailable.',
+        message: 'MySQL database connection is currently unavailable.',
         data: {
             status: 'DOWN',
-            dialect: 'Oracle SQL',
-            targetHost: config.DB.connectString,
+            dialect: 'MySQL 8.0',
+            database: config.DB.database,
+            targetHost: `${config.DB.host}:${config.DB.port}`,
             latencyMs: dbTest.latencyMs,
             reason: dbTest.error,
         },

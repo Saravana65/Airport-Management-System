@@ -168,7 +168,7 @@ function getDynamicMessage(flight) {
 
 export function UltraQualityDataTable({
   title = 'Live Flight Status & Operations Board',
-  subtitle = 'Real-time telemetry, gate allocation, and autonomous flight tracking',
+  subtitle = 'Real-time flight schedules, gate allocation, and flight status tracking',
   initialRoleFilter = null,
   embedded = false,
   onSelectFlight = null,
@@ -906,21 +906,39 @@ export function UltraQualityDataTable({
                           <Eye size={13} />
                           <span>View</span>
                         </button>
-                        {onBookFlight && (
-                          <button
-                            type="button"
-                            className="uq-details-btn"
-                            style={{ background: '#2563EB', color: '#ffffff', borderColor: '#2563EB' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onBookFlight(flight);
-                            }}
-                            title={`Book flight ${flight.flightNumber}`}
-                          >
-                            <CreditCard size={13} />
-                            <span>Book</span>
-                          </button>
-                        )}
+                        {onBookFlight && (() => {
+                          const isBookable = flight.status !== 'CANCELLED' && flight.status !== 'DEPARTED' && flight.status !== 'ARRIVED' && (flight.availableSeats === null || flight.availableSeats > 0);
+                          return (
+                            <button
+                              type="button"
+                              className="uq-details-btn"
+                              disabled={!isBookable}
+                              style={{
+                                background: isBookable ? '#2563EB' : '#94A3B8',
+                                color: '#ffffff',
+                                borderColor: isBookable ? '#2563EB' : '#94A3B8',
+                                cursor: isBookable ? 'pointer' : 'not-allowed',
+                                opacity: isBookable ? 1 : 0.65,
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isBookable) onBookFlight(flight);
+                              }}
+                              title={
+                                !isBookable
+                                  ? flight.status === 'CANCELLED'
+                                    ? 'Flight is CANCELLED — Booking unavailable'
+                                    : flight.availableSeats === 0
+                                    ? 'Flight is FULL — No seats available'
+                                    : `Flight is ${flight.status} — Booking closed`
+                                  : `Book flight ${flight.flightNumber}`
+                              }
+                            >
+                              <CreditCard size={13} />
+                              <span>{flight.status === 'CANCELLED' ? 'Cancelled' : flight.availableSeats === 0 ? 'Full' : 'Book'}</span>
+                            </button>
+                          );
+                        })()}
                       </div>
                     </td>
                   </tr>
@@ -1137,19 +1155,25 @@ export function UltraQualityDataTable({
                 </div>
                 <div className="uq-logistics-item">
                   <span className="uq-logistics-label">Aircraft Equipment</span>
-                  <span className="uq-logistics-val">{selectedFlight.aircraftModel || 'Boeing 777-300ER'}</span>
+                  <span className="uq-logistics-val">{selectedFlight.aircraftModel || 'Unassigned Equipment'}</span>
                 </div>
                 <div className="uq-logistics-item">
                   <span className="uq-logistics-label">Registration Tail</span>
-                  <span className="uq-logistics-val">{selectedFlight.aircraftReg || 'VT-ANX'}</span>
+                  <span className="uq-logistics-val">{selectedFlight.aircraftRegistration || selectedFlight.aircraftReg || '--'}</span>
                 </div>
                 <div className="uq-logistics-item">
-                  <span className="uq-logistics-label">Arrival Terminal</span>
-                  <span className="uq-logistics-val">{selectedFlight.arrivalTerminal || 'T1'}</span>
+                  <span className="uq-logistics-label">Base Fare</span>
+                  <span className="uq-logistics-val">
+                    {selectedFlight.baseFare != null ? `₹${Number(selectedFlight.baseFare).toLocaleString()}` : '--'}
+                  </span>
                 </div>
                 <div className="uq-logistics-item">
-                  <span className="uq-logistics-label">Arrival Gate</span>
-                  <span className="uq-logistics-val">{selectedFlight.arrivalGate || 'A12'}</span>
+                  <span className="uq-logistics-label">Seat Availability</span>
+                  <span className="uq-logistics-val">
+                    {selectedFlight.availableSeats != null 
+                      ? `${selectedFlight.availableSeats} of ${selectedFlight.totalSeats} seats` 
+                      : 'Capacity Unavailable'}
+                  </span>
                 </div>
                 <div className="uq-logistics-item">
                   <span className="uq-logistics-label">Baggage Reclaim</span>
@@ -1169,32 +1193,40 @@ export function UltraQualityDataTable({
 
             {/* Modal Footer */}
             <div className="uq-modal-footer">
-              {onBookFlight && (
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    background: '#2563EB',
-                    color: '#ffffff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                  }}
-                  onClick={() => {
-                    onBookFlight(selectedFlight);
-                    setSelectedFlight(null);
-                  }}
-                >
-                  <CreditCard size={15} />
-                  <span>Reserve Flight ({selectedFlight.flightNumber})</span>
-                </button>
-              )}
+              {onBookFlight && (() => {
+                const isBookable = selectedFlight.status !== 'CANCELLED' && selectedFlight.status !== 'DEPARTED' && selectedFlight.status !== 'ARRIVED' && (selectedFlight.availableSeats === null || selectedFlight.availableSeats > 0);
+                return (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={!isBookable}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      background: isBookable ? '#2563EB' : '#94A3B8',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: isBookable ? 'pointer' : 'not-allowed',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      opacity: isBookable ? 1 : 0.65,
+                    }}
+                    onClick={() => {
+                      if (isBookable) {
+                        onBookFlight(selectedFlight);
+                        setSelectedFlight(null);
+                      }
+                    }}
+                    title={!isBookable ? 'Booking unavailable for this flight status or capacity.' : `Reserve ${selectedFlight.flightNumber}`}
+                  >
+                    <CreditCard size={15} />
+                    <span>{isBookable ? `Reserve Flight (${selectedFlight.flightNumber})` : `Booking Unavailable (${selectedFlight.status})`}</span>
+                  </button>
+                );
+              })()}
               <button
                 type="button"
                 className="uq-modal-btn-close"

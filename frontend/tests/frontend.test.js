@@ -127,16 +127,16 @@ describe('Phase 06 Frontend Verification Suite', () => {
     assert.ok(sidebarSource.includes('/passenger/profile'), 'Passenger must have My Profile');
   });
 
-  test('6. Route Protection and Unauthorized Handling', () => {
+  test('6. Route Protection and Multi-Role Access Control', () => {
     const routesSource = fs.readFileSync(
       path.join(FRONTEND_ROOT, 'src/routes/AppRoutes.jsx'),
       'utf8'
     );
 
-    assert.ok(routesSource.includes('<ProtectedRoute allowedRoles={[\'ADMIN\']}>'), 'Admin routes must be protected');
-    assert.ok(routesSource.includes('<ProtectedRoute allowedRoles={[\'AIRLINE_STAFF\']}>'), 'Airline routes must be protected');
-    assert.ok(routesSource.includes('<ProtectedRoute allowedRoles={[\'AIRPORT_STAFF\']}>'), 'Airport routes must be protected');
-    assert.ok(routesSource.includes('<ProtectedRoute allowedRoles={[\'PASSENGER\']}>'), 'Passenger routes must be protected');
+    assert.ok(routesSource.includes("allowedRoles={['ADMIN']}"), 'Admin routes must be protected');
+    assert.ok(routesSource.includes("allowedRoles={['AIRLINE_STAFF', 'ADMIN']}"), 'Airline routes must enforce role protection with Admin clearance');
+    assert.ok(routesSource.includes("allowedRoles={['AIRPORT_STAFF', 'ADMIN']}"), 'Airport routes must enforce role protection with Admin clearance');
+    assert.ok(routesSource.includes("allowedRoles={['PASSENGER', 'ADMIN']}"), 'Passenger routes must enforce role protection with Admin clearance');
     assert.ok(routesSource.includes('/unauthorized'), 'Unauthorized route must be registered');
   });
 
@@ -186,55 +186,29 @@ describe('Phase 06 Frontend Verification Suite', () => {
     );
   });
 
-  test('8. Phase 08 Autonomous Airport Data Engine (AADE) Integration', () => {
-    const aadeServicePath = path.join(FRONTEND_ROOT, 'src/services/aade.service.js');
-    assert.strictEqual(fs.existsSync(aadeServicePath), true, 'aade.service.js must exist');
-    const aadeServiceSource = fs.readFileSync(aadeServicePath, 'utf8');
-
-    assert.ok(aadeServiceSource.includes('getStatus'), 'aadeService must have getStatus');
-    assert.ok(aadeServiceSource.includes('getHealth'), 'aadeService must have getHealth');
-    assert.ok(aadeServiceSource.includes('runCycle'), 'aadeService must have runCycle');
-    assert.ok(aadeServiceSource.includes('getAlerts'), 'aadeService must have getAlerts');
-    assert.ok(aadeServiceSource.includes('getConflicts'), 'aadeService must have getConflicts');
-    assert.ok(aadeServiceSource.includes('getUtilization'), 'aadeService must have getUtilization');
-    assert.ok(aadeServiceSource.includes('getRecommendations'), 'aadeService must have getRecommendations');
-    assert.ok(aadeServiceSource.includes('getApprovals'), 'aadeService must have getApprovals');
-    assert.ok(aadeServiceSource.includes('approveAction'), 'aadeService must have approveAction');
-    assert.ok(aadeServiceSource.includes('rejectAction'), 'aadeService must have rejectAction');
-    assert.ok(aadeServiceSource.includes('getAuditLogs'), 'aadeService must have getAuditLogs');
-
-    const aadeDashboardPath = path.join(FRONTEND_ROOT, 'src/pages/AadeDashboard/AadeDashboard.jsx');
-    assert.strictEqual(fs.existsSync(aadeDashboardPath), true, 'AadeDashboard.jsx must exist');
-
+  test('8. Autonomous Data Engine Decommissioning & UI Simplification', () => {
     const sidebarSource = fs.readFileSync(
       path.join(FRONTEND_ROOT, 'src/components/Sidebar/Sidebar.jsx'),
       'utf8'
     );
-    // User requested removal of AADE from primary navigation for simplified UI
+    const routesSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/routes/AppRoutes.jsx'),
+      'utf8'
+    );
     assert.ok(!sidebarSource.includes('Autonomous Data Engine'), 'Sidebar must not clutter navigation with Autonomous Data Engine');
+    assert.ok(!routesSource.includes('AadeDashboard'), 'AppRoutes must not register decommissioned AADE route');
   });
 
-  test('9. Phase 09 Multi-Language Algorithms & Java OOP Services Integration', () => {
-    const integrationServicePath = path.join(FRONTEND_ROOT, 'src/services/integration.service.js');
-    assert.strictEqual(fs.existsSync(integrationServicePath), true, 'integration.service.js must exist');
-    const integrationSource = fs.readFileSync(integrationServicePath, 'utf8');
-
-    assert.ok(integrationSource.includes('getStatus'), 'integrationService must have getStatus');
-    assert.ok(integrationSource.includes('getGateAllocation'), 'integrationService must have getGateAllocation');
-    assert.ok(integrationSource.includes('getRunwayQueue'), 'integrationService must have getRunwayQueue');
-    assert.ok(integrationSource.includes('getBaggageRouting'), 'integrationService must have getBaggageRouting');
-    assert.ok(integrationSource.includes('getJavaBookings'), 'integrationService must have getJavaBookings');
-    assert.ok(integrationSource.includes('calculatePricing'), 'integrationService must have calculatePricing');
-    assert.ok(integrationSource.includes('transitionJavaBooking'), 'integrationService must have transitionJavaBooking');
-
-    const algoDashboardPath = path.join(FRONTEND_ROOT, 'src/pages/AlgorithmsDashboard/AlgorithmsDashboard.jsx');
-    assert.strictEqual(fs.existsSync(algoDashboardPath), true, 'AlgorithmsDashboard.jsx must exist');
-
+  test('9. C & Java Algorithms Decommissioning & UI Simplification', () => {
     const sidebarSource = fs.readFileSync(
       path.join(FRONTEND_ROOT, 'src/components/Sidebar/Sidebar.jsx'),
       'utf8'
     );
-    // User requested removal of C & Java Algorithms from primary navigation for simplified UI
+    const routesSource = fs.readFileSync(
+      path.join(FRONTEND_ROOT, 'src/routes/AppRoutes.jsx'),
+      'utf8'
+    );
     assert.ok(!sidebarSource.includes('C & Java Algorithms'), 'Sidebar must not clutter navigation with C & Java Algorithms');
+    assert.ok(!routesSource.includes('AlgorithmsDashboard'), 'AppRoutes must not register decommissioned Algorithms route');
   });
 });

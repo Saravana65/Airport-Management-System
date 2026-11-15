@@ -478,6 +478,7 @@ async function runE2ESuite() {
         console.log('================================================================');
 
         process.exitCode = failed > 0 ? 1 : 0;
+        process.exit(failed > 0 ? 1 : 0);
     }
 }
 

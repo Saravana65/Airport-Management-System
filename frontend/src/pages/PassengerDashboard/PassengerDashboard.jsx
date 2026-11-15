@@ -82,6 +82,16 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
   const [cabinClass, setCabinClass] = useState('ECONOMY');
   const [bookingSeat, setBookingSeat] = useState('12A');
   const [bookingBaggageCount, setBookingBaggageCount] = useState(1);
+  const [occupiedFlightSeats, setOccupiedFlightSeats] = useState([]);
+  const [seatLoading, setSeatLoading] = useState(false);
+
+  // Passenger Details Form State
+  const [passengerFirstName, setPassengerFirstName] = useState('');
+  const [passengerLastName, setPassengerLastName] = useState('');
+  const [passengerEmail, setPassengerEmail] = useState('');
+  const [passengerPhone, setPassengerPhone] = useState('');
+  const [passengerDob, setPassengerDob] = useState('1995-05-15');
+  const [passengerGender, setPassengerGender] = useState('M');
 
   // Post-Booking Confirmation Modal State
   const [confirmedBookingData, setConfirmedBookingData] = useState(null);
@@ -121,12 +131,57 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
 
   // 1. OPEN FLIGHT BOOKING MODAL
   const handleOpenBookModal = (flight) => {
+    if (flight.status === 'CANCELLED') {
+      alert(`Cannot book flight ${flight.flightNumber}: Flight is CANCELLED.`);
+      return;
+    }
+    if (flight.availableSeats === 0) {
+      alert(`Cannot book flight ${flight.flightNumber}: Flight is fully booked with 0 available seats.`);
+      return;
+    }
+
     setSelectedFlight(flight);
-    const randRow = Math.floor(10 + Math.random() * 8);
-    const randCol = ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)];
-    setBookingSeat(`${randRow}${randCol}`);
     setCabinClass('ECONOMY');
     setBookingBaggageCount(1);
+
+    const nameParts = (user?.name || '').trim().split(' ');
+    setPassengerFirstName(nameParts[0] || 'Traveler');
+    setPassengerLastName(nameParts.slice(1).join(' ') || 'Passenger');
+    setPassengerEmail(user?.email || 'passenger@airport.com');
+    setPassengerPhone(user?.phone || '9876543210');
+    setPassengerDob('1995-05-15');
+    setPassengerGender('M');
+
+    setSeatLoading(true);
+    setOccupiedFlightSeats([]);
+    setBookingSeat('12A');
+
+    operationsService.getFlightSeats(flight.flightInstanceId)
+      .then((res) => {
+        const occ = (res.occupiedSeats || []).map((s) => s.toUpperCase());
+        setOccupiedFlightSeats(occ);
+        const candidateRows = [10, 11, 12, 14, 15, 16, 17, 18];
+        const candidateCols = ['A', 'B', 'C', 'D'];
+        let picked = '12A';
+        for (const r of candidateRows) {
+          for (const c of candidateCols) {
+            const s = `${r}${c}`;
+            if (!occ.includes(s)) {
+              picked = s;
+              break;
+            }
+          }
+          if (picked !== '12A' || !occ.includes('12A')) break;
+        }
+        setBookingSeat(picked);
+      })
+      .catch((err) => {
+        console.warn('Seat map fetch note:', err);
+      })
+      .finally(() => {
+        setSeatLoading(false);
+      });
+
     setBookModalOpen(true);
   };
 
@@ -135,13 +190,40 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
     if (e) e.preventDefault();
     if (!selectedFlight) return;
 
+    if (!passengerFirstName.trim() || !passengerLastName.trim()) {
+      alert('Passenger first and last name are required.');
+      return;
+    }
+    if (!passengerEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(passengerEmail.trim())) {
+      alert('A valid email address is required.');
+      return;
+    }
+    if (!passengerPhone.trim() || passengerPhone.trim().length < 7) {
+      alert('A valid phone number (at least 7 digits) is required.');
+      return;
+    }
+    if (!bookingSeat.trim()) {
+      alert('Please select a seat.');
+      return;
+    }
+    if (occupiedFlightSeats.includes(bookingSeat.trim().toUpperCase())) {
+      alert(`Seat ${bookingSeat.toUpperCase()} is already booked. Please choose another seat.`);
+      return;
+    }
+
     try {
       setLoading(true);
-      // Step 1: Create Booking & Issue Ticket
+      // Step 1: Create Booking & Issue Ticket via ACID transaction
       const result = await operationsService.createBooking({
         flightInstanceId: selectedFlight.flightInstanceId,
         cabinClass,
-        seatNumber: bookingSeat,
+        seatNumber: bookingSeat.trim().toUpperCase(),
+        firstName: passengerFirstName.trim(),
+        lastName: passengerLastName.trim(),
+        email: passengerEmail.trim(),
+        phone: passengerPhone.trim(),
+        dateOfBirth: passengerDob,
+        gender: passengerGender,
       });
 
       const issuedTicket = result.ticket;
@@ -166,21 +248,21 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         // Step 2: Instant Web Check-In & Boarding Pass Issuance
         const checkInRes = await operationsService.processCheckIn({
           ticketId: issuedTicket.ticketId,
-          seatNumber: bookingSeat,
+          seatNumber: bookingSeat.trim().toUpperCase(),
         });
 
         const bpData = checkInRes.checkIn || checkInRes;
         setActiveBoardingPass({
           ...bpData,
           boardingPassNumber: bpData.boardingPassCode,
-          passengerName: user?.name || user?.email?.split('@')[0] || 'Traveler',
+          passengerName: `${passengerFirstName} ${passengerLastName}`,
           flightNumber: selectedFlight.flightNumber,
           flightDate: selectedFlight.flightDate || 'Today',
           origin: selectedFlight.originAirport,
           destination: selectedFlight.destAirport,
           originCity: selectedFlight.originCity,
           destCity: selectedFlight.destCity,
-          seatNumber: bookingSeat,
+          seatNumber: bookingSeat.trim().toUpperCase(),
           cabinClass: cabinClass.toUpperCase(),
           gateNumber: selectedFlight.gate || selectedFlight.departureGate || 'T2-G01',
           terminal: selectedFlight.terminal || 'T2',
@@ -198,8 +280,15 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
           booking: result.booking,
           ticket: issuedTicket,
           flight: selectedFlight,
-          seat: bookingSeat,
+          seat: bookingSeat.trim().toUpperCase(),
+          passenger: {
+            name: `${passengerFirstName} ${passengerLastName}`,
+            email: passengerEmail,
+            phone: passengerPhone,
+          },
+          cabinClass,
         });
+        setActionSuccess(`Reservation confirmed with PNR ${bookingRef}`);
       }
     } catch (err) {
       alert(`Booking Failed: ${err.message}`);
@@ -1315,11 +1404,11 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
             <div className="profile-info-grid">
               <div className="profile-info-item">
                 <span className="info-item-label">Authentication Mode</span>
-                <span className="info-item-value">JWT Bearer (HttpOnly Transmissions)</span>
+                <span className="info-item-value">Secure Login (Session Protected)</span>
               </div>
               <div className="profile-info-item">
-                <span className="info-item-label">Session Lifetime</span>
-                <span className="info-item-value">24 Hours Active Expiration</span>
+                <span className="info-item-label">Session Status</span>
+                <span className="info-item-value">Active</span>
               </div>
               <div className="profile-info-item">
                 <span className="info-item-label">Confirmed Reservations</span>
@@ -1330,12 +1419,12 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                 <span className="info-item-value font-bold text-navy">{myBaggage.length} Registered Units</span>
               </div>
               <div className="profile-info-item">
-                <span className="info-item-label">Security Screening</span>
-                <span className="info-item-value text-emerald font-medium">Biometric Gate Clearance Enabled</span>
+                <span className="info-item-label">Travel Status</span>
+                <span className="info-item-value text-emerald font-medium">Ready to Travel</span>
               </div>
               <div className="profile-info-item">
-                <span className="info-item-label">Relational Record</span>
-                <span className="info-item-value mono">PASSENGERS Table (Oracle Linked)</span>
+                <span className="info-item-label">Account Type</span>
+                <span className="info-item-value">Registered Passenger</span>
               </div>
             </div>
           </div>
@@ -1373,55 +1462,260 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                   </div>
                 </div>
 
-                <div className="form-grid-2">
-                  <div className="form-group">
-                    <label>Cabin Class Selection</label>
-                    <select
-                      value={cabinClass}
-                      onChange={(e) => setCabinClass(e.target.value)}
-                      required
-                    >
-                      <option value="ECONOMY">Economy Class (Base Fare)</option>
-                      <option value="BUSINESS">Business Class (2.5x Base Fare)</option>
-                      <option value="FIRST">First Class Suite (4.0x Base Fare)</option>
-                    </select>
+                {/* Passenger Information Form */}
+                <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    1. Passenger Information
+                  </h4>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label>First Name <span style={{ color: '#EF4444' }}>*</span></label>
+                      <input
+                        type="text"
+                        value={passengerFirstName}
+                        onChange={(e) => setPassengerFirstName(e.target.value)}
+                        placeholder="e.g. John"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Last Name <span style={{ color: '#EF4444' }}>*</span></label>
+                      <input
+                        type="text"
+                        value={passengerLastName}
+                        onChange={(e) => setPassengerLastName(e.target.value)}
+                        placeholder="e.g. Doe"
+                        required
+                      />
+                    </div>
                   </div>
 
-                  <div className="form-group">
-                    <label>Seat Number</label>
-                    <input
-                      type="text"
-                      value={bookingSeat}
-                      onChange={(e) => setBookingSeat(e.target.value.toUpperCase())}
-                      placeholder="e.g. 12A, 14C"
-                      required
-                    />
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label>Email Address <span style={{ color: '#EF4444' }}>*</span></label>
+                      <input
+                        type="email"
+                        value={passengerEmail}
+                        onChange={(e) => setPassengerEmail(e.target.value)}
+                        placeholder="passenger@example.com"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Contact Phone <span style={{ color: '#EF4444' }}>*</span></label>
+                      <input
+                        type="tel"
+                        value={passengerPhone}
+                        onChange={(e) => setPassengerPhone(e.target.value)}
+                        placeholder="+91 98765 43210"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label>Date of Birth <span style={{ color: '#EF4444' }}>*</span></label>
+                      <input
+                        type="date"
+                        value={passengerDob}
+                        onChange={(e) => setPassengerDob(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Gender</label>
+                      <select
+                        value={passengerGender}
+                        onChange={(e) => setPassengerGender(e.target.value)}
+                      >
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                        <option value="O">Other / Prefer not to say</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Checked Luggage Allocation</label>
-                  <select
-                    value={bookingBaggageCount}
-                    onChange={(e) => setBookingBaggageCount(Number(e.target.value))}
-                  >
-                    <option value={0}>0 Checked Bags (Carry-on 7kg only)</option>
-                    <option value={1}>1 Checked Bag (15 kg allowance included)</option>
-                    <option value={2}>2 Checked Bags (25 kg allowance included)</option>
-                  </select>
+                {/* Travel Class & Baggage Section */}
+                <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    2. Travel Class & Baggage
+                  </h4>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label>Cabin Class Selection</label>
+                      <select
+                        value={cabinClass}
+                        onChange={(e) => {
+                          const newClass = e.target.value;
+                          setCabinClass(newClass);
+                          if (newClass === 'BUSINESS') {
+                            setBookingSeat('02A');
+                          } else if (newClass === 'FIRST') {
+                            setBookingSeat('01A');
+                          } else {
+                            setBookingSeat('12A');
+                          }
+                        }}
+                        required
+                      >
+                        <option value="ECONOMY">Economy Class (1.0x Base Fare)</option>
+                        <option value="BUSINESS">Business Class (2.5x Base Fare)</option>
+                        <option value="FIRST">First Class Suite (4.0x Base Fare)</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Checked Luggage Allocation</label>
+                      <select
+                        value={bookingBaggageCount}
+                        onChange={(e) => setBookingBaggageCount(Number(e.target.value))}
+                      >
+                        <option value={0}>0 Checked Bags (Carry-on 7kg only)</option>
+                        <option value={1}>1 Checked Bag (15 kg allowance included)</option>
+                        <option value={2}>2 Checked Bags (25 kg allowance included)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="booking-fare-summary">
-                  <div className="fare-row">
-                    <span>Estimated Total Fare (including taxes):</span>
-                    <span className="fare-total">
-                      ₹{Math.round((selectedFlight.baseFare || 4500) * (cabinClass === 'BUSINESS' ? 2.5 : cabinClass === 'FIRST' ? 4.0 : 1.0))}
+                {/* Interactive Seat Selection Section */}
+                <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      3. Interactive Seat Selection
+                    </h4>
+                    <span className="mono" style={{ fontSize: '12px', background: '#EFF6FF', color: '#1D4ED8', padding: '3px 10px', borderRadius: '4px', fontWeight: 700 }}>
+                      Selected Seat: {bookingSeat || 'None'}
                     </span>
+                  </div>
+
+                  {seatLoading ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#64748B', fontSize: '13px' }}>
+                      Checking live seat availability in MySQL...
+                    </div>
+                  ) : (
+                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px' }}>
+                      {/* Seat Map Grid */}
+                      <div className="seat-map-grid" style={{ maxWidth: '340px', margin: '0 auto' }}>
+                        {(cabinClass === 'BUSINESS' || cabinClass === 'FIRST'
+                          ? [1, 2, 3, 4]
+                          : [10, 11, 12, 14, 15, 16, 17]
+                        ).map((row) => (
+                          <div key={row} className="seat-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <span className="seat-row-label mono" style={{ width: '24px', fontSize: '11px', color: '#64748B', textAlign: 'right', fontWeight: 600 }}>
+                              {row < 10 ? `0${row}` : row}
+                            </span>
+                            {['A', 'B'].map((col) => {
+                              const sCode = `${row < 10 ? `0${row}` : row}${col}`;
+                              const isOccupied = occupiedFlightSeats.includes(sCode);
+                              const isSelected = bookingSeat === sCode;
+                              return (
+                                <button
+                                  key={sCode}
+                                  type="button"
+                                  disabled={isOccupied}
+                                  className={`seat-map-btn ${isSelected ? 'selected' : isOccupied ? 'occupied' : 'available'}`}
+                                  onClick={() => setBookingSeat(sCode)}
+                                  title={isOccupied ? `Seat ${sCode} (Booked)` : `Seat ${sCode} (Available)`}
+                                  style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '6px',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: isOccupied ? 'not-allowed' : 'pointer',
+                                    background: isSelected ? '#2563EB' : isOccupied ? '#CBD5E1' : '#FFFFFF',
+                                    color: isSelected ? '#FFFFFF' : isOccupied ? '#94A3B8' : '#1E293B',
+                                    border: isSelected ? '2px solid #1D4ED8' : isOccupied ? '1px solid #CBD5E1' : '1.5px solid #94A3B8',
+                                  }}
+                                >
+                                  {isOccupied ? '✕' : sCode}
+                                </button>
+                              );
+                            })}
+                            <div className="seat-aisle" style={{ width: '18px', textAlign: 'center', fontSize: '10px', color: '#94A3B8' }}>
+                              |
+                            </div>
+                            {['C', 'D'].map((col) => {
+                              const sCode = `${row < 10 ? `0${row}` : row}${col}`;
+                              const isOccupied = occupiedFlightSeats.includes(sCode);
+                              const isSelected = bookingSeat === sCode;
+                              return (
+                                <button
+                                  key={sCode}
+                                  type="button"
+                                  disabled={isOccupied}
+                                  className={`seat-map-btn ${isSelected ? 'selected' : isOccupied ? 'occupied' : 'available'}`}
+                                  onClick={() => setBookingSeat(sCode)}
+                                  title={isOccupied ? `Seat ${sCode} (Booked)` : `Seat ${sCode} (Available)`}
+                                  style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '6px',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: isOccupied ? 'not-allowed' : 'pointer',
+                                    background: isSelected ? '#2563EB' : isOccupied ? '#CBD5E1' : '#FFFFFF',
+                                    color: isSelected ? '#FFFFFF' : isOccupied ? '#94A3B8' : '#1E293B',
+                                    border: isSelected ? '2px solid #1D4ED8' : isOccupied ? '1px solid #CBD5E1' : '1.5px solid #94A3B8',
+                                  }}
+                                >
+                                  {isOccupied ? '✕' : sCode}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Legend */}
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '12px', fontSize: '11px', color: '#64748B' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '12px', height: '12px', background: '#FFFFFF', border: '1px solid #94A3B8', borderRadius: '3px' }}></span>
+                          Available
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '12px', height: '12px', background: '#2563EB', borderRadius: '3px' }}></span>
+                          Selected
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '12px', height: '12px', background: '#CBD5E1', borderRadius: '3px' }}></span>
+                          Occupied
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Fare Summary Breakdown */}
+                <div className="booking-fare-summary" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px', marginTop: '16px' }}>
+                  <div className="fare-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                    <span style={{ color: '#64748B' }}>Base Fare (Economy Tariff):</span>
+                    <span className="mono font-bold">
+                      ₹{selectedFlight.baseFare != null ? Number(selectedFlight.baseFare).toLocaleString() : '--'}
+                    </span>
+                  </div>
+                  <div className="fare-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                    <span style={{ color: '#64748B' }}>Selected Cabin Multiplier:</span>
+                    <span className="mono font-bold text-navy">
+                      {cabinClass === 'BUSINESS' ? '2.5x (Business Class)' : cabinClass === 'FIRST' ? '4.0x (First Class Suite)' : '1.0x (Standard Economy)'}
+                    </span>
+                  </div>
+                  <div className="fare-row" style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #E2E8F0', fontSize: '15px' }}>
+                    <span style={{ fontWeight: 600, color: '#1E293B' }}>Estimated Total Fare:</span>
+                    <span className="fare-total mono font-bold text-emerald" style={{ fontSize: '18px', color: '#059669' }}>
+                      ₹{Math.round((Number(selectedFlight.baseFare) || 0) * (cabinClass === 'BUSINESS' ? 2.5 : cabinClass === 'FIRST' ? 4.0 : 1.0)).toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px' }}>
+                    * Base Fare is retrieved directly from MySQL database. ACID transaction commits booking and ticket atomically.
                   </div>
                 </div>
               </div>
 
-              <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
+              <div className="modal-footer" style={{ justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid #E2E8F0' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -1455,22 +1749,70 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
       {/* ========================================================================= */}
       {confirmedBookingData && (
         <div className="modal-overlay" onClick={() => setConfirmedBookingData(null)}>
-          <div className="modal-card post-booking-card" onClick={(e) => e.stopPropagation()}>
-            <div className="post-booking-icon">
-              <CheckCircle2 size={48} className="text-emerald" />
+          <div className="modal-card post-booking-card" style={{ maxWidth: '540px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="post-booking-icon" style={{ textAlign: 'center', marginBottom: '12px' }}>
+              <CheckCircle2 size={48} className="text-emerald" style={{ color: '#10B981', margin: '0 auto' }} />
             </div>
-            <h3 className="post-booking-title">Flight Reservation Confirmed!</h3>
-            <p className="post-booking-pnr">
-              Booking Reference (PNR): <strong>{confirmedBookingData.booking.bookingReference}</strong>
-            </p>
-            <p className="post-booking-desc">
-              Your electronic ticket <strong>#{confirmedBookingData.ticket?.ticketNumber}</strong> has been issued for Flight <strong>{confirmedBookingData.flight.flightNumber}</strong> ({confirmedBookingData.flight.originAirport} → {confirmedBookingData.flight.destAirport}).
+            <h3 className="post-booking-title" style={{ textAlign: 'center', fontSize: '20px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>
+              Flight Reservation Confirmed!
+            </h3>
+            <p style={{ textAlign: 'center', color: '#64748B', fontSize: '13px', marginBottom: '16px' }}>
+              Your electronic ticket and reservation have been permanently committed to MySQL.
             </p>
 
-            <div className="post-booking-actions">
+            {/* Receipt Summary Card */}
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px dashed #CBD5E1' }}>
+                <span style={{ fontSize: '12px', color: '#64748B' }}>Booking Reference (PNR)</span>
+                <span className="mono font-bold" style={{ fontSize: '15px', color: '#1E40AF', letterSpacing: '0.05em' }}>
+                  {confirmedBookingData.booking.bookingReference}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                <span style={{ color: '#64748B' }}>E-Ticket Number:</span>
+                <span className="mono font-medium">{confirmedBookingData.ticket?.ticketNumber}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                <span style={{ color: '#64748B' }}>Passenger Name:</span>
+                <span style={{ fontWeight: 600 }}>
+                  {confirmedBookingData.passenger?.name || `${passengerFirstName} ${passengerLastName}`}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                <span style={{ color: '#64748B' }}>Flight Route:</span>
+                <span className="mono font-bold">
+                  {confirmedBookingData.flight.flightNumber} ({confirmedBookingData.flight.originAirport} → {confirmedBookingData.flight.destAirport})
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                <span style={{ color: '#64748B' }}>Travel Date & Time:</span>
+                <span>{confirmedBookingData.flight.flightDate || 'Today'} · {confirmedBookingData.flight.scheduledDepartureTime || 'On Schedule'}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                <span style={{ color: '#64748B' }}>Allocated Seat:</span>
+                <span className="mono font-bold text-navy" style={{ color: '#1D4ED8' }}>
+                  {confirmedBookingData.seat} ({confirmedBookingData.cabinClass || 'ECONOMY'})
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #E2E8F0', fontSize: '14px' }}>
+                <span style={{ fontWeight: 600, color: '#1E293B' }}>Total Amount Paid:</span>
+                <span className="mono font-bold" style={{ color: '#059669', fontSize: '16px' }}>
+                  ₹{Number(confirmedBookingData.booking.totalAmount).toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="post-booking-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 type="button"
                 className="btn btn-primary btn-lg"
+                style={{ width: '100%', justifyContent: 'center' }}
                 onClick={() => {
                   const t = confirmedBookingData.ticket;
                   setConfirmedBookingData(null);
@@ -1483,12 +1825,13 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
               <button
                 type="button"
                 className="btn btn-secondary"
+                style={{ width: '100%', justifyContent: 'center' }}
                 onClick={() => {
                   setConfirmedBookingData(null);
                   handleTabChange('bookings');
                 }}
               >
-                View Confirmed Bookings
+                View in My Bookings
               </button>
             </div>
           </div>

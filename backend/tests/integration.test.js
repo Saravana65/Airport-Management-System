@@ -161,14 +161,17 @@ async function runIntegrationTests() {
 }
 
 server = app.listen(0, '127.0.0.1', async () => {
+    const { closePool } = require('../src/config/database');
     try {
         dynamicPort = server.address().port;
         const success = await runIntegrationTests();
-        process.exitCode = success ? 0 : 1;
         server.close();
+        await closePool();
+        process.exit(success ? 0 : 1);
     } catch (e) {
         console.error('Test execution failed:', e);
-        process.exitCode = 1;
         server.close();
+        await closePool();
+        process.exit(1);
     }
 });

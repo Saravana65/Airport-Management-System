@@ -68,26 +68,28 @@ export function AppRoutes() {
         path="/admin"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <DashboardLayout title="Administrator Command & Control Center" />
+            <DashboardLayout />
           </ProtectedRoute>
         }
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard initialTab="overview" />} />
-        <Route path="users" element={<AdminDashboard initialTab="users" />} />
         <Route path="flights" element={<AdminDashboard initialTab="flights" />} />
+        <Route path="search" element={<AdminDashboard initialTab="flights" />} />
+        <Route path="bookings" element={<AdminDashboard initialTab="bookings" />} />
+        <Route path="tickets" element={<AdminDashboard initialTab="bookings" />} />
         <Route path="airports" element={<AdminDashboard initialTab="airports" />} />
         <Route path="airlines" element={<AdminDashboard initialTab="airlines" />} />
+        <Route path="gates" element={<AdminDashboard initialTab="gates" />} />
+        <Route path="users" element={<AdminDashboard initialTab="users" />} />
         <Route path="employees" element={<AdminDashboard initialTab="employees" />} />
         <Route path="database" element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="aade" element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="algorithms" element={<Navigate to="/admin/dashboard" replace />} />
         <Route
           path="settings"
           element={
             <ComingSoon
               moduleName="System & Security Configuration"
-              description="Security parameters (JWT 24h expiration, Helmet HTTP headers, CORS allowlist, and Oracle pool bounds) are actively managed via backend environment variables and middleware."
+              description="Security parameters (JWT 24h expiration, Helmet HTTP headers, CORS allowlist, and database pool bounds) are actively managed via backend environment variables and middleware."
               phase="Production Ready"
               schemaTable="USERS & AUDIT_LOGS"
             />
@@ -99,8 +101,8 @@ export function AppRoutes() {
       <Route
         path="/airline"
         element={
-          <ProtectedRoute allowedRoles={['AIRLINE_STAFF']}>
-            <DashboardLayout title="Airline Operations & Fleet Dispatch" />
+          <ProtectedRoute allowedRoles={['AIRLINE_STAFF', 'ADMIN']}>
+            <DashboardLayout />
           </ProtectedRoute>
         }
       >
@@ -108,39 +110,37 @@ export function AppRoutes() {
         <Route path="dashboard" element={<AirlineDashboard initialTab="overview" />} />
         <Route path="my-airline" element={<AirlineDashboard initialTab="flights" />} />
         <Route path="flights" element={<AirlineDashboard initialTab="flights" />} />
+        <Route path="search" element={<AirlineDashboard initialTab="flights" />} />
         <Route path="passengers" element={<AirlineDashboard initialTab="passengers" />} />
         <Route path="bookings" element={<AirlineDashboard initialTab="bookings" />} />
         <Route path="tickets" element={<AirlineDashboard initialTab="bookings" />} />
-        <Route path="aade" element={<Navigate to="/airline/dashboard" replace />} />
-        <Route path="algorithms" element={<Navigate to="/airline/dashboard" replace />} />
       </Route>
 
       {/* AIRPORT_STAFF Station Routes */}
       <Route
         path="/airport"
         element={
-          <ProtectedRoute allowedRoles={['AIRPORT_STAFF']}>
-            <DashboardLayout title="Airport Ground & Terminal Operations" />
+          <ProtectedRoute allowedRoles={['AIRPORT_STAFF', 'ADMIN']}>
+            <DashboardLayout />
           </ProtectedRoute>
         }
       >
         <Route index element={<Navigate to="/airport/dashboard" replace />} />
         <Route path="dashboard" element={<AirportDashboard initialTab="overview" />} />
-        <Route path="flights" element={<AirportDashboard initialTab="flights" />} />
         <Route path="gates" element={<AirportDashboard initialTab="gates" />} />
+        <Route path="flights" element={<AirportDashboard initialTab="flights" />} />
+        <Route path="search" element={<AirportDashboard initialTab="flights" />} />
         <Route path="checkin" element={<AirportDashboard initialTab="checkins" />} />
         <Route path="baggage" element={<AirportDashboard initialTab="baggage" />} />
         <Route path="employees" element={<AirportDashboard initialTab="gates" />} />
-        <Route path="aade" element={<Navigate to="/airport/dashboard" replace />} />
-        <Route path="algorithms" element={<Navigate to="/airport/dashboard" replace />} />
       </Route>
 
       {/* PASSENGER Station Routes */}
       <Route
         path="/passenger"
         element={
-          <ProtectedRoute allowedRoles={['PASSENGER']}>
-            <DashboardLayout title="Passenger Flight & Travel Portal" />
+          <ProtectedRoute allowedRoles={['PASSENGER', 'ADMIN']}>
+            <DashboardLayout />
           </ProtectedRoute>
         }
       >
@@ -154,8 +154,6 @@ export function AppRoutes() {
         <Route path="baggage" element={<PassengerDashboard initialTab="baggage" />} />
         <Route path="travel-info" element={<PassengerDashboard initialTab="travel-info" />} />
         <Route path="profile" element={<PassengerDashboard initialTab="profile" />} />
-        <Route path="aade" element={<Navigate to="/passenger/dashboard" replace />} />
-        <Route path="algorithms" element={<Navigate to="/passenger/dashboard" replace />} />
       </Route>
 
       {/* Catch-all 404 Route */}

@@ -7,21 +7,62 @@ import api from './api';
 
 export const operationsService = {
   // Module 1: Airports, Airlines & Aircraft
-  getAirports: () => api.get('/airports').then(r => r.data || r),
-  createAirport: (data) => api.post('/airports', data).then(r => r.data || r),
-  getAirlines: () => api.get('/airlines').then(r => r.data || r),
-  createAirline: (data) => api.post('/airlines', data).then(r => r.data || r),
-  getAircraft: () => api.get('/aircraft').then(r => r.data || r),
-  createAircraft: (data) => api.post('/aircraft', data).then(r => r.data || r),
+  getAirports: () =>
+    api.get('/airports').then((r) => {
+      const list = r.data || r;
+      if (!Array.isArray(list)) return [];
+      return list.map((a) => ({
+        ...a,
+        airportCode: a.airportCode || a.AIRPORT_CODE,
+        airportName: a.airportName || a.AIRPORT_NAME,
+        city: a.city || a.CITY,
+        state: a.state || a.STATE,
+        country: a.country || a.COUNTRY,
+        timezone: a.timezone || a.TIMEZONE,
+        isActive: a.isActive || a.IS_ACTIVE,
+      }));
+    }),
+  createAirport: (data) => api.post('/airports', data).then((r) => r.data || r),
+  getAirlines: () =>
+    api.get('/airlines').then((r) => {
+      const list = r.data || r;
+      if (!Array.isArray(list)) return [];
+      return list.map((l) => ({
+        ...l,
+        airlineCode: l.airlineCode || l.AIRLINE_CODE,
+        airlineName: l.airlineName || l.AIRLINE_NAME,
+        threeDigitCode: l.threeDigitCode || l.THREE_DIGIT_CODE,
+        country: l.country || l.COUNTRY,
+        contactEmail: l.contactEmail || l.CONTACT_EMAIL,
+        isActive: l.isActive || l.IS_ACTIVE,
+      }));
+    }),
+  createAirline: (data) => api.post('/airlines', data).then((r) => r.data || r),
+  getAircraft: () =>
+    api.get('/aircraft').then((r) => {
+      const list = r.data || r;
+      if (!Array.isArray(list)) return [];
+      return list.map((c) => ({
+        ...c,
+        aircraftId: c.aircraftId || c.AIRCRAFT_ID,
+        registrationNo: c.registrationNo || c.REGISTRATION_NO,
+        model: c.model || c.MODEL,
+        airlineCode: c.airlineCode || c.AIRLINE_CODE,
+        totalSeats: c.totalSeats || c.TOTAL_SEATS,
+        status: c.status || c.STATUS,
+      }));
+    }),
+  createAircraft: (data) => api.post('/aircraft', data).then((r) => r.data || r),
 
   // Module 2: Flights
   getFlights: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return api.get(`/flights${query ? `?${query}` : ''}`).then(r => r.data || r);
   },
+  getFlightSeats: (id) => api.get(`/flights/${id}/seats`).then(r => r.data || r),
   createFlight: (data) => api.post('/flights', data).then(r => r.data || r),
-  updateFlightStatus: (id, status, reason) =>
-    api.patch(`/flights/${id}/status`, { status, reason }).then(r => r.data || r),
+  updateFlightStatus: (id, status, reason, extra = {}) =>
+    api.patch(`/flights/${id}/status`, { status, reason, ...extra }).then(r => r.data || r),
 
   // Module 3: Passengers
   getPassengers: (q = '') =>

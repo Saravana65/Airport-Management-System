@@ -9,8 +9,10 @@ const { authenticateUser, authorizeRoles } = require('../middleware/auth.middlew
 
 router.use(authenticateUser);
 
-// All authenticated users can view flights
+// All authenticated users can view and search flights
 router.get('/', flightController.getFlights);
+router.get('/search', flightController.searchFlights);
+router.get('/:id/seats', flightController.getFlightSeats);
 router.get('/:id', flightController.getFlightById);
 
 // ADMIN & AIRLINE_STAFF can create flights and update status

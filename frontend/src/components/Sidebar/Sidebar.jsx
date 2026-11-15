@@ -44,10 +44,14 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
         return [
           { label: 'Overview', to: '/admin/dashboard', icon: LayoutDashboard },
           { label: 'Flight Management', to: '/admin/flights', icon: Plane },
+          { label: 'Search Flights', to: '/passenger/search', icon: Search },
+          { label: 'Bookings & Tickets', to: '/admin/bookings', icon: Ticket },
           { label: 'Airport Management', to: '/admin/airports', icon: Building2 },
           { label: 'Airline Management', to: '/admin/airlines', icon: Briefcase },
+          { label: 'Gate Management', to: '/admin/gates', icon: Radio },
           { label: 'User Management', to: '/admin/users', icon: Users },
-          { label: 'Employee Management', to: '/admin/employees', icon: UserCheck },
+          { label: 'Staff Management', to: '/admin/employees', icon: UserCheck },
+          { label: 'Passenger Portal', to: '/passenger/dashboard', icon: User },
           { label: 'System Settings', to: '/admin/settings', icon: Settings },
         ];
       case 'AIRLINE_STAFF':

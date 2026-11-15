@@ -6,6 +6,7 @@ import {
   Building2,
   Shield,
   Activity,
+  Ticket,
   Database,
   Radio,
   Server,
@@ -47,6 +48,16 @@ export function AdminDashboard({ initialTab = 'overview' }) {
   const [employees, setEmployees] = useState([]);
   const [gates, setGates] = useState([]);
   const [usersList, setUsersList] = useState([]);
+  const [bookingsList, setBookingsList] = useState([]);
+  const [bookingSearch, setBookingSearch] = useState('');
+
+  // Flight Status Modal State for Admin Dispatch
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedFlight, setSelectedFlight] = useState(null);
+  const [newStatus, setNewStatus] = useState('BOARDING');
+  const [statusReason, setStatusReason] = useState('');
+  const [estimatedDeparture, setEstimatedDeparture] = useState('');
+  const [estimatedArrival, setEstimatedArrival] = useState('');
 
   // Form State for creating new Airport
   const [newAirport, setNewAirport] = useState({
@@ -63,7 +74,7 @@ export function AdminDashboard({ initialTab = 'overview' }) {
     setLoading(true);
     setError(null);
     try {
-      const [ports, lines, planes, flts, emps, gts, usrRes] = await Promise.all([
+      const [ports, lines, planes, flts, emps, gts, usrRes, bks] = await Promise.all([
         operationsService.getAirports().catch(() => []),
         operationsService.getAirlines().catch(() => []),
         operationsService.getAircraft().catch(() => []),
@@ -71,6 +82,7 @@ export function AdminDashboard({ initialTab = 'overview' }) {
         operationsService.getEmployees().catch(() => []),
         operationsService.getGates().catch(() => []),
         api.get('/admin/users').catch(() => ({ data: { users: [] } })),
+        operationsService.getBookings().catch(() => []),
       ]);
       setAirports(ports);
       setAirlines(lines);
@@ -79,6 +91,7 @@ export function AdminDashboard({ initialTab = 'overview' }) {
       setEmployees(emps);
       setGates(gts);
       setUsersList(usrRes?.data?.users || usrRes?.users || []);
+      setBookingsList(bks);
     } catch (err) {
       setError(err.message || 'Failed to load operational data.');
     } finally {
@@ -101,6 +114,41 @@ export function AdminDashboard({ initialTab = 'overview' }) {
     setActiveTab(tab);
     if (tab === 'overview') navigate('/admin/dashboard');
     else navigate(`/admin/${tab}`);
+  };
+
+  const handleOpenStatusModal = (flight) => {
+    setSelectedFlight(flight);
+    setNewStatus(flight.status || 'BOARDING');
+    setStatusReason(flight.remarks || '');
+    const toInputFormat = (dt) => {
+      if (!dt) return '';
+      const s = dt.replace(' ', 'T');
+      return s.length >= 16 ? s.substring(0, 16) : s;
+    };
+    setEstimatedDeparture(toInputFormat(flight.estimatedDeparture || flight.scheduledDeparture));
+    setEstimatedArrival(toInputFormat(flight.estimatedArrival || flight.scheduledArrival));
+    setStatusModalOpen(true);
+  };
+
+  const handleUpdateStatus = async (e) => {
+    e.preventDefault();
+    if (!selectedFlight) return;
+    try {
+      await operationsService.updateFlightStatus(
+        selectedFlight.flightInstanceId,
+        newStatus,
+        statusReason || `Updated by Administrator ${user?.email}`,
+        {
+          estimatedDeparture: estimatedDeparture ? estimatedDeparture.replace('T', ' ') + (estimatedDeparture.length === 16 ? ':00' : '') : null,
+          estimatedArrival: estimatedArrival ? estimatedArrival.replace('T', ' ') + (estimatedArrival.length === 16 ? ':00' : '') : null,
+        }
+      );
+      setActionSuccess(`Flight ${selectedFlight.flightNumber} status and estimated timings successfully saved!`);
+      setStatusModalOpen(false);
+      loadData();
+    } catch (err) {
+      alert(`Status update failed: ${err.message}`);
+    }
   };
 
   const handleCreateAirport = async (e) => {
@@ -128,12 +176,20 @@ export function AdminDashboard({ initialTab = 'overview' }) {
           <span>Overview</span>
         </button>
         <button
-          className={`admin-nav-pill ${activeTab === 'flights' ? 'active' : ''}`}
+          className={`admin-nav-pill ${activeTab === 'flights' || activeTab === 'search' ? 'active' : ''}`}
           onClick={() => handleTabChange('flights')}
         >
           <Plane size={15} />
           <span>Flights</span>
           <span className="pill-count">{flights.length}</span>
+        </button>
+        <button
+          className={`admin-nav-pill ${activeTab === 'bookings' || activeTab === 'tickets' ? 'active' : ''}`}
+          onClick={() => handleTabChange('bookings')}
+        >
+          <Ticket size={15} />
+          <span>Bookings & Tickets</span>
+          <span className="pill-count">{bookingsList.length}</span>
         </button>
         <button
           className={`admin-nav-pill ${activeTab === 'airports' ? 'active' : ''}`}
@@ -152,6 +208,14 @@ export function AdminDashboard({ initialTab = 'overview' }) {
           <span className="pill-count">{airlines.length}</span>
         </button>
         <button
+          className={`admin-nav-pill ${activeTab === 'gates' ? 'active' : ''}`}
+          onClick={() => handleTabChange('gates')}
+        >
+          <Radio size={15} />
+          <span>Gates</span>
+          <span className="pill-count">{gates.length}</span>
+        </button>
+        <button
           className={`admin-nav-pill ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => handleTabChange('users')}
         >
@@ -166,14 +230,6 @@ export function AdminDashboard({ initialTab = 'overview' }) {
           <UserCheck size={15} />
           <span>Staff</span>
           <span className="pill-count">{employees.length}</span>
-        </button>
-        <button
-          className={`admin-nav-pill ${activeTab === 'gates' ? 'active' : ''}`}
-          onClick={() => handleTabChange('gates')}
-        >
-          <Radio size={15} />
-          <span>Gates</span>
-          <span className="pill-count">{gates.length}</span>
         </button>
       </nav>
 
@@ -322,13 +378,106 @@ export function AdminDashboard({ initialTab = 'overview' }) {
       {/* ========================================================================= */}
       {/* TAB 2: FLIGHT MANAGEMENT (DIRECT TABLE VIEW, NO TELEMETRY CARDS) */}
       {/* ========================================================================= */}
-      {activeTab === 'flights' && (
+      {(activeTab === 'flights' || activeTab === 'search') && (
         <div className="admin-view-container">
           <UltraQualityDataTable
             title="Commercial Flight Schedules & Fleet Monitoring"
             subtitle="Search scheduled routes, check live departure gates, track delays, and manage real-time status"
             embedded={true}
+            onSelectFlight={(f) => handleOpenStatusModal(f)}
           />
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: BOOKINGS & TICKETS MANAGEMENT (DIRECT VIEW, NO TELEMETRY CARDS) */}
+      {/* ========================================================================= */}
+      {(activeTab === 'bookings' || activeTab === 'tickets') && (
+        <div className="admin-view-container">
+          <div className="admin-view-header">
+            <div>
+              <h2 className="admin-view-title">Passenger Bookings & Electronic Tickets</h2>
+              <p className="admin-view-subtitle">
+                System-wide reservations, PNR references, passenger manifests, issued tickets, and payment settlement audit trail.
+              </p>
+            </div>
+            <div className="admin-header-actions" style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="text"
+                placeholder="Search PNR, flight, traveler..."
+                value={bookingSearch}
+                onChange={(e) => setBookingSearch(e.target.value)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '13px',
+                }}
+              />
+              <button className="btn btn-secondary btn-sm" onClick={loadData}>
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="table-responsive">
+            <table className="ops-table">
+              <thead>
+                <tr>
+                  <th>PNR Reference</th>
+                  <th>Booking Date</th>
+                  <th>Passenger(s)</th>
+                  <th>Flight / Route</th>
+                  <th>Seat & Class</th>
+                  <th>Ticket #</th>
+                  <th>Amount</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookingsList
+                  .filter((b) => {
+                    if (!bookingSearch) return true;
+                    const q = bookingSearch.toLowerCase();
+                    const pnr = (b.bookingReference || '').toLowerCase();
+                    const flt = (b.flightNumber || b.tickets?.[0]?.flightNumber || '').toLowerCase();
+                    const psg = (b.tickets?.map((t) => t.passengerName).join(' ') || '').toLowerCase();
+                    return pnr.includes(q) || flt.includes(q) || psg.includes(q);
+                  })
+                  .map((b) => (
+                    <tr key={b.bookingId}>
+                      <td className="mono font-bold text-navy">{b.bookingReference}</td>
+                      <td className="mono text-muted">{b.bookingDate}</td>
+                      <td className="font-medium">
+                        {b.tickets?.map((t) => t.passengerName || 'Passenger').join(', ') || 'Traveler'}
+                      </td>
+                      <td className="mono font-bold">
+                        {b.flightNumber || b.tickets?.[0]?.flightNumber || 'FLT'}
+                      </td>
+                      <td className="mono text-navy font-medium">
+                        {b.tickets?.map((t) => `${t.seatNumber || 'Unassigned'} (${t.cabinClass || 'ECONOMY'})`).join(', ') || '--'}
+                      </td>
+                      <td className="mono text-muted">
+                        {b.tickets?.map((t) => t.ticketNumber).join(', ') || `TKT-${b.bookingId}`}
+                      </td>
+                      <td className="mono font-bold text-emerald">₹{b.totalAmount}</td>
+                      <td>
+                        <StatusBadge
+                          status={b.paymentStatus === 'COMPLETED' ? 'CONFIRMED' : b.paymentStatus}
+                          label={b.paymentStatus}
+                          size="sm"
+                        />
+                      </td>
+                      <td>
+                        <StatusBadge status={b.status} label={b.status} size="sm" />
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -605,6 +754,94 @@ export function AdminDashboard({ initialTab = 'overview' }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ADMIN FLIGHT STATUS & TIMETABLE DISPATCH MODAL */}
+      {statusModalOpen && selectedFlight && (
+        <div className="modal-overlay" onClick={() => setStatusModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                Flight Operations Dispatch: <span className="mono text-navy">{selectedFlight.flightNumber}</span>
+              </h3>
+              <button className="modal-close" onClick={() => setStatusModalOpen(false)}>×</button>
+            </div>
+
+            <form onSubmit={handleUpdateStatus}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Flight Movement Route</label>
+                  <p className="mono text-navy">
+                    {selectedFlight.originAirport} → {selectedFlight.destAirport} (Scheduled: {selectedFlight.scheduledDepartureTime || selectedFlight.scheduledDeparture})
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label>Operational Status State Transition</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    required
+                  >
+                    <option value="SCHEDULED">SCHEDULED (Normal)</option>
+                    <option value="BOARDING">BOARDING (Gate Active)</option>
+                    <option value="DEPARTED">DEPARTED (Airborne)</option>
+                    <option value="ARRIVED">ARRIVED (Touchdown)</option>
+                    <option value="DELAYED">DELAYED (Holding Pattern)</option>
+                    <option value="CANCELLED">CANCELLED (Grounded)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Manual Estimated Departure Time</label>
+                  <input
+                    type="datetime-local"
+                    value={estimatedDeparture}
+                    onChange={(e) => setEstimatedDeparture(e.target.value)}
+                  />
+                  <small style={{ color: '#64748B', fontSize: '11px', display: 'block', marginTop: '2px' }}>
+                    Overrides automated calculation and recalculates delay duration
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label>Manual Estimated Arrival Time</label>
+                  <input
+                    type="datetime-local"
+                    value={estimatedArrival}
+                    onChange={(e) => setEstimatedArrival(e.target.value)}
+                  />
+                  <small style={{ color: '#64748B', fontSize: '11px', display: 'block', marginTop: '2px' }}>
+                    Projected arrival timestamp
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label>Operational Remarks / Air Traffic Reason</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Runway congestion or weather delay"
+                    value={statusReason}
+                    onChange={(e) => setStatusReason(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setStatusModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save Dispatch Timetable
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

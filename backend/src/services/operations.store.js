@@ -1,110 +1,93 @@
 /**
  * Airport Operations Engine & Data Access Layer
- * Provides relational persistence matching the 16-table Oracle SQL schema.
- * Executes parameterized queries against Oracle SQL when online,
- * with transaction-safe operational state handling when offline.
+ * Provides relational persistence matching the MySQL 8.0 schema.
+ * Synchronizes real-time state with the MySQL database tables.
  */
 
 const db = require('./database.service');
 
-// Seed Data directly mirroring database/sample_data/insert_sample_data.sql
 const store = {
-    airports: [
-        { airportCode: 'BOM', airportName: 'Chhatrapati Shivaji Maharaj International Airport', city: 'Mumbai', state: 'Maharashtra', country: 'India', timezone: 'Asia/Kolkata', isActive: 'Y' },
-        { airportCode: 'DEL', airportName: 'Indira Gandhi International Airport', city: 'Delhi', state: 'Delhi', country: 'India', timezone: 'Asia/Kolkata', isActive: 'Y' },
-        { airportCode: 'JFK', airportName: 'John F. Kennedy International Airport', city: 'New York', state: 'New York', country: 'United States', timezone: 'America/New_York', isActive: 'Y' },
-        { airportCode: 'DFW', airportName: 'Dallas/Fort Worth International Airport', city: 'Dallas', state: 'Texas', country: 'United States', timezone: 'America/Chicago', isActive: 'Y' },
-        { airportCode: 'SFO', airportName: 'San Francisco International Airport', city: 'San Francisco', state: 'California', country: 'United States', timezone: 'America/Los_Angeles', isActive: 'Y' },
-        { airportCode: 'LHR', airportName: 'Heathrow Airport', city: 'London', state: 'Greater London', country: 'United Kingdom', timezone: 'Europe/London', isActive: 'Y' },
-    ],
-    airlines: [
-        { airlineCode: 'AI', airlineName: 'Air India Limited', threeDigitCode: '098', country: 'India', contactEmail: 'support@airindia.in', isActive: 'Y' },
-        { airlineCode: 'AA', airlineName: 'American Airlines', threeDigitCode: '001', country: 'United States', contactEmail: 'reservations@aa.com', isActive: 'Y' },
-        { airlineCode: 'BA', airlineName: 'British Airways', threeDigitCode: '125', country: 'United Kingdom', contactEmail: 'customer.service@ba.com', isActive: 'Y' },
-        { airlineCode: 'LH', airlineName: 'Lufthansa German Airlines', threeDigitCode: '220', country: 'Germany', contactEmail: 'service@lufthansa.de', isActive: 'Y' },
-        { airlineCode: 'EK', airlineName: 'Emirates', threeDigitCode: '176', country: 'United Arab Emirates', contactEmail: 'help@emirates.com', isActive: 'Y' },
-    ],
-    aircraft: [
-        { aircraftId: 1, registrationNo: 'VT-ANX', model: 'Boeing 777-300ER', airlineCode: 'AI', totalSeats: 342, economySeats: 300, businessSeats: 38, firstSeats: 4, status: 'ACTIVE' },
-        { aircraftId: 2, registrationNo: 'VT-EXG', model: 'Airbus A320neo', airlineCode: 'AI', totalSeats: 180, economySeats: 168, businessSeats: 12, firstSeats: 0, status: 'ACTIVE' },
-        { aircraftId: 3, registrationNo: 'N789AA', model: 'Boeing 787-9 Dreamliner', airlineCode: 'AA', totalSeats: 285, economySeats: 234, businessSeats: 30, firstSeats: 21, status: 'ACTIVE' },
-        { aircraftId: 4, registrationNo: 'G-ZBLA', model: 'Boeing 787-10', airlineCode: 'BA', totalSeats: 256, economySeats: 199, businessSeats: 48, firstSeats: 9, status: 'ACTIVE' },
-        { aircraftId: 5, registrationNo: 'D-AIMA', model: 'Airbus A380-800', airlineCode: 'LH', totalSeats: 509, economySeats: 371, businessSeats: 78, firstSeats: 60, status: 'ACTIVE' },
-        { aircraftId: 6, registrationNo: 'A6-EKA', model: 'Boeing 777-200LR', airlineCode: 'EK', totalSeats: 302, economySeats: 264, businessSeats: 38, firstSeats: 0, status: 'ACTIVE' },
-    ],
-    gates: [
-        { gateId: 1, airportCode: 'BOM', terminal: 'T2', gateNumber: 'G01', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 2, airportCode: 'BOM', terminal: 'T2', gateNumber: 'G02', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 3, airportCode: 'BOM', terminal: 'T2', gateNumber: 'G03', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 4, airportCode: 'DEL', terminal: 'T3', gateNumber: 'G10', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 5, airportCode: 'DEL', terminal: 'T3', gateNumber: 'G11', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 6, airportCode: 'JFK', terminal: 'T4', gateNumber: 'G04', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 7, airportCode: 'JFK', terminal: 'T4', gateNumber: 'G05', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 8, airportCode: 'DFW', terminal: 'T1', gateNumber: 'A12', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 9, airportCode: 'SFO', terminal: 'T2', gateNumber: 'D01', status: 'AVAILABLE', isActive: 'Y' },
-        { gateId: 10, airportCode: 'LHR', terminal: 'T5', gateNumber: 'A01', status: 'AVAILABLE', isActive: 'Y' },
-    ],
-    flights: [
-        { flightNumber: 'AI2014', airlineCode: 'AI', originAirport: 'BOM', destAirport: 'DFW', scheduledDepartureTime: '02:10', scheduledArrivalTime: '14:30', flightType: 'NON-STOP', baseFare: 75000.00, isActive: 'Y' },
-        { flightNumber: 'AI101', airlineCode: 'AI', originAirport: 'DEL', destAirport: 'JFK', scheduledDepartureTime: '01:30', scheduledArrivalTime: '07:00', flightType: 'NON-STOP', baseFare: 68000.00, isActive: 'Y' },
-        { flightNumber: 'AI680', airlineCode: 'AI', originAirport: 'BOM', destAirport: 'DEL', scheduledDepartureTime: '06:00', scheduledArrivalTime: '08:15', flightType: 'DIRECT', baseFare: 5500.00, isActive: 'Y' },
-        { flightNumber: 'AA4367', airlineCode: 'AA', originAirport: 'SFO', destAirport: 'LHR', scheduledDepartureTime: '18:10', scheduledArrivalTime: '12:30', flightType: 'NON-STOP', baseFare: 82000.00, isActive: 'Y' },
-        { flightNumber: 'AA120', airlineCode: 'AA', originAirport: 'DFW', destAirport: 'JFK', scheduledDepartureTime: '09:00', scheduledArrivalTime: '13:15', flightType: 'DIRECT', baseFare: 18000.00, isActive: 'Y' },
-        { flightNumber: 'BA1689', airlineCode: 'BA', originAirport: 'LHR', destAirport: 'DEL', scheduledDepartureTime: '10:20', scheduledArrivalTime: '23:45', flightType: 'NON-STOP', baseFare: 62000.00, isActive: 'Y' },
-        { flightNumber: 'EK501', airlineCode: 'EK', originAirport: 'BOM', destAirport: 'LHR', scheduledDepartureTime: '04:30', scheduledArrivalTime: '09:15', flightType: 'NON-STOP', baseFare: 58000.00, isActive: 'Y' },
-        { flightNumber: 'LH760', airlineCode: 'LH', originAirport: 'LHR', destAirport: 'DEL', scheduledDepartureTime: '13:45', scheduledArrivalTime: '16:20', flightType: 'NON-STOP', baseFare: 54000.00, isActive: 'Y' },
-        { flightNumber: 'AI302', airlineCode: 'AI', originAirport: 'DEL', destAirport: 'SFO', scheduledDepartureTime: '14:00', scheduledArrivalTime: '06:30', flightType: 'NON-STOP', baseFare: 89000.00, isActive: 'Y' },
-        { flightNumber: 'BA245', airlineCode: 'BA', originAirport: 'LHR', destAirport: 'JFK', scheduledDepartureTime: '15:30', scheduledArrivalTime: '18:45', flightType: 'NON-STOP', baseFare: 65000.00, isActive: 'Y' },
-        { flightNumber: 'EK505', airlineCode: 'EK', originAirport: 'BOM', destAirport: 'DFW', scheduledDepartureTime: '11:15', scheduledArrivalTime: '21:00', flightType: 'NON-STOP', baseFare: 78000.00, isActive: 'Y' },
-        { flightNumber: 'AI409', airlineCode: 'AI', originAirport: 'BOM', destAirport: 'SFO', scheduledDepartureTime: '16:30', scheduledArrivalTime: '07:15', flightType: 'NON-STOP', baseFare: 92000.00, isActive: 'Y' },
-    ],
-    flightInstances: [
-        { flightInstanceId: 1, flightNumber: 'AI2014', flightDate: '2026-11-05', aircraftId: 1, departureGateId: 1, arrivalGateId: 8, scheduledDeparture: '2026-11-05 02:10:00', scheduledArrival: '2026-11-05 14:30:00', status: 'DELAYED', delayMinutes: 75, remarks: 'Air traffic congestion at origin hub' },
-        { flightInstanceId: 2, flightNumber: 'AI101', flightDate: '2026-11-05', aircraftId: 2, departureGateId: 4, arrivalGateId: 6, scheduledDeparture: '2026-11-05 01:30:00', scheduledArrival: '2026-11-05 07:00:00', status: 'BOARDING', delayMinutes: 0, remarks: 'Boarding Gate G10 - Final Call' },
-        { flightInstanceId: 3, flightNumber: 'AI680', flightDate: '2026-11-05', aircraftId: 1, departureGateId: 2, arrivalGateId: 5, scheduledDeparture: '2026-11-05 06:00:00', scheduledArrival: '2026-11-05 08:15:00', actualDeparture: '2026-11-05 06:05:00', status: 'DEPARTED', delayMinutes: 5, remarks: 'Airborne domestic direct' },
-        { flightInstanceId: 4, flightNumber: 'AA120', flightDate: '2026-11-05', aircraftId: 3, departureGateId: 8, arrivalGateId: 7, scheduledDeparture: '2026-11-05 09:00:00', scheduledArrival: '2026-11-05 13:15:00', status: 'ON_TIME', delayMinutes: 0, remarks: 'Domestic standard on schedule' },
-        { flightInstanceId: 5, flightNumber: 'BA1689', flightDate: '2026-11-05', aircraftId: 4, departureGateId: 10, arrivalGateId: 4, scheduledDeparture: '2026-11-05 10:20:00', scheduledArrival: '2026-11-05 23:45:00', status: 'LANDING_SOON', delayMinutes: 0, remarks: 'Descending into Delhi airspace' },
-        { flightInstanceId: 6, flightNumber: 'EK501', flightDate: '2026-11-14', aircraftId: 6, departureGateId: 1, arrivalGateId: 10, scheduledDeparture: '2026-11-14 04:30:00', scheduledArrival: '2026-11-14 09:15:00', status: 'CHECK_IN', delayMinutes: 0, remarks: 'Check-in counters 21-28 open' },
-        { flightInstanceId: 7, flightNumber: 'LH760', flightDate: '2026-11-14', aircraftId: 5, departureGateId: 10, arrivalGateId: 4, scheduledDeparture: '2026-11-14 13:45:00', scheduledArrival: '2026-11-14 16:20:00', actualArrival: '2026-11-14 16:20:00', status: 'LANDED', delayMinutes: 0, remarks: 'Arrived at Gate G10 - Carousel 4' },
-        { flightInstanceId: 8, flightNumber: 'AA4367', flightDate: '2026-11-14', aircraftId: 3, departureGateId: 9, arrivalGateId: 10, scheduledDeparture: '2026-11-14 18:10:00', scheduledArrival: '2026-11-15 12:30:00', actualDeparture: '2026-11-14 18:15:00', status: 'IN_AIR', delayMinutes: 5, remarks: 'En route at cruising altitude' },
-        { flightInstanceId: 9, flightNumber: 'AI302', flightDate: '2026-11-14', aircraftId: 1, departureGateId: 5, arrivalGateId: 9, scheduledDeparture: '2026-11-14 14:00:00', scheduledArrival: '2026-11-15 06:30:00', status: 'GATE_CLOSED', delayMinutes: 0, remarks: 'Cabin doors closed - Pushback pending' },
-        { flightInstanceId: 10, flightNumber: 'BA245', flightDate: '2026-11-14', aircraftId: 4, departureGateId: 10, arrivalGateId: 6, scheduledDeparture: '2026-11-14 15:30:00', scheduledArrival: '2026-11-14 18:45:00', status: 'CANCELLED', delayMinutes: 0, remarks: 'Severe weather alert - Contact airline' },
-        { flightInstanceId: 11, flightNumber: 'EK505', flightDate: '2026-11-14', aircraftId: 6, departureGateId: 2, arrivalGateId: 8, scheduledDeparture: '2026-11-14 11:15:00', scheduledArrival: '2026-11-14 21:00:00', status: 'DIVERTED', delayMinutes: 120, remarks: 'Diverted to ORD due to thunderstorm' },
-        { flightInstanceId: 12, flightNumber: 'AI409', flightDate: '2026-11-15', aircraftId: 2, departureGateId: 1, arrivalGateId: 9, scheduledDeparture: '2026-11-15 16:30:00', scheduledArrival: '2026-11-16 07:15:00', status: 'SCHEDULED', delayMinutes: 0, remarks: 'Scheduled standard timetable' },
-    ],
-    passengers: [
-        { passengerId: 1, userId: 4, firstName: 'Rohan', lastName: 'Verma', passportNumber: 'P8923412', phone: '+919876543210', email: 'passenger@gmail.com', dateOfBirth: '1995-05-15', gender: 'M' },
-        { passengerId: 2, userId: null, firstName: 'Ananya', lastName: 'Iyer', passportNumber: 'Z1239847', phone: '+919876543211', email: 'ananya.iyer@gmail.com', dateOfBirth: '1998-10-22', gender: 'F' },
-        { passengerId: 3, userId: null, firstName: 'David', lastName: 'Miller', passportNumber: 'USA449012', phone: '+14155552671', email: 'dmiller@techcorp.io', dateOfBirth: '1988-03-09', gender: 'M' },
-    ],
-    employees: [
-        { employeeId: 1, userId: 1, airportCode: 'BOM', airlineCode: null, firstName: 'System', lastName: 'Admin', jobTitle: 'Airport Operations Director', shift: 'DAY', contactPhone: '+912226829000', isActive: 'Y' },
-        { employeeId: 2, userId: 2, airportCode: 'BOM', airlineCode: 'AI', firstName: 'Vikram', lastName: 'Sharma', jobTitle: 'Station Dispatch Manager', shift: 'DAY', contactPhone: '+912226829101', isActive: 'Y' },
-        { employeeId: 3, userId: 3, airportCode: 'BOM', airlineCode: null, firstName: 'Sunil', lastName: 'Patil', jobTitle: 'Terminal Operations Lead', shift: 'DAY', contactPhone: '+912226829202', isActive: 'Y' },
-    ],
-    bookings: [
-        { bookingId: 1, bookingReference: 'AI7X9B', userId: 4, bookingDate: '2026-11-04 10:00:00', totalAmount: 75000.00, status: 'CONFIRMED' },
-        { bookingId: 2, bookingReference: 'DEL88K', userId: 4, bookingDate: '2026-11-04 11:30:00', totalAmount: 5500.00, status: 'CONFIRMED' },
-    ],
-    tickets: [
-        { ticketId: 1, bookingId: 1, flightInstanceId: 1, passengerId: 1, ticketNumber: '0982348912301', seatNumber: '12A', cabinClass: 'ECONOMY', price: 75000.00, status: 'ISSUED' },
-        { ticketId: 2, bookingId: 2, flightInstanceId: 3, passengerId: 1, ticketNumber: '0982348912302', seatNumber: '08C', cabinClass: 'ECONOMY', price: 5500.00, status: 'ISSUED' },
-    ],
-    checkin: [
-        { checkInId: 1, ticketId: 2, checkInTime: '2026-11-04 14:00:00', boardingPassCode: 'BP-AI680-08C', boardingTime: '2026-11-05 05:20:00', gateId: 2, status: 'COMPLETED' },
-    ],
-    baggage: [
-        { baggageId: 1, ticketId: 2, tagNumber: 'BAG-AI-90214', weightKg: 18.5, status: 'CHECKED_IN', carouselNumber: 'C03', createdAt: '2026-11-04 14:05:00' },
-    ],
-    flightStatusHistory: [
-        { historyId: 1, flightInstanceId: 2, oldStatus: 'SCHEDULED', newStatus: 'BOARDING', reason: 'Gate open for boarding', changedAt: '2026-11-04 14:30:00', changedByUserId: 2 },
-    ],
-    // Phase 08: Autonomous Airport Data Engine (AADE) Collections
+    airports: [],
+    airlines: [],
+    aircraft: [],
+    gates: [],
+    flights: [],
+    flightInstances: [],
+    passengers: [],
+    employees: [],
+    bookings: [],
+    tickets: [],
+    checkin: [],
+    baggage: [],
+    flightStatusHistory: [],
     aadeEvents: [],
     aadeAlerts: [],
     aadeRecommendations: [],
     aadeApprovals: [],
     aadeAuditLogs: [],
 };
+
+/**
+ * Loads all active tables from MySQL database into operational cache
+ */
+async function syncWithDatabase() {
+    try {
+        const [
+            ports, lines, craft, gts, flts, insts, psgs, emps, bks, tks, chks, bags, hist
+        ] = await Promise.all([
+            db.execute('SELECT AIRPORT_CODE as airportCode, AIRPORT_NAME as airportName, CITY as city, STATE as state, COUNTRY as country, TIMEZONE as timezone, IS_ACTIVE as isActive FROM AIRPORTS ORDER BY AIRPORT_CODE'),
+            db.execute('SELECT AIRLINE_CODE as airlineCode, AIRLINE_NAME as airlineName, THREE_DIGIT_CODE as threeDigitCode, COUNTRY as country, CONTACT_EMAIL as contactEmail, IS_ACTIVE as isActive FROM AIRLINES ORDER BY AIRLINE_CODE'),
+            db.execute('SELECT AIRCRAFT_ID as aircraftId, REGISTRATION_NO as registrationNo, MODEL as model, AIRLINE_CODE as airlineCode, TOTAL_SEATS as totalSeats, ECONOMY_SEATS as economySeats, BUSINESS_SEATS as businessSeats, FIRST_SEATS as firstSeats, STATUS as status FROM AIRCRAFT'),
+            db.execute('SELECT GATE_ID as gateId, AIRPORT_CODE as airportCode, TERMINAL as terminal, GATE_NUMBER as gateNumber, STATUS as status, IS_ACTIVE as isActive FROM GATES'),
+            db.execute('SELECT FLIGHT_NUMBER as flightNumber, AIRLINE_CODE as airlineCode, ORIGIN_AIRPORT as originAirport, DEST_AIRPORT as destAirport, SCHEDULED_DEPARTURE_TIME as scheduledDepartureTime, SCHEDULED_ARRIVAL_TIME as scheduledArrivalTime, FLIGHT_TYPE as flightType, BASE_FARE as baseFare, IS_ACTIVE as isActive FROM FLIGHTS'),
+            db.execute('SELECT FLIGHT_INSTANCE_ID as flightInstanceId, FLIGHT_NUMBER as flightNumber, DATE_FORMAT(FLIGHT_DATE, "%Y-%m-%d") as flightDate, AIRCRAFT_ID as aircraftId, DEPARTURE_GATE_ID as departureGateId, ARRIVAL_GATE_ID as arrivalGateId, DATE_FORMAT(SCHEDULED_DEPARTURE, "%Y-%m-%d %H:%i:%s") as scheduledDeparture, DATE_FORMAT(ESTIMATED_DEPARTURE, "%Y-%m-%d %H:%i:%s") as estimatedDeparture, DATE_FORMAT(ACTUAL_DEPARTURE, "%Y-%m-%d %H:%i:%s") as actualDeparture, DATE_FORMAT(SCHEDULED_ARRIVAL, "%Y-%m-%d %H:%i:%s") as scheduledArrival, DATE_FORMAT(ESTIMATED_ARRIVAL, "%Y-%m-%d %H:%i:%s") as estimatedArrival, DATE_FORMAT(ACTUAL_ARRIVAL, "%Y-%m-%d %H:%i:%s") as actualArrival, STATUS as status, REMARKS as remarks FROM FLIGHT_INSTANCES'),
+            db.execute('SELECT PASSENGER_ID as passengerId, USER_ID as userId, FIRST_NAME as firstName, LAST_NAME as lastName, PASSPORT_NUMBER as passportNumber, PHONE as phone, EMAIL as email, DATE_FORMAT(DATE_OF_BIRTH, "%Y-%m-%d") as dateOfBirth, GENDER as gender FROM PASSENGERS'),
+            db.execute('SELECT EMPLOYEE_ID as employeeId, USER_ID as userId, AIRPORT_CODE as airportCode, AIRLINE_CODE as airlineCode, FIRST_NAME as firstName, LAST_NAME as lastName, JOB_TITLE as jobTitle, SHIFT as shift, CONTACT_PHONE as contactPhone, IS_ACTIVE as isActive FROM EMPLOYEES'),
+            db.execute('SELECT BOOKING_ID as bookingId, BOOKING_REFERENCE as bookingReference, USER_ID as userId, DATE_FORMAT(BOOKING_DATE, "%Y-%m-%d %H:%i:%s") as bookingDate, TOTAL_AMOUNT as totalAmount, STATUS as status FROM BOOKINGS'),
+            db.execute('SELECT TICKET_ID as ticketId, BOOKING_ID as bookingId, FLIGHT_INSTANCE_ID as flightInstanceId, PASSENGER_ID as passengerId, TICKET_NUMBER as ticketNumber, SEAT_NUMBER as seatNumber, CABIN_CLASS as cabinClass, PRICE as price, STATUS as status FROM TICKETS'),
+            db.execute('SELECT CHECK_IN_ID as checkInId, TICKET_ID as ticketId, DATE_FORMAT(CHECK_IN_TIME, "%Y-%m-%d %H:%i:%s") as checkInTime, BOARDING_PASS_CODE as boardingPassCode, DATE_FORMAT(BOARDING_TIME, "%Y-%m-%d %H:%i:%s") as boardingTime, GATE_ID as gateId, STATUS as status FROM CHECK_IN'),
+            db.execute('SELECT BAGGAGE_ID as baggageId, TICKET_ID as ticketId, TAG_NUMBER as tagNumber, WEIGHT_KG as weightKg, STATUS as status, CAROUSEL_NUMBER as carouselNumber, DATE_FORMAT(CREATED_AT, "%Y-%m-%d %H:%i:%s") as createdAt FROM BAGGAGE'),
+            db.execute('SELECT HISTORY_ID as historyId, FLIGHT_INSTANCE_ID as flightInstanceId, OLD_STATUS as oldStatus, NEW_STATUS as newStatus, REASON as reason, DATE_FORMAT(CHANGED_AT, "%Y-%m-%d %H:%i:%s") as changedAt, CHANGED_BY_USER_ID as changedByUserId FROM FLIGHT_STATUS_HISTORY'),
+        ]);
+
+        if (ports?.rows) store.airports = ports.rows;
+        if (lines?.rows) store.airlines = lines.rows;
+        if (craft?.rows) store.aircraft = craft.rows;
+        if (gts?.rows) store.gates = gts.rows;
+        if (flts?.rows) store.flights = flts.rows;
+        if (insts?.rows) store.flightInstances = insts.rows;
+        if (psgs?.rows) store.passengers = psgs.rows;
+        if (emps?.rows) store.employees = emps.rows;
+        if (bks?.rows) store.bookings = bks.rows;
+        if (tks?.rows) store.tickets = tks.rows;
+        if (chks?.rows) store.checkin = chks.rows;
+        if (bags?.rows) store.baggage = bags.rows;
+        if (hist?.rows) store.flightStatusHistory = hist.rows;
+
+        console.log('[Operations Store] Synchronized with MySQL tables:', {
+            airports: store.airports.length,
+            airlines: store.airlines.length,
+            aircraft: store.aircraft.length,
+            gates: store.gates.length,
+            flights: store.flights.length,
+            flightInstances: store.flightInstances.length,
+            passengers: store.passengers.length,
+            employees: store.employees.length,
+            bookings: store.bookings.length,
+            tickets: store.tickets.length,
+            checkin: store.checkin.length,
+            baggage: store.baggage.length,
+        });
+        return true;
+    } catch (err) {
+        console.warn('[Operations Store] Sync warning:', err.message);
+        return false;
+    }
+}
+
+// Auto-sync on startup
+syncWithDatabase().catch(() => {});
+
+store.syncWithDatabase = syncWithDatabase;
 
 module.exports = store;

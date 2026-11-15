@@ -25,15 +25,18 @@ const environment = {
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '24h',
     COOKIE_SECRET: process.env.COOKIE_SECRET || 'dev_fallback_cookie_secret_key_12345',
 
-    // Oracle Database Connection
+    // MySQL Database Connection
     DB: {
-        user: process.env.DB_USER || 'airport_admin',
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT, 10) || 3306,
+        user: process.env.DB_USER || 'root',
         password: process.env.DB_PASSWORD || '',
-        connectString: process.env.DB_CONNECT_STRING || 'localhost:1521/XEPDB1',
-        poolMin: parseInt(process.env.DB_POOL_MIN, 10) || 2,
-        poolMax: parseInt(process.env.DB_POOL_MAX, 10) || 10,
-        poolIncrement: parseInt(process.env.DB_POOL_INCREMENT, 10) || 2,
-        poolTimeout: parseInt(process.env.DB_POOL_TIMEOUT, 10) || 60,
+        database: process.env.DB_NAME || 'airport_management_db',
+        connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT, 10) || 10,
+        waitForConnections: true,
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 0,
     },
 
     // Autonomous Airport Data Engine (AADE) Configuration
@@ -47,10 +50,10 @@ const environment = {
 function validateConfig() {
     const warnings = [];
     if (!process.env.DB_PASSWORD) {
-        warnings.push('DB_PASSWORD is not set in environment. Oracle database operations may fail authentication.');
+        warnings.push('DB_PASSWORD is not set in environment. MySQL database operations may fail authentication.');
     }
-    if (!process.env.DB_CONNECT_STRING) {
-        warnings.push('DB_CONNECT_STRING is not set. Defaulting to localhost:1521/XEPDB1.');
+    if (!process.env.DB_NAME) {
+        warnings.push('DB_NAME is not set. Defaulting to airport_management_db.');
     }
     return warnings;
 }
