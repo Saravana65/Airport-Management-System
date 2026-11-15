@@ -105,22 +105,18 @@ describe('Phase 06 Frontend Verification Suite', () => {
     assert.ok(sidebarSource.includes('/admin/airports'), 'Admin must have Airport Management');
     assert.ok(sidebarSource.includes('/admin/airlines'), 'Admin must have Airline Management');
     assert.ok(sidebarSource.includes('/admin/employees'), 'Admin must have Employee Management');
-    assert.ok(sidebarSource.includes('/admin/database'), 'Admin must have Database Monitoring');
     assert.ok(sidebarSource.includes('/admin/settings'), 'Admin must have System Settings');
 
     // Airline nav items
-    assert.ok(sidebarSource.includes('/airline/my-airline'), 'Airline staff must have My Airline');
     assert.ok(sidebarSource.includes('/airline/flights'), 'Airline staff must have Flight Management');
     assert.ok(sidebarSource.includes('/airline/passengers'), 'Airline staff must have Passenger Management');
     assert.ok(sidebarSource.includes('/airline/bookings'), 'Airline staff must have Booking Management');
-    assert.ok(sidebarSource.includes('/airline/tickets'), 'Airline staff must have Ticket Information');
 
     // Airport nav items
     assert.ok(sidebarSource.includes('/airport/flights'), 'Airport staff must have Flight Operations');
     assert.ok(sidebarSource.includes('/airport/gates'), 'Airport staff must have Gate Management');
     assert.ok(sidebarSource.includes('/airport/checkin'), 'Airport staff must have Check-in Operations');
     assert.ok(sidebarSource.includes('/airport/baggage'), 'Airport staff must have Baggage Management');
-    assert.ok(sidebarSource.includes('/airport/employees'), 'Airport staff must have Employee Operations');
 
     // Passenger nav items
     assert.ok(sidebarSource.includes('/passenger/search'), 'Passenger must have Search Flights');
@@ -214,13 +210,8 @@ describe('Phase 06 Frontend Verification Suite', () => {
       path.join(FRONTEND_ROOT, 'src/components/Sidebar/Sidebar.jsx'),
       'utf8'
     );
-    assert.ok(sidebarSource.includes('Autonomous Data Engine'), 'Sidebar must include Autonomous Data Engine link');
-
-    const routesSource = fs.readFileSync(
-      path.join(FRONTEND_ROOT, 'src/routes/AppRoutes.jsx'),
-      'utf8'
-    );
-    assert.ok(routesSource.includes('AadeDashboard'), 'AppRoutes must include AadeDashboard');
+    // User requested removal of AADE from primary navigation for simplified UI
+    assert.ok(!sidebarSource.includes('Autonomous Data Engine'), 'Sidebar must not clutter navigation with Autonomous Data Engine');
   });
 
   test('9. Phase 09 Multi-Language Algorithms & Java OOP Services Integration', () => {
@@ -243,12 +234,7 @@ describe('Phase 06 Frontend Verification Suite', () => {
       path.join(FRONTEND_ROOT, 'src/components/Sidebar/Sidebar.jsx'),
       'utf8'
     );
-    assert.ok(sidebarSource.includes('C & Java Algorithms'), 'Sidebar must include C & Java Algorithms link');
-
-    const routesSource = fs.readFileSync(
-      path.join(FRONTEND_ROOT, 'src/routes/AppRoutes.jsx'),
-      'utf8'
-    );
-    assert.ok(routesSource.includes('AlgorithmsDashboard'), 'AppRoutes must include AlgorithmsDashboard');
+    // User requested removal of C & Java Algorithms from primary navigation for simplified UI
+    assert.ok(!sidebarSource.includes('C & Java Algorithms'), 'Sidebar must not clutter navigation with C & Java Algorithms');
   });
 });

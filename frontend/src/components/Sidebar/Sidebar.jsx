@@ -37,43 +37,33 @@ export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) 
     navigate('/login');
   };
 
-  // Define navigation schemas matching Phase 06 requirements
+  // Define navigation schemas matching clean user operations
   const getNavLinks = () => {
     switch (user?.role) {
       case 'ADMIN':
         return [
           { label: 'Overview', to: '/admin/dashboard', icon: LayoutDashboard },
-          { label: 'User Management', to: '/admin/users', icon: Users },
           { label: 'Flight Management', to: '/admin/flights', icon: Plane },
           { label: 'Airport Management', to: '/admin/airports', icon: Building2 },
           { label: 'Airline Management', to: '/admin/airlines', icon: Briefcase },
+          { label: 'User Management', to: '/admin/users', icon: Users },
           { label: 'Employee Management', to: '/admin/employees', icon: UserCheck },
-          { label: 'Autonomous Data Engine', to: '/admin/aade', icon: Radio },
-          { label: 'C & Java Algorithms', to: '/admin/algorithms', icon: Cpu },
-          { label: 'Database Monitoring', to: '/admin/database', icon: Database },
           { label: 'System Settings', to: '/admin/settings', icon: Settings },
         ];
       case 'AIRLINE_STAFF':
         return [
           { label: 'Overview', to: '/airline/dashboard', icon: LayoutDashboard },
-          { label: 'My Airline', to: '/airline/my-airline', icon: Building2 },
           { label: 'Flight Management', to: '/airline/flights', icon: Plane },
           { label: 'Passenger Management', to: '/airline/passengers', icon: Users },
           { label: 'Booking Management', to: '/airline/bookings', icon: Calendar },
-          { label: 'Ticket Information', to: '/airline/tickets', icon: Ticket },
-          { label: 'Autonomous Data Engine', to: '/airline/aade', icon: Radio },
-          { label: 'C & Java Algorithms', to: '/airline/algorithms', icon: Cpu },
         ];
       case 'AIRPORT_STAFF':
         return [
           { label: 'Overview', to: '/airport/dashboard', icon: LayoutDashboard },
-          { label: 'Flight Operations', to: '/airport/flights', icon: Plane },
           { label: 'Gate Management', to: '/airport/gates', icon: Building2 },
-          { label: 'Check-in Operations', to: '/airport/checkin', icon: ShieldCheck },
+          { label: 'Flight Operations', to: '/airport/flights', icon: Plane },
+          { label: 'Check-In Operations', to: '/airport/checkin', icon: ShieldCheck },
           { label: 'Baggage Management', to: '/airport/baggage', icon: Luggage },
-          { label: 'Employee Operations', to: '/airport/employees', icon: UserCheck },
-          { label: 'Autonomous Data Engine', to: '/airport/aade', icon: Radio },
-          { label: 'C & Java Algorithms', to: '/airport/algorithms', icon: Cpu },
         ];
       case 'PASSENGER':
         return [

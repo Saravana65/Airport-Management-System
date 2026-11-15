@@ -4,6 +4,94 @@
   gap: 28px;
 }
 
+/* Navigation Pill Bar */
+.airline-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.airline-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.airline-nav-pill:hover {
+  background-color: var(--light-blue);
+  color: var(--blue-primary);
+}
+
+.airline-nav-pill.active {
+  background-color: var(--blue-primary);
+  color: #FFFFFF;
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.airline-nav-pill .pill-count {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: inherit;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.airline-nav-pill.active .pill-count {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+/* Focused View Containers */
+.airline-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.airline-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 18px 24px;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.airline-view-title {
+  font-size: 1.25rem;
+  font-weight: var(--fw-bold);
+  color: var(--navy-primary);
+  margin-bottom: 4px;
+}
+
+.airline-view-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
 .airline-banner {
   border-left-color: var(--blue-primary) !important;
 }
@@ -14,75 +102,42 @@
   color: var(--blue-primary) !important;
 }
 
-/* Dispatch Table */
-.dispatch-board-panel {
-  background-color: var(--bg-card);
+/* Form inlining */
+.inline-form-box {
+  background-color: #FFFFFF;
   border: 1px solid var(--border-card);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-}
-
-.dispatch-table-header {
-  display: grid;
-  grid-template-columns: 120px 1.5fr 1.5fr 120px 160px;
-  background-color: #F8FAFC;
-  border-bottom: 2px solid var(--border-card);
-  padding: 14px 20px;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: var(--fw-semibold);
-  color: var(--navy-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.dispatch-empty-state {
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  text-align: center;
-  gap: 12px;
-  background-color: #F8FAFC;
+  gap: 14px;
 }
 
-.empty-clock-icon {
-  color: var(--blue-primary);
-  animation: pulse-radar 3s infinite ease-in-out;
-}
-
-.empty-title {
-  font-size: 16px;
+.inline-form-box h4 {
+  font-size: 14px;
   font-weight: var(--fw-bold);
   color: var(--navy-primary);
 }
 
-.empty-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  max-width: 580px;
-  line-height: 1.5;
-  font-weight: var(--fw-regular);
+.inline-form-box .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) auto;
+  gap: 10px;
+  align-items: center;
 }
 
-.empty-desc code {
-  font-family: var(--font-mono);
-  background-color: #FFFFFF;
+.inline-form-box input {
+  padding: 8px 12px;
   border: 1px solid var(--border-card);
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: var(--blue-primary);
-  font-weight: var(--fw-semibold);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--navy-primary);
+  background-color: #FFFFFF;
 }
 
-.empty-badge-wrap {
-  margin-top: 8px;
-}
-
-@media (max-width: 768px) {
-  .dispatch-table-header {
-    display: none;
-  }
+.inline-form-box input:focus {
+  outline: none;
+  border-color: var(--blue-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }

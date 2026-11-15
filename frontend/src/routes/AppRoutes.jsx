@@ -12,8 +12,6 @@ import AdminDashboard from '../pages/AdminDashboard/AdminDashboard';
 import AirlineDashboard from '../pages/AirlineDashboard/AirlineDashboard';
 import AirportDashboard from '../pages/AirportDashboard/AirportDashboard';
 import PassengerDashboard from '../pages/PassengerDashboard/PassengerDashboard';
-import AadeDashboard from '../pages/AadeDashboard/AadeDashboard';
-import AlgorithmsDashboard from '../pages/AlgorithmsDashboard/AlgorithmsDashboard';
 import ComingSoon from '../pages/ComingSoon/ComingSoon';
 import Unauthorized from '../pages/Unauthorized/Unauthorized';
 import NotFound from '../pages/NotFound/NotFound';
@@ -75,15 +73,15 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard initialTab="airports" />} />
+        <Route path="dashboard" element={<AdminDashboard initialTab="overview" />} />
         <Route path="users" element={<AdminDashboard initialTab="users" />} />
         <Route path="flights" element={<AdminDashboard initialTab="flights" />} />
         <Route path="airports" element={<AdminDashboard initialTab="airports" />} />
         <Route path="airlines" element={<AdminDashboard initialTab="airlines" />} />
         <Route path="employees" element={<AdminDashboard initialTab="employees" />} />
-        <Route path="database" element={<AadeDashboard />} />
-        <Route path="aade" element={<AadeDashboard />} />
-        <Route path="algorithms" element={<AlgorithmsDashboard />} />
+        <Route path="database" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="aade" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="algorithms" element={<Navigate to="/admin/dashboard" replace />} />
         <Route
           path="settings"
           element={
@@ -107,14 +105,14 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/airline/dashboard" replace />} />
-        <Route path="dashboard" element={<AirlineDashboard initialTab="dispatch" />} />
-        <Route path="my-airline" element={<AirlineDashboard initialTab="dispatch" />} />
-        <Route path="flights" element={<AirlineDashboard initialTab="dispatch" />} />
+        <Route path="dashboard" element={<AirlineDashboard initialTab="overview" />} />
+        <Route path="my-airline" element={<AirlineDashboard initialTab="flights" />} />
+        <Route path="flights" element={<AirlineDashboard initialTab="flights" />} />
         <Route path="passengers" element={<AirlineDashboard initialTab="passengers" />} />
         <Route path="bookings" element={<AirlineDashboard initialTab="bookings" />} />
         <Route path="tickets" element={<AirlineDashboard initialTab="bookings" />} />
-        <Route path="aade" element={<AadeDashboard />} />
-        <Route path="algorithms" element={<AlgorithmsDashboard />} />
+        <Route path="aade" element={<Navigate to="/airline/dashboard" replace />} />
+        <Route path="algorithms" element={<Navigate to="/airline/dashboard" replace />} />
       </Route>
 
       {/* AIRPORT_STAFF Station Routes */}
@@ -127,14 +125,14 @@ export function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/airport/dashboard" replace />} />
-        <Route path="dashboard" element={<AirportDashboard initialTab="gates" />} />
+        <Route path="dashboard" element={<AirportDashboard initialTab="overview" />} />
         <Route path="flights" element={<AirportDashboard initialTab="flights" />} />
         <Route path="gates" element={<AirportDashboard initialTab="gates" />} />
         <Route path="checkin" element={<AirportDashboard initialTab="checkins" />} />
         <Route path="baggage" element={<AirportDashboard initialTab="baggage" />} />
         <Route path="employees" element={<AirportDashboard initialTab="gates" />} />
-        <Route path="aade" element={<AadeDashboard />} />
-        <Route path="algorithms" element={<AlgorithmsDashboard />} />
+        <Route path="aade" element={<Navigate to="/airport/dashboard" replace />} />
+        <Route path="algorithms" element={<Navigate to="/airport/dashboard" replace />} />
       </Route>
 
       {/* PASSENGER Station Routes */}
@@ -156,6 +154,8 @@ export function AppRoutes() {
         <Route path="baggage" element={<PassengerDashboard initialTab="baggage" />} />
         <Route path="travel-info" element={<PassengerDashboard initialTab="travel-info" />} />
         <Route path="profile" element={<PassengerDashboard initialTab="profile" />} />
+        <Route path="aade" element={<Navigate to="/passenger/dashboard" replace />} />
+        <Route path="algorithms" element={<Navigate to="/passenger/dashboard" replace />} />
       </Route>
 
       {/* Catch-all 404 Route */}

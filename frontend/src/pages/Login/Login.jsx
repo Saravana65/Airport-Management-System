@@ -9,12 +9,7 @@ import {
   AlertTriangle,
   ServerCrash,
   ShieldCheck,
-  CheckCircle2,
   Info,
-  CalendarCheck,
-  Smartphone,
-  Sparkles,
-  ArrowRight,
 } from 'lucide-react';
 import { Lottie } from 'lottie-react';
 import bookingAnimation from '../../assets/appointment-booking.json';
@@ -102,19 +97,13 @@ export function Login() {
       <div className="radar-circle-bg"></div>
 
       <div className="login-split-card">
-        {/* Left Showcase Panel: Appointment Booking & Smartphone Lottie */}
+        {/* Left Showcase Panel: Smartphone Booking Animation */}
         <div className="login-hero-showcase">
-          <div className="hero-badge-pill">
-            <Sparkles size={14} className="hero-sparkle-icon" />
-            <span>Smart Passenger & Operations Suite</span>
-          </div>
-
           <h2 className="hero-headline">
-            Intelligent Airport Booking & Terminal Dispatch
+            Airport Operations & Travel Portal
           </h2>
           <p className="hero-description">
-            Experience next-generation mobile flight booking, automated gate dispatch,
-            and real-time autonomous AADE operations in one unified aviation platform.
+            Flight management, passenger reservations, gate operations, and digital check-in.
           </p>
 
           {/* Interactive Lottie Smartphone Booking Container */}
@@ -127,33 +116,6 @@ export function Login() {
                 autoplay={true}
                 className="booking-lottie-player"
               />
-            </div>
-
-            {/* Floating Context Badges */}
-            <div className="floating-badge badge-top-right">
-              <CalendarCheck size={14} className="floating-badge-icon" />
-              <span>Instant Mobile Booking</span>
-            </div>
-
-            <div className="floating-badge badge-bottom-left">
-              <Smartphone size={14} className="floating-badge-icon" />
-              <span>Digital Boarding Pass</span>
-            </div>
-          </div>
-
-          {/* Feature Highlights List */}
-          <div className="hero-features-list">
-            <div className="hero-feature-item">
-              <span className="feature-dot"></span>
-              <span>Self-Service Mobile Reservations</span>
-            </div>
-            <div className="hero-feature-item">
-              <span className="feature-dot"></span>
-              <span>Automated Gate & Baggage Handling</span>
-            </div>
-            <div className="hero-feature-item">
-              <span className="feature-dot"></span>
-              <span>Autonomous AI Engine Monitoring</span>
             </div>
           </div>
         </div>
@@ -305,14 +267,8 @@ export function Login() {
               </button>
             </div>
             <p className="demo-note">
-              Note: Authentication is strictly validated against the backend database.
+              Select any role above to auto-fill credentials for demonstration.
             </p>
-          </div>
-
-          {/* Security Notice */}
-          <div className="login-security-notice">
-            <CheckCircle2 size={12} className="security-check-icon" />
-            <span>Encrypted with bcrypt & HttpOnly JWT tokens</span>
           </div>
         </div>
       </div>
