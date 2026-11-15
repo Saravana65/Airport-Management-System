@@ -43,6 +43,8 @@ export function AirportDashboard({ initialTab = 'overview' }) {
   const [flights, setFlights] = useState([]);
   const [baggage, setBaggage] = useState([]);
   const [checkins, setCheckins] = useState([]);
+  const [checkInOverview, setCheckInOverview] = useState(null);
+  const [checkInSearch, setCheckInSearch] = useState('');
 
   // Gate Assignment Modal
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -57,16 +59,18 @@ export function AirportDashboard({ initialTab = 'overview' }) {
     setLoading(true);
     setError(null);
     try {
-      const [gts, flts, bags, chks] = await Promise.all([
+      const [gts, flts, bags, chks, overview] = await Promise.all([
         operationsService.getGates().catch(() => []),
         operationsService.getFlights().catch(() => []),
         operationsService.getBaggage().catch(() => []),
         operationsService.getCheckIns().catch(() => []),
+        operationsService.getStaffCheckInOverview().catch(() => null),
       ]);
       setGates(gts);
       setFlights(flts);
       setBaggage(bags);
       setCheckins(chks);
+      setCheckInOverview(overview);
     } catch (err) {
       setError(err.message || 'Failed to load ground telemetry.');
     } finally {
@@ -378,59 +382,160 @@ export function AirportDashboard({ initialTab = 'overview' }) {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: CHECK-IN OPERATIONS (DIRECT VIEW, NO METRICS CARDS) */}
+      {/* TAB 4: CHECK-IN OPERATIONS (STAFF MONITORING SUITE) */}
       {/* ========================================================================= */}
-      {(activeTab === 'checkin' || activeTab === 'checkins') && (
-        <div className="airport-view-container">
-          <div className="airport-view-header">
-            <div>
-              <h2 className="airport-view-title">Passenger Check-In Operations</h2>
-              <p className="airport-view-subtitle">
-                Live stream of web check-ins, counter verifications, and issued boarding passes.
-              </p>
-            </div>
-            <button className="btn btn-secondary btn-sm" onClick={loadAirportData}>
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              <span>Refresh Stream</span>
-            </button>
-          </div>
+      {(activeTab === 'checkin' || activeTab === 'checkins') && (() => {
+        const filteredCheckins = checkins.filter(chk => {
+          if (!checkInSearch.trim()) return true;
+          const q = checkInSearch.trim().toLowerCase();
+          return (
+            (chk.boardingPassCode && chk.boardingPassCode.toLowerCase().includes(q)) ||
+            (chk.flightNumber && chk.flightNumber.toLowerCase().includes(q)) ||
+            (chk.bookingReference && chk.bookingReference.toLowerCase().includes(q)) ||
+            (chk.passengerName && chk.passengerName.toLowerCase().includes(q)) ||
+            (chk.seatNumber && chk.seatNumber.toLowerCase().includes(q))
+          );
+        });
 
-          <div className="table-responsive">
-            <table className="ops-table">
-              <thead>
-                <tr>
-                  <th>Check-In ID</th>
-                  <th>Boarding Pass Code</th>
-                  <th>Ticket Reference</th>
-                  <th>Assigned Seat</th>
-                  <th>Boarding Aerobridge</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {checkins.length === 0 ? (
+        return (
+          <div className="airport-view-container">
+            <div className="airport-view-header">
+              <div>
+                <h2 className="airport-view-title">Flight Check-In Monitoring Station</h2>
+                <p className="airport-view-subtitle">
+                  Real-time staff monitor for flight passenger check-ins, seat allocations, and gate readiness.
+                </p>
+              </div>
+              <button className="btn btn-secondary btn-sm" onClick={loadAirportData}>
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <span>Refresh Stream</span>
+              </button>
+            </div>
+
+            {/* Flight Passenger Counts Summary Cards */}
+            {checkInOverview?.flights && checkInOverview.flights.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Flight Passenger Check-In Telemetry ({checkInOverview.summary?.totalCheckedInPassengers} / {checkInOverview.summary?.totalBookedPassengers} Checked In · {checkInOverview.summary?.overallCheckInRatePercent}%)
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
+                  {checkInOverview.flights.map(f => (
+                    <div
+                      key={f.flightInstanceId}
+                      style={{
+                        background: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '8px',
+                        padding: '14px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span className="mono font-bold text-navy" style={{ fontSize: '15px' }}>{f.flightNumber}</span>
+                        <StatusBadge status={f.flightStatus} label={f.flightStatus} size="sm" />
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748B', marginBottom: '8px' }}>
+                        {f.origin} → {f.destination} · Gate {f.gate}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                        <span>Checked In:</span>
+                        <strong className="mono text-emerald" style={{ color: '#059669' }}>
+                          {f.checkedInCount} / {f.totalBookedPassengers} ({f.completionRatePercent}%)
+                        </strong>
+                      </div>
+                      {/* Mini progress bar */}
+                      <div style={{ height: '6px', width: '100%', background: '#F1F5F9', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div
+                          style={{
+                            height: '100%',
+                            width: `${Math.min(100, f.completionRatePercent)}%`,
+                            background: f.completionRatePercent === 100 ? '#10B981' : '#2563EB',
+                            borderRadius: '3px',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Search Filter Bar */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+                <input
+                  type="text"
+                  placeholder="Filter by Flight Number, PNR, Seat or Passenger Name..."
+                  value={checkInSearch}
+                  onChange={(e) => setCheckInSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '13px',
+                  }}
+                />
+              </div>
+              {checkInSearch && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setCheckInSearch('')}
+                >
+                  Clear Filter
+                </button>
+              )}
+              <span style={{ fontSize: '12px', color: '#64748B' }}>
+                Showing {filteredCheckins.length} of {checkins.length} check-in events
+              </span>
+            </div>
+
+            <div className="table-responsive">
+              <table className="ops-table">
+                <thead>
                   <tr>
-                    <td colSpan="6" className="text-center text-muted" style={{ padding: '32px' }}>
-                      No active check-in events recorded for current shift.
-                    </td>
+                    <th>Check-In ID</th>
+                    <th>Boarding Pass Code</th>
+                    <th>PNR Reference</th>
+                    <th>Flight & Route</th>
+                    <th>Passenger Name</th>
+                    <th>Assigned Seat</th>
+                    <th>Gate / Terminal</th>
+                    <th>Status</th>
+                    <th>Check-In Timestamp</th>
                   </tr>
-                ) : (
-                  checkins.map((chk) => (
-                    <tr key={chk.checkinId}>
-                      <td className="mono">#{chk.checkinId}</td>
-                      <td className="mono font-bold text-navy">{chk.boardingPassCode}</td>
-                      <td className="mono">Ticket #{chk.ticketId}</td>
-                      <td className="mono font-bold text-emerald">{chk.seatNumber || 'Assigned'}</td>
-                      <td className="mono">{chk.gateId ? `Gate ID ${chk.gateId}` : 'Main Concourse'}</td>
-                      <td><StatusBadge status={chk.status} label={chk.status} size="sm" /></td>
+                </thead>
+                <tbody>
+                  {filteredCheckins.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" className="text-center text-muted" style={{ padding: '32px' }}>
+                        {checkInSearch ? 'No check-in records matching search filter.' : 'No active check-in events recorded.'}
+                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    filteredCheckins.map((chk) => (
+                      <tr key={chk.checkinId}>
+                        <td className="mono">#{chk.checkinId}</td>
+                        <td className="mono font-bold text-navy">{chk.boardingPassCode}</td>
+                        <td className="mono font-semibold" style={{ color: '#1D4ED8' }}>{chk.bookingReference || 'CONFIRMED'}</td>
+                        <td className="mono">
+                          {chk.flightNumber} ({chk.origin} → {chk.destination})
+                        </td>
+                        <td>{chk.passengerName || 'Verified Traveler'}</td>
+                        <td className="mono font-bold text-emerald">{chk.seatNumber || 'Assigned'}</td>
+                        <td className="mono">{chk.gate || (chk.terminal ? `Terminal ${chk.terminal}` : 'Not assigned yet')}</td>
+                        <td><StatusBadge status={chk.status} label={chk.status} size="sm" /></td>
+                        <td className="mono text-muted" style={{ fontSize: '11px' }}>{chk.checkInTime || 'Recent'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* TAB 5: BAGGAGE MANAGEMENT (DIRECT VIEW, NO METRICS CARDS) */}

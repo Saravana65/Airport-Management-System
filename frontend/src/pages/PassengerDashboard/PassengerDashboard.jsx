@@ -305,6 +305,17 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
     setCheckInBaggageWeight(15.0);
     setSafetyDeclared(false);
     setActiveBoardingPass(null);
+
+    if (ticket.flightInstanceId) {
+      operationsService.getFlightSeats(ticket.flightInstanceId)
+        .then((res) => {
+          const occ = (res.occupiedSeats || []).map((s) => s.toUpperCase());
+          const otherOccupied = occ.filter((s) => s !== (ticket.seatNumber || '').toUpperCase());
+          setOccupiedFlightSeats(otherOccupied);
+        })
+        .catch(() => {});
+    }
+
     handleTabChange('checkin');
   };
 
@@ -340,20 +351,28 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
         }
       }
 
-      const bpRecord = result.checkIn || result;
-      setActiveBoardingPass({
-        ...bpRecord,
-        boardingPassNumber: bpRecord.boardingPassCode,
-        passengerName: checkingInTicket.passengerName || user?.name || user?.email?.split('@')[0] || 'Traveler',
+      const bp = result.boardingPass || {
+        ...result.checkIn,
+        boardingPassNumber: result.checkIn?.boardingPassCode,
+        passengerName: checkingInTicket.passengerName || user?.name || 'Verified Traveler',
         flightNumber: checkingInTicket.flightNumber,
         flightDate: checkingInTicket.flightDate || 'Today',
-        origin: checkingInTicket.origin || 'DEL',
-        destination: checkingInTicket.destination || 'BOM',
+        origin: checkingInTicket.origin,
+        destination: checkingInTicket.destination,
         seatNumber: selectedCheckInSeat,
         cabinClass: checkingInTicket.cabinClass || 'ECONOMY',
-        gateNumber: bpRecord.gate || checkingInTicket.gate || 'T2-G01',
-        terminal: 'T2',
+        gateNumber: checkingInTicket.gate || 'Not assigned yet',
+        terminal: checkingInTicket.terminal || 'Not assigned yet',
+        pnr: checkingInTicket.bookingReference,
         ticketNumber: checkingInTicket.ticketNumber,
+      };
+
+      setActiveBoardingPass({
+        ...bp,
+        pnr: bp.pnr || checkingInTicket.bookingReference,
+        ticketNumber: bp.ticketNumber || checkingInTicket.ticketNumber,
+        gateNumber: bp.gate || bp.gateNumber || 'Not assigned yet',
+        terminal: bp.terminal || 'Not assigned yet',
         bagTagCode,
       });
 
@@ -851,19 +870,38 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
           {/* VIEW 1: ACTIVE DIGITAL BOARDING PASS (REAL-TIME DISPLAY) */}
           {activeBoardingPass && (
             <div className="boarding-pass-print-wrapper">
+              {/* Mandatory Demo Disclaimer Notice */}
+              <div
+                className="bp-demo-notice-banner no-print"
+                style={{
+                  background: '#FEF3C7',
+                  border: '1px solid #F59E0B',
+                  color: '#92400E',
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  textAlign: 'center',
+                  marginBottom: '16px',
+                  fontWeight: 600,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                }}
+              >
+                ⚠️ DIGITAL DEMO BOARDING-PASS PREVIEW — For demonstration and simulation purposes only. Not an official airline or airport travel document.
+              </div>
+
               <div className="digital-boarding-pass-modern">
                 {/* Boarding Pass Header Ribbon */}
                 <div className="bp-header-bar">
                   <div className="bp-airline-brand">
                     <Plane size={22} className="bp-plane-icon" />
                     <div>
-                      <span className="bp-airline-title">COMMERCIAL AIRWAYS</span>
-                      <span className="bp-pass-type">ELECTRONIC BOARDING PASS</span>
+                      <span className="bp-airline-title">{activeBoardingPass.airlineName || 'COMMERCIAL AIRWAYS'}</span>
+                      <span className="bp-pass-type">ELECTRONIC BOARDING PASS (DEMO PREVIEW)</span>
                     </div>
                   </div>
                   <div className="bp-status-tag">
                     <ShieldCheck size={14} />
-                    <span>BOARDING AUTHORIZED</span>
+                    <span>{activeBoardingPass.checkInStatus || 'CHECKED_IN'}</span>
                   </div>
                 </div>
 
@@ -901,20 +939,38 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                     <span className="bp-cell-val font-bold text-emerald">{activeBoardingPass.seatNumber}</span>
                   </div>
                   <div className="bp-cell">
-                    <span className="bp-cell-label">Terminal / Aerobridge Gate</span>
-                    <span className="bp-cell-val font-bold text-navy">{activeBoardingPass.gateNumber || 'T2 - G01'}</span>
+                    <span className="bp-cell-label">Terminal / Gate</span>
+                    <span className="bp-cell-val font-bold text-navy">
+                      {activeBoardingPass.gateNumber || activeBoardingPass.gate || (activeBoardingPass.terminal && activeBoardingPass.terminal !== 'Not assigned yet' ? `Terminal ${activeBoardingPass.terminal}` : 'Not assigned yet')}
+                    </span>
                   </div>
                   <div className="bp-cell">
                     <span className="bp-cell-label">Boarding Time</span>
-                    <span className="bp-cell-val font-bold text-navy">45 mins prior to departure</span>
+                    <span className="bp-cell-val font-bold text-navy">{activeBoardingPass.boardingTime || '45 mins prior to departure'}</span>
                   </div>
                   <div className="bp-cell">
                     <span className="bp-cell-label">Cabin Class</span>
                     <span className="bp-cell-val">{activeBoardingPass.cabinClass || 'ECONOMY'}</span>
                   </div>
                   <div className="bp-cell">
-                    <span className="bp-cell-label">PNR / Ticket Number</span>
-                    <span className="bp-cell-val mono">{activeBoardingPass.pnr || activeBoardingPass.ticketNumber || 'PNR-CONFIRMED'}</span>
+                    <span className="bp-cell-label">PNR Reference</span>
+                    <span className="bp-cell-val mono font-bold text-navy">{activeBoardingPass.pnr || 'PNR-CONFIRMED'}</span>
+                  </div>
+                </div>
+
+                {/* Second Row: E-Ticket Number and Travel Date */}
+                <div className="bp-details-grid" style={{ marginTop: '8px', borderTop: '1px dashed #CBD5E1', paddingTop: '8px' }}>
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">E-Ticket Number</span>
+                    <span className="bp-cell-val mono">{activeBoardingPass.ticketNumber || '--'}</span>
+                  </div>
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">Departure Date & Time</span>
+                    <span className="bp-cell-val">{activeBoardingPass.flightDate || activeBoardingPass.departureDate || 'Scheduled Date'} · {activeBoardingPass.departureTime || 'Scheduled'}</span>
+                  </div>
+                  <div className="bp-cell">
+                    <span className="bp-cell-label">Check-In Status</span>
+                    <span className="bp-cell-val font-bold text-emerald">{activeBoardingPass.checkInStatus || 'CHECKED_IN'}</span>
                   </div>
                 </div>
 
@@ -943,7 +999,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
               <div className="bp-action-bar no-print">
                 <button type="button" className="btn btn-primary" onClick={handlePrintBoardingPass}>
                   <Printer size={15} />
-                  <span>Print Official Boarding Pass</span>
+                  <span>Print Boarding Pass Preview</span>
                 </button>
                 <button
                   type="button"
@@ -1045,7 +1101,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                         <div className="seat-pair left">
                           {SEAT_COLS_LEFT.map((col) => {
                             const seatCode = `${row}${col}`;
-                            const isOccupied = DEFAULT_OCCUPIED_SEATS.includes(seatCode);
+                            const isOccupied = occupiedFlightSeats.includes(seatCode);
                             const isSelected = selectedCheckInSeat === seatCode;
 
                             return (
@@ -1072,7 +1128,7 @@ export function PassengerDashboard({ initialTab = 'overview' }) {
                         <div className="seat-pair right">
                           {SEAT_COLS_RIGHT.map((col) => {
                             const seatCode = `${row}${col}`;
-                            const isOccupied = DEFAULT_OCCUPIED_SEATS.includes(seatCode);
+                            const isOccupied = occupiedFlightSeats.includes(seatCode);
                             const isSelected = selectedCheckInSeat === seatCode;
 
                             return (

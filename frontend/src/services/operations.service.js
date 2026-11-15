@@ -79,9 +79,20 @@ export const operationsService = {
   cancelBooking: (id) => api.patch(`/bookings/${id}/cancel`).then(r => r.data || r),
 
   // Module 5: Check-in Operations
-  getEligibleTickets: () => api.get('/checkin/eligible').then(r => r.data || r),
-  getCheckIns: () => api.get('/checkin').then(r => r.data || r),
+  getEligibleTickets: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return api.get(`/checkin/eligible${query ? `?${query}` : ''}`).then(r => r.data || r);
+  },
+  getCheckIns: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return api.get(`/checkin${query ? `?${query}` : ''}`).then(r => r.data || r);
+  },
   processCheckIn: (data) => api.post('/checkin', data).then(r => r.data || r),
+  getStaffCheckInOverview: () => api.get('/checkin/staff/overview').then(r => r.data || r),
+  retrieveBookingForCheckIn: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return api.get(`/checkin/retrieve${query ? `?${query}` : ''}`).then(r => r.data || r);
+  },
 
   // Module 6: Baggage Management
   getBaggage: (params = {}) => {
