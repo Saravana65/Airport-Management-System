@@ -14,7 +14,17 @@ export const authService = {
    */
   async login(email, password) {
     const response = await api.post('/auth/login', { email, password });
-    // Backend standard structure: { success: true, message: '...', data: { user, token } }
+    return response.data || response;
+  },
+
+  /**
+   * Register a new user
+   * @param {string} email 
+   * @param {string} password 
+   * @returns {Promise<{ user: Object, token?: string }>}
+   */
+  async register(email, password) {
+    const response = await api.post('/auth/register', { email, password });
     return response.data || response;
   },
 
@@ -27,7 +37,6 @@ export const authService = {
       const response = await api.post('/auth/logout', {});
       return response.data || response;
     } catch (error) {
-      // Even if backend fails, client should clear local auth state
       return { loggedOut: true };
     }
   },

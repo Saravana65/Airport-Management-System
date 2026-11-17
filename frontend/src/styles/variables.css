@@ -85,4 +85,24 @@
   --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.05), 0 1px 2px rgba(16, 24, 40, 0.03);
   --shadow-card-hover: 0 6px 14px -2px rgba(16, 24, 40, 0.08), 0 3px 5px -2px rgba(16, 24, 40, 0.04);
   --shadow-amber-glow: 0 0 12px rgba(37, 99, 235, 0.2);
+
+  /* AEROVISION Premium Futuristic Aviation Palette */
+  --aero-midnight: #030712;
+  --aero-navy-950: #050B1A;
+  --aero-navy-900: #0A1226;
+  --aero-navy-800: #101E3D;
+  --aero-surface-glass: rgba(10, 18, 38, 0.72);
+  --aero-surface-glass-border: rgba(56, 189, 248, 0.2);
+  --aero-surface-glass-hover: rgba(16, 30, 61, 0.85);
+  --aero-electric: #00F0FF;
+  --aero-cyan: #38BDF8;
+  --aero-blue: #0284C7;
+  --aero-indigo: #6366F1;
+  --aero-emerald: #10B981;
+  --aero-amber: #F59E0B;
+  --aero-rose: #F43F5E;
+  --aero-glow-cyan: 0 0 24px rgba(0, 240, 255, 0.28);
+  --aero-glow-blue: 0 0 30px rgba(56, 189, 248, 0.25);
+  --aero-glow-text: 0 0 16px rgba(56, 189, 248, 0.4);
+  --font-space: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }

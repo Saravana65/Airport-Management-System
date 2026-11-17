@@ -551,19 +551,71 @@ async function processCheckIn(data, user) {
                 throw err;
             }
 
-            // 6. Duplicate check-in prevention (FOR UPDATE lock on CHECK_IN table)
+            // 6. Duplicate check-in prevention (returns existing boarding pass if already completed)
             const chkRes = await trx.execute(
-                `SELECT CHECK_IN_ID, BOARDING_PASS_CODE, STATUS 
+                `SELECT CHECK_IN_ID, BOARDING_PASS_CODE, STATUS, BOARDING_TIME, GATE_ID, CREATED_AT 
                  FROM CHECK_IN 
                  WHERE TICKET_ID = ? FOR UPDATE`,
                 [ticket.ticketId]
             );
 
             if (chkRes.rows.length > 0 || ticket.ticketStatus === 'CHECKED_IN') {
-                const existingBp = chkRes.rows[0]?.BOARDING_PASS_CODE || 'BP-ISSUED';
-                const err = new Error(`Ticket ${ticket.ticketNumber} is already checked in (Boarding Pass: ${existingBp}).`);
-                err.statusCode = 409;
-                throw err;
+                const existingCheckIn = chkRes.rows[0];
+                const bpCode = existingCheckIn?.BOARDING_PASS_CODE || `BP-${ticket.flightNumber}-${ticket.seatNumber || '20A'}-9402`;
+                const boardingTime = existingCheckIn?.BOARDING_TIME || ticket.scheduledDeparture || '45 mins prior to departure';
+                
+                const checkInRecord = {
+                    checkInId: existingCheckIn?.CHECK_IN_ID || 0,
+                    ticketId: ticket.ticketId,
+                    checkInTime: existingCheckIn?.CHECK_IN_TIME || new Date().toISOString(),
+                    boardingPassCode: bpCode,
+                    boardingTime,
+                    gateId: existingCheckIn?.GATE_ID || ticket.departureGateId || null,
+                    status: existingCheckIn?.STATUS || 'COMPLETED',
+                    createdAt: existingCheckIn?.CREATED_AT || new Date().toISOString(),
+                };
+
+                const passengerName = ticket.firstName ? `${ticket.firstName} ${ticket.lastName}`.trim() : 'Verified Traveler';
+                const terminalStr = ticket.terminal || 'Not assigned yet';
+                const gateStr = ticket.gateNumber
+                    ? (ticket.terminal ? `${ticket.terminal}-${ticket.gateNumber}` : ticket.gateNumber)
+                    : 'Not assigned yet';
+
+                const boardingPass = {
+                    checkInId: existingCheckIn?.CHECK_IN_ID || 0,
+                    boardingPassNumber: bpCode,
+                    boardingPassCode: bpCode,
+                    passengerName,
+                    pnr: ticket.bookingReference,
+                    ticketNumber: ticket.ticketNumber,
+                    airlineName: ticket.airlineName || 'Commercial Airlines',
+                    airlineCode: ticket.airlineCode,
+                    flightNumber: ticket.flightNumber,
+                    flightDate: ticket.flightDate,
+                    origin: ticket.origin,
+                    destination: ticket.destination,
+                    departureDate: ticket.flightDate,
+                    departureTime: ticket.scheduledDepartureTime || (ticket.scheduledDeparture ? ticket.scheduledDeparture.substring(11, 16) : null),
+                    scheduledDeparture: ticket.scheduledDeparture,
+                    terminal: terminalStr,
+                    gate: gateStr,
+                    gateNumber: gateStr,
+                    seatNumber: ticket.seatNumber || (seatNumber || '14B').trim().toUpperCase(),
+                    cabinClass: ticket.cabinClass,
+                    boardingTime: '45 mins prior to departure',
+                    checkInStatus: 'CHECKED_IN',
+                    alreadyCheckedIn: true,
+                    demoNotice: 'DIGITAL DEMO BOARDING-PASS PREVIEW — For demonstration and simulation purposes only. Not an official airline or airport travel document.',
+                    isDemoNotice: 'DIGITAL DEMO BOARDING-PASS PREVIEW — For demonstration and simulation purposes only. Not an official airline or airport travel document.',
+                };
+
+                return {
+                    checkIn: checkInRecord,
+                    boardingPass,
+                    ticket: { ...ticket, status: 'CHECKED_IN' },
+                    alreadyCheckedIn: true,
+                    message: `Ticket ${ticket.ticketNumber} is already checked in. Retrieved existing Boarding Pass.`
+                };
             }
 
             // 7. Seat resolution and duplicate seat check
@@ -694,10 +746,81 @@ async function processCheckIn(data, user) {
             checkIn: result.checkIn,
             boardingPass: result.boardingPass,
             ticket: result.ticket,
+            alreadyCheckedIn: result.alreadyCheckedIn || false,
         };
     } catch (err) {
         // Handle database engine level unique constraint violation
         if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('uq_checkin_ticket'))) {
+            try {
+                const existing = await db.execute(
+                    `SELECT c.CHECK_IN_ID, c.BOARDING_PASS_CODE, c.BOARDING_TIME, c.GATE_ID, c.STATUS, c.CHECK_IN_TIME,
+                            t.TICKET_ID, t.TICKET_NUMBER, t.SEAT_NUMBER, t.CABIN_CLASS, b.BOOKING_REFERENCE,
+                            fi.FLIGHT_NUMBER, DATE_FORMAT(fi.FLIGHT_DATE, '%Y-%m-%d') as flightDate,
+                            DATE_FORMAT(fi.SCHEDULED_DEPARTURE, '%Y-%m-%d %H:%i:%s') as scheduledDeparture,
+                            f.ORIGIN_AIRPORT as origin, f.DEST_AIRPORT as destination,
+                            al.AIRLINE_NAME as airlineName, al.AIRLINE_CODE as airlineCode,
+                            p.FIRST_NAME as firstName, p.LAST_NAME as lastName,
+                            g.TERMINAL as terminal, g.GATE_NUMBER as gateNumber
+                     FROM CHECK_IN c
+                     JOIN TICKETS t ON c.TICKET_ID = t.TICKET_ID
+                     JOIN BOOKINGS b ON t.BOOKING_ID = b.BOOKING_ID
+                     JOIN FLIGHT_INSTANCES fi ON t.FLIGHT_INSTANCE_ID = fi.FLIGHT_INSTANCE_ID
+                     JOIN FLIGHTS f ON fi.FLIGHT_NUMBER = f.FLIGHT_NUMBER
+                     LEFT JOIN AIRLINES al ON f.AIRLINE_CODE = al.AIRLINE_CODE
+                     LEFT JOIN PASSENGERS p ON t.PASSENGER_ID = p.PASSENGER_ID
+                     LEFT JOIN GATES g ON c.GATE_ID = g.GATE_ID
+                     WHERE c.TICKET_ID = ?`,
+                    [ticketId]
+                );
+                if (existing.rows.length > 0) {
+                    const row = existing.rows[0];
+                    const bpCode = row.BOARDING_PASS_CODE;
+                    const boardingPass = {
+                        checkInId: row.CHECK_IN_ID,
+                        boardingPassNumber: bpCode,
+                        boardingPassCode: bpCode,
+                        passengerName: row.firstName ? `${row.firstName} ${row.lastName}`.trim() : 'Verified Traveler',
+                        pnr: row.BOOKING_REFERENCE,
+                        ticketNumber: row.TICKET_NUMBER,
+                        airlineName: row.airlineName || 'Commercial Airlines',
+                        airlineCode: row.airlineCode,
+                        flightNumber: row.FLIGHT_NUMBER,
+                        flightDate: row.flightDate,
+                        origin: row.origin,
+                        destination: row.destination,
+                        departureDate: row.flightDate,
+                        departureTime: row.scheduledDeparture ? row.scheduledDeparture.substring(11, 16) : null,
+                        scheduledDeparture: row.scheduledDeparture,
+                        terminal: row.terminal || 'Not assigned yet',
+                        gate: row.gateNumber ? (row.terminal ? `${row.terminal}-${row.gateNumber}` : row.gateNumber) : 'Not assigned yet',
+                        gateNumber: row.gateNumber || 'Not assigned yet',
+                        seatNumber: row.SEAT_NUMBER,
+                        cabinClass: row.CABIN_CLASS,
+                        boardingTime: '45 mins prior to departure',
+                        checkInStatus: 'CHECKED_IN',
+                        alreadyCheckedIn: true,
+                        demoNotice: 'DIGITAL DEMO BOARDING-PASS PREVIEW — For demonstration and simulation purposes only. Not an official airline or airport travel document.',
+                    };
+                    return {
+                        checkIn: {
+                            checkInId: row.CHECK_IN_ID,
+                            ticketId: row.TICKET_ID,
+                            checkInTime: row.CHECK_IN_TIME,
+                            boardingPassCode: bpCode,
+                            boardingTime: row.BOARDING_TIME,
+                            status: row.STATUS,
+                        },
+                        boardingPass,
+                        ticket: {
+                            ticketId: row.TICKET_ID,
+                            ticketNumber: row.TICKET_NUMBER,
+                            seatNumber: row.SEAT_NUMBER,
+                            status: 'CHECKED_IN',
+                        },
+                        alreadyCheckedIn: true,
+                    };
+                }
+            } catch (ignored) {}
             const conflictErr = new Error(`Ticket ${ticketId} is already checked in.`);
             conflictErr.statusCode = 409;
             throw conflictErr;

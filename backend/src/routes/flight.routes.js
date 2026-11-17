@@ -7,6 +7,9 @@ const router = express.Router();
 const flightController = require('../controllers/flight.controller');
 const { authenticateUser, authorizeRoles } = require('../middleware/auth.middleware');
 
+// Public preview endpoint for landing page & flight board (no auth required)
+router.get('/public-preview', flightController.getFlights);
+
 router.use(authenticateUser);
 
 // All authenticated users can view and search flights

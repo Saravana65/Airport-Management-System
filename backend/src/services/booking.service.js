@@ -56,13 +56,20 @@ async function getAllBookings(user, filters = {}) {
             p.FIRST_NAME as firstName,
             p.LAST_NAME as lastName,
             p.EMAIL as passengerEmail,
-            p.PHONE as passengerPhone
+            p.PHONE as passengerPhone,
+            c.BOARDING_PASS_CODE as boardingPassCode,
+            c.CHECK_IN_ID as checkInId,
+            DATE_FORMAT(c.CHECK_IN_TIME, '%Y-%m-%d %H:%i:%s') as checkInTime,
+            g.TERMINAL as terminal,
+            g.GATE_NUMBER as gateNumber
         FROM BOOKINGS b
         LEFT JOIN TICKETS t ON b.BOOKING_ID = t.BOOKING_ID
         LEFT JOIN FLIGHT_INSTANCES fi ON t.FLIGHT_INSTANCE_ID = fi.FLIGHT_INSTANCE_ID
         LEFT JOIN FLIGHTS f ON fi.FLIGHT_NUMBER = f.FLIGHT_NUMBER
         LEFT JOIN AIRLINES al ON f.AIRLINE_CODE = al.AIRLINE_CODE
         LEFT JOIN PASSENGERS p ON t.PASSENGER_ID = p.PASSENGER_ID
+        LEFT JOIN CHECK_IN c ON t.TICKET_ID = c.TICKET_ID
+        LEFT JOIN GATES g ON fi.DEPARTURE_GATE_ID = g.GATE_ID
         WHERE 1=1
     `;
     const params = [];
@@ -110,13 +117,20 @@ async function getAllBookings(user, filters = {}) {
                     seatNumber: row.seatNumber,
                     cabinClass: row.cabinClass,
                     price: parseFloat(row.price) || 0,
-                    status: row.ticketStatus,
+                    status: row.checkInId ? 'CHECKED_IN' : row.ticketStatus,
+                    boardingPassCode: row.boardingPassCode || null,
+                    checkInId: row.checkInId || null,
+                    checkInTime: row.checkInTime || null,
                     flightNumber: row.flightNumber,
                     flightDate: row.flightDate,
+                    scheduledDeparture: row.scheduledDeparture,
+                    scheduledArrival: row.scheduledArrival,
                     origin: row.origin,
                     destination: row.destination,
                     airlineCode: row.airlineCode,
                     airlineName: row.airlineName,
+                    terminal: row.terminal || null,
+                    gate: row.gateNumber ? (row.terminal ? `${row.terminal}-${row.gateNumber}` : row.gateNumber) : null,
                     passengerName: row.firstName ? `${row.firstName} ${row.lastName}`.trim() : null,
                     passengerEmail: row.passengerEmail,
                     passengerPhone: row.passengerPhone,
@@ -208,13 +222,20 @@ async function getBookingById(id, user) {
             p.PHONE as passengerPhone,
             p.PASSPORT_NUMBER as passportNumber,
             DATE_FORMAT(p.DATE_OF_BIRTH, '%Y-%m-%d') as dateOfBirth,
-            p.GENDER as gender
+            p.GENDER as gender,
+            c.BOARDING_PASS_CODE as boardingPassCode,
+            c.CHECK_IN_ID as checkInId,
+            DATE_FORMAT(c.CHECK_IN_TIME, '%Y-%m-%d %H:%i:%s') as checkInTime,
+            g.TERMINAL as terminal,
+            g.GATE_NUMBER as gateNumber
         FROM BOOKINGS b
         LEFT JOIN TICKETS t ON b.BOOKING_ID = t.BOOKING_ID
         LEFT JOIN FLIGHT_INSTANCES fi ON t.FLIGHT_INSTANCE_ID = fi.FLIGHT_INSTANCE_ID
         LEFT JOIN FLIGHTS f ON fi.FLIGHT_NUMBER = f.FLIGHT_NUMBER
         LEFT JOIN AIRLINES al ON f.AIRLINE_CODE = al.AIRLINE_CODE
         LEFT JOIN PASSENGERS p ON t.PASSENGER_ID = p.PASSENGER_ID
+        LEFT JOIN CHECK_IN c ON t.TICKET_ID = c.TICKET_ID
+        LEFT JOIN GATES g ON fi.DEPARTURE_GATE_ID = g.GATE_ID
         WHERE b.BOOKING_ID = ? OR b.BOOKING_REFERENCE = ?
     `;
 
@@ -252,7 +273,11 @@ async function getBookingById(id, user) {
                     seatNumber: row.seatNumber,
                     cabinClass: row.cabinClass,
                     price: parseFloat(row.price) || 0,
-                    status: row.ticketStatus,
+                    status: row.checkInId ? 'CHECKED_IN' : row.ticketStatus,
+                    boardingPassCode: row.boardingPassCode || null,
+                    checkInId: row.checkInId || null,
+                    terminal: row.terminal || null,
+                    gate: row.gateNumber ? (row.terminal ? `${row.terminal}-${row.gateNumber}` : row.gateNumber) : null,
                     flight: {
                         flightNumber: row.flightNumber,
                         flightDate: row.flightDate,

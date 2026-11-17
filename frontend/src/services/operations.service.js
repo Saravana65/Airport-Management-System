@@ -55,6 +55,10 @@ export const operationsService = {
   createAircraft: (data) => api.post('/aircraft', data).then((r) => r.data || r),
 
   // Module 2: Flights
+  getPublicFlights: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return api.get(`/flights/public-preview${query ? `?${query}` : ''}`).then(r => r.data || r).catch(() => []);
+  },
   getFlights: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return api.get(`/flights${query ? `?${query}` : ''}`).then(r => r.data || r);

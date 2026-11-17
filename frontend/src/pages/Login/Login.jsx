@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
-  Plane,
   Lock,
   Mail,
   Eye,
   EyeOff,
   AlertTriangle,
   ServerCrash,
-  ShieldCheck,
-  Info,
 } from 'lucide-react';
-import { Lottie } from 'lottie-react';
-import bookingAnimation from '../../assets/appointment-booking.json';
 import useAuth from '../../hooks/useAuth';
+import AirportHeroCanvas from '../../components/ThreeCanvas/AirportHeroCanvas';
 import './Login.css';
 
+/**
+ * AEROVISION — Authentication Gateway
+ * Clean Minimalist Login Card with 3D Commercial Airliner & Airport Airfield.
+ */
 export function Login() {
-  const { login, error: contextError } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,16 +34,16 @@ export function Login() {
   // Client-side form validation
   const validateForm = () => {
     if (!email.trim()) {
-      setFormError('Operational station email is required.');
+      setFormError('Email is required.');
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      setFormError('Please enter a valid station email address.');
+      setFormError('Please enter a valid email address.');
       return false;
     }
     if (!password) {
-      setFormError('Security access password is required.');
+      setFormError('Password is required.');
       return false;
     }
     if (password.length < 6) {
@@ -66,10 +66,9 @@ export function Login() {
       const result = await login(email.trim(), password);
 
       if (result.success) {
-        // Successful login: navigate to destination or role dashboard
         navigate(destination, { replace: true });
       } else {
-        setFormError(result.error);
+        setFormError(result.error || 'Authentication rejected by security gateway.');
         if (result.status === 0 || result.error?.includes('Unable to connect')) {
           setIsNetworkError(true);
         }
@@ -82,196 +81,121 @@ export function Login() {
     }
   };
 
-  // Quick fill helper for presentation / viva demo
-  const fillCredentials = (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setFormError('');
-    setIsNetworkError(false);
-  };
-
   return (
-    <div className="login-viewport">
-      {/* Background Radar Animation Grid */}
-      <div className="login-backdrop-grid"></div>
-      <div className="radar-circle-bg"></div>
+    <div className="aero-login-viewport">
+      {/* 3D WebGL Commercial Airliner & Airport Airfield */}
+      <div className="aero-login-3d-backdrop">
+        <AirportHeroCanvas />
+      </div>
 
-      <div className="login-split-card">
-        {/* Left Showcase Panel: Smartphone Booking Animation */}
-        <div className="login-hero-showcase">
-          <h2 className="hero-headline">
-            Airport Operations & Travel Portal
-          </h2>
-          <p className="hero-description">
-            Flight management, passenger reservations, gate operations, and digital check-in.
-          </p>
-
-          {/* Interactive Lottie Smartphone Booking Container */}
-          <div className="hero-lottie-container">
-            <div className="lottie-glow-ring"></div>
-            <div className="lottie-frame">
-              <Lottie
-                src={bookingAnimation}
-                loop={true}
-                autoplay={true}
-                className="booking-lottie-player"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Panel: Aero•Ops Gateway Login Form */}
-        <div className="login-container">
-          {/* Card Header & Branding */}
-          <div className="login-card-header">
-            <div className="brand-badge">
-              <Plane size={24} className="brand-plane-icon" />
-            </div>
-            <h1 className="login-title">AERO•OPS GATEWAY</h1>
-            <p className="login-subtitle">
-              Airport Operations & Flight Management Control System
-            </p>
-          </div>
-
-          {/* Network / Connection Failure Banner */}
+      {/* Main Centered Login Container */}
+      <main className="aero-login-main-container">
+        <div className="aero-login-card">
+          {/* Network Failure Banner */}
           {isNetworkError && (
-            <div className="login-alert-banner alert-danger">
-              <ServerCrash size={18} className="alert-icon" />
-              <div className="alert-body">
+            <div className="aero-alert-box aero-alert-error">
+              <ServerCrash size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
                 <strong>Backend Connection Unavailable</strong>
-                <p>
-                  Cannot reach Node.js server at <code>http://localhost:5000</code>. Verify that backend is running (<code>npm run dev</code>).
+                <p style={{ margin: '4px 0 0', opacity: 0.9 }}>
+                  Cannot reach Node.js server at <code>http://localhost:5000</code>. Verify that backend is running.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Credentials / Validation Error Banner */}
+          {/* Form Error Banner */}
           {formError && !isNetworkError && (
-            <div className="login-alert-banner alert-warning">
-              <AlertTriangle size={18} className="alert-icon" />
-              <div className="alert-body">
-                <span>{formError}</span>
-              </div>
+            <div className="aero-alert-box aero-alert-warning">
+              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>{formError}</div>
             </div>
           )}
 
-          {/* Real Backend Authentication Form */}
-          <form onSubmit={handleSubmit} className="login-form" noValidate>
-            {/* Email Input */}
-            <div className="form-group">
-              <label htmlFor="station-email" className="form-label">
-                Station User / Operator Email
+          {/* Authentication Form */}
+          <form onSubmit={handleSubmit} className="aero-form" noValidate>
+            {/* Email Field */}
+            <div className="aero-form-group">
+              <label htmlFor="user-email" className="aero-form-label">
+                <Mail size={12} />
+                <span>Email</span>
               </label>
-              <div className="input-with-icon">
-                <Mail size={18} className="input-icon" />
+              <div className="aero-field-box">
+                <span className="aero-field-icon">
+                  <Mail size={16} />
+                </span>
                 <input
-                  id="station-email"
+                  id="user-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="operator@airport.com"
+                  placeholder="name@example.com"
                   disabled={loading}
                   autoComplete="email"
                   autoFocus
+                  className="aero-field-input"
                 />
               </div>
             </div>
 
-            {/* Password Input with Visibility Toggle */}
-            <div className="form-group">
-              <label htmlFor="station-password" className="form-label">
-                Station Access Password
+            {/* Password Field */}
+            <div className="aero-form-group">
+              <label htmlFor="user-password" className="aero-form-label">
+                <Lock size={12} />
+                <span>Password</span>
               </label>
-              <div className="input-with-icon">
-                <Lock size={18} className="input-icon" />
+              <div className="aero-field-box">
+                <span className="aero-field-icon">
+                  <Lock size={16} />
+                </span>
                 <input
-                  id="station-password"
+                  id="user-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
                   disabled={loading}
                   autoComplete="current-password"
+                  className="aero-field-input mono"
                 />
                 <button
                   type="button"
-                  className="password-toggle-btn"
+                  className="aero-field-toggle"
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit Action Button */}
             <button
               type="submit"
-              className="btn btn-primary login-submit-btn"
+              className="aero-submit-btn font-space"
               disabled={loading}
             >
               {loading ? (
                 <>
-                  <span className="spinner-border animate-spin"></span>
-                  <span>Authenticating with Node.js Gateway...</span>
+                  <span className="aero-pulse-dot" />
+                  <span>LOGGING IN...</span>
                 </>
               ) : (
-                <>
-                  <ShieldCheck size={18} />
-                  <span>Initialize Station Session</span>
-                </>
+                <span>Log in</span>
               )}
             </button>
           </form>
 
-          {/* Viva / Faculty Presentation Quick-Fill Helper */}
-          <div className="login-demo-helper">
-            <div className="demo-helper-header">
-              <Info size={14} className="demo-info-icon" />
-              <span>Viva / Faculty Demo Station Roles</span>
-            </div>
-            <div className="demo-pill-group">
-              <button
-                type="button"
-                className="demo-pill pill-admin"
-                onClick={() => fillCredentials('admin@airport.com', 'Admin@12345')}
-                title="Click to fill ADMIN credentials"
-              >
-                ADMIN
-              </button>
-              <button
-                type="button"
-                className="demo-pill pill-airline"
-                onClick={() => fillCredentials('staff@airline.com', 'Airline@12345')}
-                title="Click to fill AIRLINE_STAFF credentials"
-              >
-                AIRLINE_STAFF
-              </button>
-              <button
-                type="button"
-                className="demo-pill pill-airport"
-                onClick={() => fillCredentials('ops@airport.com', 'Airport@12345')}
-                title="Click to fill AIRPORT_STAFF credentials"
-              >
-                AIRPORT_STAFF
-              </button>
-              <button
-                type="button"
-                className="demo-pill pill-passenger"
-                onClick={() => fillCredentials('passenger@gmail.com', 'Pass@12345')}
-                title="Click to fill PASSENGER credentials"
-              >
-                PASSENGER
-              </button>
-            </div>
-            <p className="demo-note">
-              Select any role above to auto-fill credentials for demonstration.
-            </p>
+          {/* New User Register Option */}
+          <div className="aero-auth-switch">
+            <span>Don't have an account?</span>{' '}
+            <Link to="/register" className="aero-auth-link">
+              Register
+            </Link>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

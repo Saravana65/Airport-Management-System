@@ -69,6 +69,28 @@ export function AuthProvider({ children }) {
   };
 
   /**
+   * Register new user
+   * @param {string} email 
+   * @param {string} password 
+   */
+  const register = async (email, password) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await authService.register(email, password);
+      const authenticatedUser = data.user || data;
+      setUser(authenticatedUser);
+      return { success: true, user: authenticatedUser };
+    } catch (err) {
+      const message = err.message || 'Registration failed. Please try again.';
+      setError(message);
+      return { success: false, error: message, status: err.status };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Log out user
    */
   const logout = async () => {
@@ -89,6 +111,7 @@ export function AuthProvider({ children }) {
     loading,
     error,
     login,
+    register,
     logout,
     checkAuthStatus,
   };

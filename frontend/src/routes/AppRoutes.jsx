@@ -8,6 +8,7 @@ import ProtectedRoute from '../components/ProtectedRoute/ProtectedRoute';
 
 // Pages
 import Login from '../pages/Login/Login';
+import Register from '../pages/Register/Register';
 import AdminDashboard from '../pages/AdminDashboard/AdminDashboard';
 import AirlineDashboard from '../pages/AirlineDashboard/AirlineDashboard';
 import AirportDashboard from '../pages/AirportDashboard/AirportDashboard';
@@ -50,6 +51,7 @@ export function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
 
       {/* Gateway Entry / Auto Role Routing */}
